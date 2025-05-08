@@ -1,6 +1,6 @@
 ## Quick Start
 pip install -r requirements.txt
-将app/utils/transform.py中的
+将app/utils/transform.py中的路径
 ```
 def find_musescore_executable():
     # 在WSL中使用Linux路径格式
