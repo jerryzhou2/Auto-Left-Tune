@@ -27,14 +27,14 @@ def upload_file():
         session_id = str(uuid.uuid4())
         filename = secure_filename(file.filename)
         input_path = os.path.join(Config.UPLOAD_FOLDER, f"{session_id}_{filename}")
-        output_midi_path = os.path.join(Config.OUTPUT_FOLDER, f"{session_id}_output.mid")
-        output_pdf_path = os.path.join(Config.OUTPUT_FOLDER, f"{session_id}_output.pdf")
+        output_midi_path = os.path.join(Config.OUTPUT_FOLDER, f"output.mid")
+        output_pdf_path = os.path.join(Config.OUTPUT_FOLDER, f"output.pdf")
         
         file.save(input_path)
         
         # 处理MIDI文件
-        if not transform.split_midi(input_path, output_midi_path):
-            return jsonify({'error': 'MIDI处理失败'}), 500
+        # if not transform.split_midi(input_path, output_midi_path):
+        #     return jsonify({'error': 'MIDI处理失败'}), 500
             
         # 直接生成PDF
         if not transform.export_pdf(output_midi_path, output_pdf_path):
