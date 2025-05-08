@@ -40,6 +40,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const volumeSlider = document.getElementById('volume-slider');
     const volumeValue = document.getElementById('volume-value');
     
+    // 原始MIDI PDF相关元素
+    const viewOriginalPdfBtn = document.getElementById('view-original-pdf-btn');
+    const downloadOriginalPdfBtn = document.getElementById('download-original-pdf-btn');
+    
+    // 隐藏原始MIDI PDF按钮，直到导出成功
+    if (viewOriginalPdfBtn) viewOriginalPdfBtn.style.display = 'none';
+    if (downloadOriginalPdfBtn) downloadOriginalPdfBtn.style.display = 'none';
+    
     // 确保结果区域默认不显示
     resultContainer.style.display = 'none';
     
@@ -278,6 +286,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 stopMidiBtn.disabled = true;
                 midiStatus.textContent = '';
                 midiStatus.className = 'status';
+                
+                // 隐藏PDF按钮，因为还没有上传和处理
+                if (viewOriginalPdfBtn) viewOriginalPdfBtn.style.display = 'none';
+                if (downloadOriginalPdfBtn) downloadOriginalPdfBtn.style.display = 'none';
             } else {
                 droppedFile = null;
                 selectedFileText.textContent = `错误: 只支持MIDI文件`;
@@ -428,6 +440,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('download-midi-btn').onclick = () => downloadFile('midi', data.session_id);
                 document.getElementById('download-pdf-btn').onclick = () => downloadFile('pdf', data.session_id);
                 document.getElementById('view-pdf-btn').onclick = () => viewPdf(data.session_id);
+                
+                // 自动导出原始MIDI文件的PDF
+                exportOriginalPDF(data.session_id);
             } else {
                 uploadStatus.textContent = data.error || '上传失败';
                 uploadStatus.className = 'status status-error';
@@ -454,16 +469,105 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('load', function() {
         setTimeout(checkLibrariesLoaded, 500);
     });
+
+    // 下载和查看PDF按钮
+    const downloadMidiBtn = document.getElementById('download-midi-btn');
+    const downloadPdfBtn = document.getElementById('download-pdf-btn');
+    const viewPdfBtn = document.getElementById('view-pdf-btn');
+    
+    if (downloadMidiBtn) {
+        downloadMidiBtn.addEventListener('click', function() {
+            const sessionId = localStorage.getItem('midi_session_id');
+            if (sessionId) {
+                downloadFile('midi', sessionId);
+            }
+        });
+    }
+    
+    if (downloadPdfBtn) {
+        downloadPdfBtn.addEventListener('click', function() {
+            const sessionId = localStorage.getItem('midi_session_id');
+            if (sessionId) {
+                downloadFile('pdf', sessionId);
+            }
+        });
+    }
+    
+    if (viewPdfBtn) {
+        viewPdfBtn.addEventListener('click', function() {
+            const sessionId = localStorage.getItem('midi_session_id');
+            if (sessionId) {
+                viewPdf(sessionId);
+            }
+        });
+    }
+    
+    // 查看和下载原始PDF按钮事件处理
+    if (viewOriginalPdfBtn) {
+        viewOriginalPdfBtn.addEventListener('click', function() {
+            const sessionId = localStorage.getItem('midi_session_id');
+            if (sessionId) {
+                viewOriginalPdf(sessionId);
+            }
+        });
+    }
+    
+    if (downloadOriginalPdfBtn) {
+        downloadOriginalPdfBtn.addEventListener('click', function() {
+            const sessionId = localStorage.getItem('midi_session_id');
+            if (sessionId) {
+                downloadOriginalPdf(sessionId);
+            }
+        });
+    }
+    
+    // 实现自动导出原始MIDI文件的PDF
+    function exportOriginalPDF(sessionId) {
+        // 显示状态信息
+        const pdfStatus = document.getElementById('pdf-status');
+        pdfStatus.textContent = '正在生成原始MIDI的PDF...';
+        pdfStatus.className = 'status status-info';
+        
+        // 调用后端API导出原始MIDI的PDF
+        fetch(`/export-original-pdf/${sessionId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    pdfStatus.textContent = data.message;
+                    pdfStatus.className = 'status status-success';
+                    
+                    // 显示查看和下载按钮
+                    viewOriginalPdfBtn.style.display = 'inline-block';
+                    downloadOriginalPdfBtn.style.display = 'inline-block';
+                } else {
+                    pdfStatus.textContent = data.error || '生成PDF失败';
+                    pdfStatus.className = 'status status-error';
+                }
+            })
+            .catch(error => {
+                console.error('导出原始MIDI的PDF失败:', error);
+                pdfStatus.textContent = '导出原始MIDI的PDF失败';
+                pdfStatus.className = 'status status-error';
+            });
+    }
 });
 
 // 下载文件函数
 function downloadFile(type, sessionId) {
-    window.location.href = `/download/${type}/${sessionId}`;
+    window.open(`/download/${type}/${sessionId}`, '_blank');
 }
 
 // 在新标签页中查看PDF
 function viewPdf(sessionId) {
     window.open(`/view-pdf/${sessionId}`, '_blank');
+}
+
+function viewOriginalPdf(sessionId) {
+    window.open(`/view-original-pdf/${sessionId}`, '_blank');
+}
+
+function downloadOriginalPdf(sessionId) {
+    window.open(`/download-original-pdf/${sessionId}`, '_blank');
 }
 
 // 导出MidiPlayer以便在其他文件中使用
