@@ -6,7 +6,7 @@ def find_musescore_executable():
     # 在WSL中使用Linux路径格式
     return "/mnt/c/Program Files/MuseScore 4/bin/MuseScore4.exe"
 ```
-改为你本地电脑的MuseScore Studio 4.exe所在位置
+改为你本地电脑的MuseScore Studio 4.exe所在位置，然后
 python3 run.py
 
 ## 项目介绍
