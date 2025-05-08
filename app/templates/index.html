@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI处理工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- 使用本地存储的Tone.js和@tonejs/midi库 -->
+    <script src="{{ url_for('static', filename='js/lib/Tone.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/lib/Midi.js') }}"></script>
+    <!-- 音符映射和钢琴采样库 -->
+    <script src="{{ url_for('static', filename='js/lib/notes.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/lib/SampleLibrary.js') }}" type="module"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>MIDI左右手音轨拆分工具</h1>
+        
+        <div id="upload-container">
+            <div class="upload-area" id="drop-area">
+                <p>将MIDI文件拖放到此处，或</p>
+                <input type="file" id="file-input" class="file-input" accept=".mid">
+                <button class="btn" id="select-file-btn">选择文件</button>
+                <p id="selected-file">未选择文件</p>
+            </div>
+            <button class="btn" id="upload-btn" disabled>上传并处理</button>
+            <div class="progress-bar">
+                <div class="progress" id="upload-progress"></div>
+            </div>
+            <div id="upload-status" class="status"></div>
+        </div>
+        
+        <div id="midi-player" class="midi-player">
+            <h2>MIDI播放器</h2>
+            <div class="player-controls">
+                <button id="play-midi-btn" class="btn player-btn" disabled>播放</button>
+                <button id="pause-midi-btn" class="btn player-btn" disabled>暂停</button>
+                <button id="stop-midi-btn" class="btn player-btn" disabled>停止</button>
+                <div class="midi-progress-container">
+                    <div id="midi-progress" class="midi-progress"></div>
+                </div>
+                <div id="current-time" class="time-display">00:00</div>
+            </div>
+            <div class="volume-control">
+                <label for="volume-slider">音量:</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="70" class="volume-slider">
+                <span id="volume-value">70%</span>
+            </div>
+            <div id="midi-status" class="status"></div>
+        </div>
+        
+        <div id="result-container" class="result-area">
+            <div class="file-info">
+                <h3>处理完成</h3>
+                <p>转换后的MIDI文件: <span id="converted-midi-filename"></span></p>
+                <p>转换后的PDF文件: <span id="converted-pdf-filename"></span></p>
+            </div>
+            <div class="buttons">
+                <button class="btn btn-success" id="download-midi-btn">下载MIDI</button>
+                <button class="btn btn-success" id="download-pdf-btn">下载PDF</button>
+                <button class="btn btn-success" id="view-pdf-btn">打开PDF</button>
+                <button class="btn btn-success" id="play-converted-midi-btn">播放转换后的MIDI</button>
+            </div>
+            <div id="pdf-status" class="status"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/midiPlayer.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
+</body>
+</html> 
