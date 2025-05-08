@@ -6,6 +6,9 @@ pip install -r requirements.txt
 def find_musescore_executable():
     # 在WSL中使用Linux路径格式
     return "/mnt/c/Program Files/MuseScore 4/bin/MuseScore4.exe"
+...
+if __name__=="__main__":
+    musescore_exe = r"C:\Program Files\MuseScore 4\bin\MuseScore4.exe"
 ```
 改为你本地电脑的MuseScore Studio 4.exe所在位置
 
