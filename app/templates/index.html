@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MIDI处理工具</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/piano.css') }}">
     <!-- 使用本地存储的Tone.js和@tonejs/midi库 -->
     <script src="{{ url_for('static', filename='js/lib/Tone.js') }}"></script>
     <script src="{{ url_for('static', filename='js/lib/Midi.js') }}"></script>
-    <!-- 音符映射和钢琴采样库 -->
-    <script src="{{ url_for('static', filename='js/lib/notes.js') }}" type="module"></script>
-    <script src="{{ url_for('static', filename='js/lib/SampleLibrary.js') }}" type="module"></script>
 </head>
 <body>
     <div class="container">
         <h1>AutoLeftPiano</h1>
+        
+        <!-- 钢琴组件将在这里插入 -->
+        <div id="piano-container"></div>
         
         <div id="upload-container">
             <div class="upload-area" id="drop-area">
@@ -65,6 +66,28 @@
         </div>
     </div>
 
+    <!-- 导入模块化JS文件 -->
+    <script type="module">
+        import { Notes } from "{{ url_for('static', filename='js/lib/notes.js') }}";
+        import Piano from "{{ url_for('static', filename='js/piano.js') }}";
+        
+        // 页面加载完成后初始化钢琴
+        document.addEventListener('DOMContentLoaded', () => {
+            const piano = new Piano();
+            piano.init('#piano-container');
+            
+            // 添加用户交互来启动AudioContext
+            const startAudio = () => {
+                if (Tone.context.state !== 'running') {
+                    Tone.context.resume();
+                }
+                document.removeEventListener('click', startAudio);
+            };
+            
+            document.addEventListener('click', startAudio);
+        });
+    </script>
+    
     <script src="{{ url_for('static', filename='js/midiPlayer.js') }}" type="module"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
 </body>
