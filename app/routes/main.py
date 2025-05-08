@@ -122,4 +122,75 @@ def view_pdf(session_id):
     if not os.path.exists(file_path):
         return jsonify({'error': 'PDF文件不存在'}), 404
         
-    return send_file(file_path, mimetype='application/pdf') 
+    return send_file(file_path, mimetype='application/pdf')
+
+@main.route('/export-original-pdf/<session_id>', methods=['GET'])
+def export_original_pdf(session_id):
+    """
+    导出原始MIDI文件的PDF（转换前的）
+    """
+    session = session_manager.get_session(session_id)
+    if not session:
+        return jsonify({'error': '会话不存在'}), 404
+    
+    input_path = session['input_path']
+    original_pdf_path = os.path.join(Config.OUTPUT_FOLDER, f"original_{session_id}.pdf")
+    
+    # 调用transform.py的PDF转换函数处理原始MIDI文件
+    success = transform.export_pdf(input_path, original_pdf_path)
+    
+    if success:
+        # 将原始PDF路径添加到会话数据中
+        session['original_pdf_path'] = original_pdf_path
+        session_manager.create_session(session_id, session)
+        
+        return jsonify({
+            'success': True,
+            'message': '原始MIDI的PDF已生成'
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': '原始MIDI的PDF生成失败'
+        }), 500
+
+@main.route('/view-original-pdf/<session_id>', methods=['GET'])
+def view_original_pdf(session_id):
+    """
+    查看原始MIDI文件的PDF
+    """
+    session = session_manager.get_session(session_id)
+    if not session:
+        return jsonify({'error': '会话不存在'}), 404
+    
+    # 如果原始PDF路径不存在，先生成
+    if 'original_pdf_path' not in session:
+        return jsonify({'error': '请先生成原始MIDI的PDF'}), 400
+    
+    file_path = session['original_pdf_path']
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': '原始MIDI的PDF文件不存在'}), 404
+        
+    return send_file(file_path, mimetype='application/pdf')
+
+@main.route('/download-original-pdf/<session_id>', methods=['GET'])
+def download_original_pdf(session_id):
+    """
+    下载原始MIDI文件的PDF
+    """
+    session = session_manager.get_session(session_id)
+    if not session:
+        return jsonify({'error': '会话不存在'}), 404
+    
+    # 如果原始PDF路径不存在，先生成
+    if 'original_pdf_path' not in session:
+        return jsonify({'error': '请先生成原始MIDI的PDF'}), 400
+    
+    file_path = session['original_pdf_path']
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': '原始MIDI的PDF文件不存在'}), 404
+        
+    return send_file(file_path, as_attachment=True, 
+                    download_name=f"original_{session['original_filename'].replace('.mid', '.pdf')}") 
