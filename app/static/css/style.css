@@ -282,7 +282,53 @@ h2 {
 }
 
 #volume-value {
-    margin-left: 10px;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* 原始PDF按钮样式 */
+.original-pdf-buttons {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.original-pdf-buttons .btn {
+    background-color: #e74c3c; /* 红色主题 */
+    margin: 0 10px;
+    padding: 8px 15px;
     font-size: 14px;
-    min-width: 40px;
+    transition: all 0.3s ease;
+}
+
+.original-pdf-buttons .btn:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* 状态信息的样式增强 */
+#pdf-status {
+    text-align: center;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+.status-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* 添加全宽容器样式 */
+.full-width-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    overflow-x: auto;
+}
+
+/* 设置应用标题样式 */
+.app-title {
+    text-align: center;
+    margin: 20px 0;
 } 

@@ -13,11 +13,10 @@ class Piano {
         <div class="piano-scroll-wrap">
           <div class="piano-wrap" id="pianoWrap">
             <div class="piano-band">
-              <div class="piano-tip">⇧ 代表 shift 键</div>
+              <div class="piano-tip">+ 代表 shift 键</div>
             </div>
             <div class="piano-key-wrap" id="pianoKeyWrap">
-              <!-- 白键将通过JavaScript动态生成 -->
-              <!-- 黑键将通过JavaScript动态生成 -->
+              <!-- 白键和黑键将通过JavaScript动态生成 -->
             </div>
           </div>
         </div>
@@ -70,6 +69,8 @@ class Piano {
     this.playNoteByKeyCode = this.playNoteByKeyCode.bind(this);
     this.playNote = this.playNote.bind(this);
     this.startAudioContext = this.startAudioContext.bind(this);
+    this.triggerKeyEffect = this.triggerKeyEffect.bind(this);
+    this.triggerKeyByName = this.triggerKeyByName.bind(this);
   }
 
   // 初始化，插入HTML并启动钢琴
@@ -96,6 +97,9 @@ class Piano {
       this.showNoteName = e.target.checked;
       this.updateKeyDisplay();
     });
+
+    // 监听窗口大小变化，重新计算键盘尺寸
+    window.addEventListener('resize', this.computeEleSize);
   }
 
   // 启动AudioContext
@@ -156,50 +160,70 @@ class Piano {
   // 计算元素尺寸
   computeEleSize() {
     const pianoKeyWrap = document.getElementById('pianoKeyWrap');
-    const wkeyWidth = pianoKeyWrap.offsetWidth / 36; // 36个白键
-    const wkeyHeight = wkeyWidth * 6;  // 调整白键高度比例
-    const bkeyHeight = wkeyHeight * 0.65;  // 黑键高度为白键的65%
+    const pianoWrap = document.getElementById('pianoWrap');
+    const keysContainer = document.getElementById('piano-keys-container');
     
-    pianoKeyWrap.style.height = wkeyHeight + 'px';
+    // 设置钢琴键盘区域高度为固定高度200px
+    pianoKeyWrap.style.height = '200px';
+    keysContainer.style.height = '200px';
     
-    // 只设置黑键高度，不设置宽度（宽度由CSS控制）
+    // 设置黑键高度为固定高度的65%
     const bkeys = document.querySelectorAll('.bkey');
     bkeys.forEach(key => {
-      key.style.height = bkeyHeight + 'px';
+      key.style.height = '130px'; // 200px的65%
     });
+    
+    // 动态调整文字大小
+    if (pianoWrap.offsetWidth < 800) {
+      document.querySelectorAll('.wkey .keyname').forEach(elem => {
+        elem.style.fontSize = '8px';
+      });
+      document.querySelectorAll('.wkey .notename').forEach(elem => {
+        elem.style.fontSize = '7px';
+      });
+      document.querySelectorAll('.bkey .keyname').forEach(elem => {
+        elem.style.fontSize = '6px';
+      });
+    }
   }
 
-  // 渲染钢琴键
+  // 渲染钢琴键 - 标准钢琴布局：白黑白黑白白黑白黑白黑白
   renderPianoKeys() {
     const pianoKeyWrap = document.getElementById('pianoKeyWrap');
-    let whiteKeysHTML = '';
-    let blackKeysHTML = '';
+    
+    // 添加一个内部容器，用于放置钢琴键
+    pianoKeyWrap.innerHTML = '<div id="piano-keys-container"></div>';
+    const keysContainer = document.getElementById('piano-keys-container');
+    
+    let html = '';
 
-    // 渲染白色按键
-    Notes.Piano.filter(note => note.type === 'white').forEach(note => {
-      whiteKeysHTML += `
-        <div class="piano-key wkey" data-keycode="${note.keyCode}" data-name="${note.name}">
-          <div class="keytip">
-            <div class="keyname" ${!this.showKeyName ? 'style="display:none"' : ''}>${note.key}</div>
-            <div class="notename" ${!this.showNoteName ? 'style="display:none"' : ''}>${note.name}</div>
-          </div>
+    // 先绘制所有白键
+    const whiteKeys = Notes.Piano.filter(note => note.type === 'white');
+    html += whiteKeys.map(note => `
+      <div class="piano-key wkey" data-keycode="${note.keyCode}" data-name="${note.name}">
+        <div class="keytip">
+          <div class="keyname" ${!this.showKeyName ? 'style="display:none"' : ''}>${note.key}</div>
+          <div class="notename" ${!this.showNoteName ? 'style="display:none"' : ''}>${note.name}</div>
         </div>
-      `;
-    });
+      </div>
+    `).join('');
 
-    // 渲染黑色按键 - 不再使用分组容器
-    Notes.Piano.filter(note => note.type === 'black').forEach(note => {
-      blackKeysHTML += `
-        <div class="piano-key bkey" data-keycode="${note.keyCode}" data-name="${note.name}">
-          <div class="keytip">
-            <div class="keyname" ${!this.showKeyName ? 'style="display:none"' : ''}>${note.key}</div>
-          </div>
+    // 再绘制黑键，但排除C7组最后三个黑键（F#7, G#7, A#7）
+    const blackKeys = Notes.Piano.filter(note => 
+      note.type === 'black' && 
+      !['F#7', 'G#7', 'A#7'].includes(note.name)
+    );
+    
+    html += blackKeys.map(note => `
+      <div class="piano-key bkey" data-keycode="${note.keyCode}" data-name="${note.name}">
+        <div class="keytip">
+          <div class="keyname" ${!this.showKeyName ? 'style="display:none"' : ''}>${note.key}</div>
         </div>
-      `;
-    });
+      </div>
+    `).join('');
 
-    // 添加到DOM
-    pianoKeyWrap.innerHTML = whiteKeysHTML + blackKeysHTML;
+    // 添加到容器DOM
+    keysContainer.innerHTML = html;
 
     // 绑定点击事件
     const pianoKeys = document.querySelectorAll('.piano-key');
@@ -212,6 +236,9 @@ class Piano {
         this.clickPianoKey(e, keyCode);
       });
     });
+
+    // 验证黑白键布局
+    console.log("已渲染键盘布局: 白键数量 =", whiteKeys.length, "黑键数量 =", blackKeys.length);
   }
 
   // 键盘事件绑定
@@ -253,119 +280,105 @@ class Piano {
         this.lastKeyCode = keyCode;
       }
     });
-
+    
     document.addEventListener('keyup', (e) => {
       let keyCode = e.keyCode;
       
-      // 松开Shift键，则禁用黑色按键
+      // 释放Shift键，则禁用黑色按键
       if (keyCode == ShiftKeyCode) {
         this.enableBlackKey = false;
+        return;
       }
       
-      document.querySelectorAll('.wkey').forEach(key => {
-        key.classList.remove('wkey-active');
-      });
-      
-      document.querySelectorAll('.bkey').forEach(key => {
-        key.classList.remove('bkey-active');
-      });
+      if (keyCode == this.lastKeyCode) {
+        this.lastKeyCode = '';
+      }
     });
   }
 
-  // 根据键码获取音符
+  // 通过键码获取音符对象
   getNoteByKeyCode(keyCode) {
-    for (let i = 0; i < Notes.Piano.length; i++) {
-      if (Notes.Piano[i].keyCode == keyCode) {
-        return Notes.Piano[i];
-      }
-    }
-    return null;
+    return Notes.Piano.find(note => note.keyCode == keyCode) || null;
   }
 
-  // 根据音名获取音符
+  // 通过音名获取音符对象
   getNoteByName(name = 'C4') {
-    for (let i = 0; i < Notes.Piano.length; i++) {
-      if (Notes.Piano[i].name == name) {
-        return Notes.Piano[i];
-      }
-    }
-    return null;
+    return Notes.Piano.find(note => note.name == name) || null;
   }
 
-  // 鼠标点击钢琴键
+  // 触发按键视觉效果
+  triggerKeyEffect(key, duration = 300) {
+    if (!key) return;
+    
+    const keyClass = key.classList.contains('wkey') ? 'wkey' : 'bkey';
+    key.classList.add(keyClass + '-active');
+    
+    // 指定时间后移除active样式
+    setTimeout(() => {
+      key.classList.remove(keyClass + '-active');
+    }, duration);
+  }
+
+  // 点击钢琴键处理
   clickPianoKey(e, keyCode) {
-    const pressedNote = this.getNoteByKeyCode(keyCode);
-    if (pressedNote) {
-      this.playNote(pressedNote.name);
-      
-      const keyType = pressedNote.type;
-      // 添加按键动画
-      if (keyType === 'white') {
-        const element = document.querySelector(`[data-keycode="${pressedNote.keyCode}"]`);
-        element.classList.add('wkey-active');
-        setTimeout(() => {
-          element.classList.remove('wkey-active');
-        }, 300);
-      } else if (keyType === 'black') {
-        const element = document.querySelector(`[data-keycode="${pressedNote.keyCode}"]`);
-        element.classList.add('bkey-active');
-        setTimeout(() => {
-          element.classList.remove('bkey-active');
-        }, 300);
-      }
+    let target = e.target;
+    // 确保我们点击的是钢琴键本身
+    while (target && !target.classList.contains('piano-key')) {
+      target = target.parentElement;
     }
+    
+    if (!target) return;
+    
+    // 添加视觉效果
+    this.triggerKeyEffect(target);
+    
+    // 播放声音
+    this.playNoteByKeyCode(keyCode);
   }
 
-  // 根据键码播放音符
+  // 通过键码播放音符
   async playNoteByKeyCode(keyCode) {
     const note = this.getNoteByKeyCode(keyCode);
     if (!note) return;
     
-    // 确保 AudioContext 已启动
-    if (!this.audioContextStarted) {
-      await this.startAudioContext();
-    }
+    // 添加视觉效果
+    const key = document.querySelector(`.piano-key[data-keycode="${keyCode}"]`);
+    this.triggerKeyEffect(key);
     
-    // 确保采样器已加载
-    if (!this.audioLoaded) {
-      console.log('等待音频加载完成...');
-      return;
+    // 播放音符
+    try {
+      await this.playNote(note.name);
+    } catch (err) {
+      console.error('播放音符失败:', err);
     }
+  }
+
+  // 根据音符名称触发键盘效果
+  triggerKeyByName(noteName, duration = 300) {
+    if (!noteName) return;
     
-    // 添加按键视觉反馈
-    const element = document.querySelector(`[data-keycode="${keyCode}"]`);
-    if (element) {
-      if (note.type === 'white') {
-        element.classList.add('wkey-active');
-      } else if (note.type === 'black') {
-        element.classList.add('bkey-active');
-      }
-      
-      // 300ms后移除活动状态
-      setTimeout(() => {
-        element.classList.remove('wkey-active', 'bkey-active');
-      }, 300);
-    }
-    
-    this.playNote(note.name);
+    const key = document.querySelector(`.piano-key[data-name="${noteName}"]`);
+    this.triggerKeyEffect(key, duration);
   }
 
   // 播放音符
   async playNote(notename = 'C4', duration = '8n') {
-    if (!this.synth || !this.audioLoaded) {
-      console.log('采样器未就绪');
+    if (!this.audioLoaded || !this.synth) {
+      console.warn('音频尚未加载完成');
       return;
     }
     
     try {
-      // 设置适当的音量
-      this.synth.volume.value = -12;
+      // 确保AudioContext已启动
+      await this.startAudioContext();
       
-      // 使用 try-catch 确保音频播放不会因错误中断
-      await this.synth.triggerAttackRelease(notename, duration);
-      console.log(`播放音符: ${notename}`);
-    } catch (error) {
-      console.error('播放音符时出错:', error);
+      // 触发键盘视觉效果
+      this.triggerKeyByName(notename);
+      
+      // 播放音符
+      this.synth.triggerAttackRelease(notename, duration);
+    } catch(e) {
+      console.error('播放音符错误:', e);
     }
   }
 }

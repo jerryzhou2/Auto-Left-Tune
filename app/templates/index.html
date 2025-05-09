@@ -11,12 +11,15 @@
     <script src="{{ url_for('static', filename='js/lib/Midi.js') }}"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>AutoLeftPiano</h1>
-        
-        <!-- 钢琴组件将在这里插入 -->
+    <h1 class="app-title">AutoLeftPiano</h1>
+    
+    <!-- 添加80%宽度的容器 -->
+    <div class="piano-wrapper" style="width: 80%; margin: 0 auto;">
+        <!-- 钢琴组件将在这里由piano.js动态插入，使用piano-visual.html中的精确参数 -->
         <div id="piano-container"></div>
-        
+    </div>
+    
+    <div class="container">
         <div id="upload-container">
             <div class="upload-area" id="drop-area">
                 <p>将MIDI文件拖放到此处，或</p>
@@ -25,10 +28,15 @@
                 <p id="selected-file">未选择文件</p>
             </div>
             <button class="btn" id="upload-btn" disabled>上传并处理</button>
+            <div class="buttons original-pdf-buttons">
+                <button class="btn btn-success" id="view-original-pdf-btn">查看原始的PDF</button>
+                <button class="btn btn-success" id="download-original-pdf-btn">下载原始的PDF</button>
+            </div>
             <div class="progress-bar">
                 <div class="progress" id="upload-progress"></div>
             </div>
             <div id="upload-status" class="status"></div>
+            <div id="pdf-status" class="status"></div>
         </div>
         
         <div id="midi-player" class="midi-player">
@@ -62,7 +70,7 @@
                 <button class="btn btn-success" id="view-pdf-btn">打开PDF</button>
                 <button class="btn btn-success" id="play-converted-midi-btn">播放转换后的MIDI</button>
             </div>
-            <div id="pdf-status" class="status"></div>
+            <div id="result-status" class="status"></div>
         </div>
     </div>
 
