@@ -1,6 +1,7 @@
 // 导入所需的模块
 import SampleLibrary from './lib/SampleLibrary.js';
 import MidiPlayer from './midiPlayer.js';
+import pdfViewer from './pdfViewer.js';
 
 // 使用localStorage保存会话ID以保持状态
 document.addEventListener('DOMContentLoaded', function() {
@@ -441,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('download-pdf-btn').onclick = () => downloadFile('pdf', data.session_id);
                 document.getElementById('view-pdf-btn').onclick = () => viewPdf(data.session_id);
                 
-                // 自动导出原始MIDI文件的PDF
+                // 自动导出并显示原始MIDI文件的PDF
                 exportOriginalPDF(data.session_id);
             } else {
                 uploadStatus.textContent = data.error || '上传失败';
@@ -539,6 +540,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // 显示查看和下载按钮
                     viewOriginalPdfBtn.style.display = 'inline-block';
                     downloadOriginalPdfBtn.style.display = 'inline-block';
+                    
+                    // 自动显示原始PDF
+                    loadPdfToViewer(`/view-original-pdf/${sessionId}`);
                 } else {
                     pdfStatus.textContent = data.error || '生成PDF失败';
                     pdfStatus.className = 'status status-error';
@@ -550,19 +554,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 pdfStatus.className = 'status status-error';
             });
     }
+    
+    // 修改viewPdf函数，在PDF查看器中加载转换后的PDF
+    function viewPdf(sessionId) {
+        loadPdfToViewer(`/view-pdf/${sessionId}`);
+    }
+    
+    // 修改viewOriginalPdf函数，在PDF查看器中加载原始PDF
+    function viewOriginalPdf(sessionId) {
+        loadPdfToViewer(`/view-original-pdf/${sessionId}`);
+    }
+    
+    // 新增：加载PDF到PDF查看器
+    function loadPdfToViewer(url) {
+        pdfViewer.loadPdfFromUrl(url)
+            .then(success => {
+                if (success) {
+                    console.log('PDF加载成功');
+                } else {
+                    console.error('PDF加载失败');
+                }
+            });
+    }
 });
 
-// 下载文件函数
+// 修改全局函数，添加Global前缀避免与局部函数冲突
 function downloadFile(type, sessionId) {
     window.open(`/download/${type}/${sessionId}`, '_blank');
 }
 
-// 在新标签页中查看PDF
-function viewPdf(sessionId) {
+function viewPdfGlobal(sessionId) {
     window.open(`/view-pdf/${sessionId}`, '_blank');
 }
 
-function viewOriginalPdf(sessionId) {
+function viewOriginalPdfGlobal(sessionId) {
     window.open(`/view-original-pdf/${sessionId}`, '_blank');
 }
 
