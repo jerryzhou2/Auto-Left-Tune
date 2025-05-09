@@ -474,10 +474,40 @@ class MidiPlayer {
         velocity
       );
       
+      // 触发钢琴键盘视觉效果
+      this.triggerPianoKeyVisual(noteName, duration * 1000); // 转换为毫秒
+      
       // 触发音符播放回调
       this.onNotePlay(note);
     } catch (err) {
       console.error('播放音符出错:', err, note);
+    }
+  }
+
+  // 触发钢琴键盘视觉效果
+  triggerPianoKeyVisual(noteName, durationMs = 300) {
+    try {
+      // 在DOM中找到对应的钢琴键
+      const pianoKey = document.querySelector(`.piano-key[data-name="${noteName}"]`);
+      
+      if (pianoKey) {
+        // 判断是白键还是黑键
+        const keyClass = pianoKey.classList.contains('wkey') ? 'wkey' : 'bkey';
+        
+        // 添加按下效果
+        pianoKey.classList.add(`${keyClass}-active`);
+        
+        // 在音符持续时间结束后移除效果
+        setTimeout(() => {
+          pianoKey.classList.remove(`${keyClass}-active`);
+        }, durationMs);
+        
+        if (this.debug) console.log(`触发钢琴键视觉效果: ${noteName}, 持续时间: ${durationMs}ms`);
+      } else if (this.debug) {
+        console.warn(`找不到对应的钢琴键: ${noteName}`);
+      }
+    } catch (err) {
+      console.error('触发钢琴键视觉效果时出错:', err);
     }
   }
 
@@ -567,5 +597,4 @@ class MidiPlayer {
   }
 }
 
-// 导出MidiPlayer类
-export { MidiPlayer }; 
+export default MidiPlayer; 

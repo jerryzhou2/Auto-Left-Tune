@@ -1,6 +1,6 @@
 // 导入所需的模块
 import SampleLibrary from './lib/SampleLibrary.js';
-import { MidiPlayer } from './midiPlayer.js';
+import MidiPlayer from './midiPlayer.js';
 
 // 使用localStorage保存会话ID以保持状态
 document.addEventListener('DOMContentLoaded', function() {
