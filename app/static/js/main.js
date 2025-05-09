@@ -522,6 +522,49 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // 修改viewPdf函数，在PDF查看器中加载转换后的PDF
+    function viewPdf(sessionId) {
+        loadPdfToViewer(`/view-pdf/${sessionId}`);
+    }
+    
+    // 在PDF查看器中加载原始MIDI的PDF
+    function viewOriginalPdf(sessionId) {
+        loadPdfToViewer(`/view-original-pdf/${sessionId}`);
+    }
+    
+    // 加载PDF到查看器中
+    function loadPdfToViewer(url) {
+        // 检查pdfViewer是否可用
+        if (!pdfViewer) {
+            console.error('PDF查看器未初始化');
+            return;
+        }
+        
+        const pdfViewContainer = document.getElementById('pdf-view-container');
+        if (pdfViewContainer) {
+            pdfViewContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 开始加载PDF
+        pdfViewer.loadPdfFromUrl(url)
+            .then(success => {
+                if (success) {
+                    console.log('PDF加载成功');
+                    // 触发PDF生成完成事件
+                    document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
+                } else {
+                    console.error('PDF加载失败');
+                    // 即使加载失败也触发完成事件，以隐藏加载指示器
+                    document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
+                }
+            })
+            .catch(error => {
+                console.error('加载PDF发生错误:', error);
+                // 发生错误时也触发完成事件
+                document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
+            });
+    }
+    
     // 实现自动导出原始MIDI文件的PDF
     function exportOriginalPDF(sessionId) {
         // 显示状态信息
@@ -543,37 +586,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // 自动显示原始PDF
                     loadPdfToViewer(`/view-original-pdf/${sessionId}`);
+                    
+                    // 如果没有由loadPdfToViewer触发事件（例如PDF加载失败），
+                    // 我们仍然需要触发PDF生成完成事件
+                    setTimeout(() => {
+                        document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
+                    }, 5000);
                 } else {
                     pdfStatus.textContent = data.error || '生成PDF失败';
                     pdfStatus.className = 'status status-error';
+                    // PDF生成失败，也触发完成事件以隐藏加载提示
+                    document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
                 }
             })
             .catch(error => {
                 console.error('导出原始MIDI的PDF失败:', error);
                 pdfStatus.textContent = '导出原始MIDI的PDF失败';
                 pdfStatus.className = 'status status-error';
-            });
-    }
-    
-    // 修改viewPdf函数，在PDF查看器中加载转换后的PDF
-    function viewPdf(sessionId) {
-        loadPdfToViewer(`/view-pdf/${sessionId}`);
-    }
-    
-    // 修改viewOriginalPdf函数，在PDF查看器中加载原始PDF
-    function viewOriginalPdf(sessionId) {
-        loadPdfToViewer(`/view-original-pdf/${sessionId}`);
-    }
-    
-    // 新增：加载PDF到PDF查看器
-    function loadPdfToViewer(url) {
-        pdfViewer.loadPdfFromUrl(url)
-            .then(success => {
-                if (success) {
-                    console.log('PDF加载成功');
-                } else {
-                    console.error('PDF加载失败');
-                }
+                // 出错时也触发完成事件以隐藏加载提示
+                document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
             });
     }
 });

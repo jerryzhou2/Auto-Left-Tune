@@ -3,7 +3,7 @@ import os
 
 def find_musescore_executable():
     # 在WSL中使用Linux路径格式
-    return "E:\\musescore\\bin\\MuseScore4.exe"
+    return "/mnt/c/Program Files/MuseScore 4/bin/MuseScore4.exe"
 
 def split_midi(input_file, output_file, musescore_path=None):
     # 1) 检查输入文件是否存在
