@@ -160,23 +160,89 @@ h2 {
 .player-btn {
     padding: 8px 15px;
     min-width: 80px;
-}
-
-/* 活动播放按钮样式 */
-.active-play-btn {
-    background-color: #18bc9c !important; /* 蓝绿色背景 */
-    box-shadow: 0 0 0 3px rgba(24, 188, 156, 0.3); /* 发光效果 */
     position: relative;
-    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
 
-.active-play-btn::after {
-    content: '►';
-    font-size: 8px;
+.btn-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    position: relative;
+}
+
+/* 播放图标 */
+.play-icon::before {
+    content: "";
     position: absolute;
-    top: 5px;
-    right: 5px;
-    color: #fff;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-left: 14px solid #fff;
+    border-bottom: 8px solid transparent;
+}
+
+/* 暂停图标 */
+.pause-icon::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 16px;
+    background-color: #fff;
+}
+
+.pause-icon::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 16px;
+    background-color: #fff;
+}
+
+/* 停止图标 */
+.stop-icon::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 16px;
+    height: 16px;
+    background-color: #fff;
+}
+
+/* 将播放按钮变成绿色 */
+#play-pause-midi-btn {
+    background-color: #2ecc71; /* 绿色 */
+}
+
+#play-pause-midi-btn:hover {
+    background-color: #27ae60; /* 深绿色 */
+}
+
+/* 播放按钮的播放和暂停图标切换 */
+#play-pause-midi-btn[data-state="play"] .play-icon {
+    display: inline-block;
+}
+
+#play-pause-midi-btn[data-state="play"] .pause-icon {
+    display: none;
+}
+
+#play-pause-midi-btn[data-state="pause"] .play-icon {
+    display: none;
+}
+
+#play-pause-midi-btn[data-state="pause"] .pause-icon {
+    display: inline-block;
 }
 
 /* 原始MIDI和转换MIDI的按钮样式区分 */
@@ -184,8 +250,38 @@ h2 {
     background-color: #3498db; /* 蓝色 */
 }
 
+/* 转换后的MIDI播放按钮样式 */
 #play-converted-midi-btn {
     background-color: #9b59b6; /* 紫色 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+#play-converted-midi-btn:hover {
+    background-color: #8e44ad; /* 深紫色 */
+}
+
+#play-converted-midi-btn .play-icon::before {
+    border-left-color: #fff;
+}
+
+/* 转换前的MIDI播放按钮样式 */
+#play-original-midi-btn {
+    background-color: #3498db; /* 蓝色 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+#play-original-midi-btn:hover {
+    background-color: #2980b9; /* 深蓝色 */
+}
+
+#play-original-midi-btn .play-icon::before {
+    border-left-color: #fff;
 }
 
 .midi-progress-container {
@@ -445,4 +541,49 @@ h2 {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* PDF查看器展开/收起功能样式 */
+.pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+#pdf-view-container.collapsed #pdf-container {
+    height: 0;
+    max-height: 0;
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    transition: all 0.3s ease-out;
+}
+
+#pdf-view-container #pdf-container {
+    height: auto;
+    max-height: 2000px; /* 设置足够大的高度以容纳内容 */
+    opacity: 1;
+    transition: all 0.3s ease-in;
+}
+
+/* 活动按钮样式 */
+.btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 停止按钮样式 */
+#stop-midi-btn {
+    background-color: #e74c3c; /* 红色 */
+}
+
+#stop-midi-btn:hover {
+    background-color: #c0392b; /* 深红色 */
 } 

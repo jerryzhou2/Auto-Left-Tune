@@ -13,7 +13,6 @@ class Config:
     # 静态文件和模板配置
     STATIC_FOLDER = os.path.join(APP_DIR, 'static')
     TEMPLATE_FOLDER = os.path.join(APP_DIR, 'templates')
-    
     # 确保必要的目录存在
     @staticmethod
     def init_app():

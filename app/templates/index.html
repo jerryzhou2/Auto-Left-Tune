@@ -21,8 +21,11 @@
     
     <div class="container">
         <!-- PDF查看器部分 - 移到顶部并占满宽度 -->
-        <div id="pdf-view-container" class="app-section full-width">
-            <h2>查看乐谱</h2>
+        <div id="pdf-view-container" class="app-section full-width collapsed">
+            <div class="pdf-header">
+                <h2>查看乐谱</h2>
+                <button id="toggle-pdf-btn" class="btn btn-sm">展开</button>
+            </div>
             <div id="pdf-container">
                 <div id="pdf-viewer"></div>
             </div>
@@ -51,9 +54,13 @@
             <div id="midi-player" class="midi-player app-section">
                 <h2>MIDI播放器</h2>
                 <div class="player-controls">
-                    <button id="play-midi-btn" class="btn player-btn" disabled>播放</button>
-                    <button id="pause-midi-btn" class="btn player-btn" disabled>暂停</button>
-                    <button id="stop-midi-btn" class="btn player-btn" disabled>停止</button>
+                    <button id="play-pause-midi-btn" class="btn player-btn" data-state="play" disabled>
+                        <span class="btn-icon play-icon"></span>
+                        <span class="btn-icon pause-icon"></span>
+                    </button>
+                    <button id="stop-midi-btn" class="btn player-btn" disabled>
+                        <span class="btn-icon stop-icon"></span>
+                    </button>
                     <div class="midi-progress-container">
                         <div id="midi-progress" class="midi-progress"></div>
                     </div>
@@ -78,7 +85,14 @@
                 <button class="btn btn-success" id="download-midi-btn">下载MIDI</button>
                 <button class="btn btn-success" id="download-pdf-btn">下载PDF</button>
                 <button class="btn btn-success" id="view-pdf-btn">打开PDF</button>
-                <button class="btn btn-success" id="play-converted-midi-btn">播放转换后的MIDI</button>
+                <button class="btn btn-primary player-btn" id="play-original-midi-btn">
+                    <span class="btn-icon play-icon"></span>
+                    转换前
+                </button>
+                <button class="btn btn-success player-btn" id="play-converted-midi-btn">
+                    <span class="btn-icon play-icon"></span>
+                    转换后
+                </button>
             </div>
             <div id="result-status" class="status"></div>
         </div>

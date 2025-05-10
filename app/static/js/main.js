@@ -31,13 +31,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultContainer = document.getElementById('result-container');
     
     // MIDI播放器元素
-    const playMidiBtn = document.getElementById('play-midi-btn');
-    const pauseMidiBtn = document.getElementById('pause-midi-btn');
+    const playPauseMidiBtn = document.getElementById('play-pause-midi-btn');
     const stopMidiBtn = document.getElementById('stop-midi-btn');
     const midiProgress = document.getElementById('midi-progress');
     const currentTimeDisplay = document.getElementById('current-time');
     const midiStatus = document.getElementById('midi-status');
     const playConvertedMidiBtn = document.getElementById('play-converted-midi-btn');
+    const playOriginalMidiBtn = document.getElementById('play-original-midi-btn');
     const volumeSlider = document.getElementById('volume-slider');
     const volumeValue = document.getElementById('volume-value');
     
@@ -165,47 +165,53 @@ document.addEventListener('DOMContentLoaded', function() {
         midiProgress.style.width = '0%';
         currentTimeDisplay.textContent = '00:00';
         
-        // 重置所有按钮状态
-        playMidiBtn.disabled = droppedFile ? false : true;
-        playConvertedMidiBtn.disabled = localStorage.getItem('midi_session_id') ? false : true;
-        pauseMidiBtn.disabled = true;
-        stopMidiBtn.disabled = true;
+        // 重置按钮状态
+        if (playPauseMidiBtn) {
+            playPauseMidiBtn.disabled = droppedFile ? false : true;
+            playPauseMidiBtn.dataset.state = 'play';
+            playPauseMidiBtn.innerHTML = '<span class="btn-icon play-icon"></span><span class="btn-icon pause-icon"></span> 播放';
+        }
         
-        // 清除活动按钮
-        if (activePlayButton) {
-            activePlayButton.classList.remove('active-play-btn');
-            activePlayButton = null;
+        if (playConvertedMidiBtn) {
+            playConvertedMidiBtn.disabled = localStorage.getItem('midi_session_id') ? false : true;
+        }
+        
+        if (playOriginalMidiBtn) {
+            playOriginalMidiBtn.disabled = localStorage.getItem('midi_session_id') ? false : true;
+        }
+        
+        if (stopMidiBtn) {
+            stopMidiBtn.disabled = true;
         }
     }
     
     // 更新播放器UI为播放状态
-    function updateUIForPlayback(playButton) {
-        // 禁用所有播放按钮，启用暂停和停止按钮
-        playMidiBtn.disabled = true;
-        playConvertedMidiBtn.disabled = true;
-        pauseMidiBtn.disabled = false;
-        stopMidiBtn.disabled = false;
-        
-        // 标记当前活动的播放按钮
-        if (activePlayButton) {
-            activePlayButton.classList.remove('active-play-btn');
-        }
-        playButton.classList.add('active-play-btn');
-        activePlayButton = playButton;
-    }
-    
-    // 更新播放器UI为暂停状态
-    function updateUIForPause() {
-        // 只启用当前活动的播放按钮和停止按钮
-        playMidiBtn.disabled = true;
-        playConvertedMidiBtn.disabled = true;
-        
-        if (activePlayButton) {
-            activePlayButton.disabled = false;
+    function updateUIForPlayback(isPlaying) {
+        if (playPauseMidiBtn) {
+            if (isPlaying) {
+                playPauseMidiBtn.dataset.state = 'pause';
+                playPauseMidiBtn.innerHTML = '<span class="btn-icon play-icon"></span><span class="btn-icon pause-icon"></span> 暂停';
+            } else {
+                playPauseMidiBtn.dataset.state = 'play';
+                playPauseMidiBtn.innerHTML = '<span class="btn-icon play-icon"></span><span class="btn-icon pause-icon"></span> 播放';
+            }
+            
+            playPauseMidiBtn.disabled = false;
         }
         
-        pauseMidiBtn.disabled = true;
-        stopMidiBtn.disabled = false;
+        if (playConvertedMidiBtn) {
+            playConvertedMidiBtn.disabled = true;
+        }
+        
+        if (playOriginalMidiBtn) {
+            playOriginalMidiBtn.disabled = true;
+        }
+        
+        if (stopMidiBtn) {
+            // 即使在暂停状态下也允许点击停止按钮，只要MIDI已加载
+            const playbackInfo = midiPlayer.getPlaybackInfo();
+            stopMidiBtn.disabled = !(isPlaying || playbackInfo.isPaused);
+        }
     }
     
     // 文件选择按钮点击处理
@@ -235,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, () => {
+        dropArea.addEventListener('drop', () => {
             dropArea.classList.remove('highlight');
         }, false);
     });
@@ -252,9 +258,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultContainer.style.display = 'none';
                 
                 // 允许播放上传的MIDI文件
-                playMidiBtn.disabled = false;
-                pauseMidiBtn.disabled = true;
-                stopMidiBtn.disabled = true;
+                if (playPauseMidiBtn) {
+                    playPauseMidiBtn.disabled = false;
+                }
+                
+                if (stopMidiBtn) {
+                    stopMidiBtn.disabled = true;
+                }
+                
                 midiStatus.textContent = '';
                 midiStatus.className = 'status';
             } else {
@@ -264,9 +275,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultContainer.style.display = 'none';
                 
                 // 禁用播放按钮
-                playMidiBtn.disabled = true;
-                pauseMidiBtn.disabled = true;
-                stopMidiBtn.disabled = true;
+                if (playPauseMidiBtn) {
+                    playPauseMidiBtn.disabled = true;
+                }
+                
+                if (stopMidiBtn) {
+                    stopMidiBtn.disabled = true;
+                }
             }
         }
     }, false);
@@ -282,9 +297,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultContainer.style.display = 'none';
                 
                 // 允许播放上传的MIDI文件
-                playMidiBtn.disabled = false;
-                pauseMidiBtn.disabled = true;
-                stopMidiBtn.disabled = true;
+                if (playPauseMidiBtn) {
+                    playPauseMidiBtn.disabled = false;
+                }
+                
+                if (stopMidiBtn) {
+                    stopMidiBtn.disabled = true;
+                }
+                
                 midiStatus.textContent = '';
                 midiStatus.className = 'status';
                 
@@ -298,105 +318,170 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultContainer.style.display = 'none';
                 
                 // 禁用播放按钮
-                playMidiBtn.disabled = true;
-                pauseMidiBtn.disabled = true;
-                stopMidiBtn.disabled = true;
+                if (playPauseMidiBtn) {
+                    playPauseMidiBtn.disabled = true;
+                }
+                
+                if (stopMidiBtn) {
+                    stopMidiBtn.disabled = true;
+                }
             }
         }
     }
     
-    // 播放上传的MIDI文件
-    playMidiBtn.addEventListener('click', () => {
-        if (droppedFile) {
-            midiStatus.textContent = '正在检查必要的库...';
-            midiStatus.className = 'status';
+    // 播放/暂停逻辑
+    if (playPauseMidiBtn) {
+        playPauseMidiBtn.addEventListener('click', function() {
+            // 根据当前按钮状态决定是播放还是暂停
+            const isPlayState = this.dataset.state === 'play';
             
-            // 检查必要的库是否已加载
-            if (!checkLibrariesLoaded()) {
-                return;
-            }
-            
-            midiStatus.textContent = '正在启动音频系统...';
-            
-            // 确保音频上下文已启动
-            ensureAudioContext().then(success => {
-                if (success) {
-                    // 获取当前播放状态
-                    const playbackInfo = midiPlayer.getPlaybackInfo();
+            if (isPlayState) {
+                // 播放逻辑
+                if (droppedFile) {
+                    midiStatus.textContent = '正在检查必要的库...';
+                    midiStatus.className = 'status';
                     
-                    // 如果当前正在播放转换后的文件，或播放的是不同的文件，先停止当前播放
-                    if (playbackInfo.isConverted || (playbackInfo.fileId && playbackInfo.fileId !== droppedFile.name)) {
-                        midiPlayer.resetPlayStatus();
+                    // 检查必要的库是否已加载
+                    if (!checkLibrariesLoaded()) {
+                        return;
                     }
                     
-                    // 加载并播放MIDI文件，明确标记为原始文件(isConverted=false)
-                    midiStatus.textContent = '正在加载MIDI文件...';
-                    midiPlayer.loadMidiFileAndPlay(droppedFile, false);
+                    midiStatus.textContent = '正在启动音频系统...';
                     
-                    // 更新UI
-                    updateUIForPlayback(playMidiBtn);
-                    midiStatus.textContent = '正在播放原始MIDI文件...';
+                    // 确保音频上下文已启动
+                    ensureAudioContext().then(success => {
+                        if (success) {
+                            // 获取当前播放状态
+                            const playbackInfo = midiPlayer.getPlaybackInfo();
+                            
+                            // 如果当前正在播放转换后的文件，或播放的是不同的文件，先停止当前播放
+                            if (playbackInfo.isConverted || (playbackInfo.fileId && playbackInfo.fileId !== droppedFile.name)) {
+                                midiPlayer.resetPlayStatus();
+                            } else if (playbackInfo.isPaused) {
+                                // 如果是暂停状态，继续播放
+                                midiPlayer.resumeMidiPlay();
+                                updateUIForPlayback(true);
+                                midiStatus.textContent = '继续播放原始MIDI文件...';
+                                return;
+                            }
+                            
+                            // 加载并播放MIDI文件，明确标记为原始文件(isConverted=false)
+                            midiStatus.textContent = '正在加载MIDI文件...';
+                            midiPlayer.loadMidiFileAndPlay(droppedFile, false);
+                            
+                            // 更新UI
+                            updateUIForPlayback(true);
+                            midiStatus.textContent = '正在播放原始MIDI文件...';
+                        }
+                    });
                 }
-            });
-        }
-    });
-    
-    // 播放转换后的MIDI文件
-    playConvertedMidiBtn.addEventListener('click', () => {
-        const sessionId = localStorage.getItem('midi_session_id');
-        if (sessionId) {
-            midiStatus.textContent = '正在检查必要的库...';
-            midiStatus.className = 'status';
-            
-            // 检查必要的库是否已加载
-            if (!checkLibrariesLoaded()) {
-                return;
+            } else {
+                // 暂停逻辑
+                midiPlayer.pauseMidiPlay();
+                updateUIForPlayback(false);
+                midiStatus.textContent = '已暂停';
             }
-            
-            midiStatus.textContent = '正在启动音频系统...';
-            
-            // 确保音频上下文已启动
-            ensureAudioContext().then(success => {
-                if (success) {
-                    const midiUrl = `/download/midi/${sessionId}`;
-                    
-                    // 获取当前播放状态
-                    const playbackInfo = midiPlayer.getPlaybackInfo();
-                    
-                    // 如果当前播放的不是转换后的文件，或者是不同的URL，重置播放状态
-                    if (!playbackInfo.isConverted || (playbackInfo.fileId && playbackInfo.fileId !== midiUrl)) {
-                        midiPlayer.resetPlayStatus();
-                    }
-                    
-                    midiStatus.textContent = '正在加载转换后的MIDI文件...';
-                    
-                    // 加载并播放MIDI文件，明确标记为转换后文件(isConverted=true)
-                    midiPlayer.loadMidiAndPlay(midiUrl, true);
-                    
-                    // 更新UI
-                    updateUIForPlayback(playConvertedMidiBtn);
-                    midiStatus.textContent = '正在播放转换后的MIDI...';
-                }
-            });
-        } else {
-            midiStatus.textContent = '错误: 未找到转换后的MIDI文件';
-            midiStatus.className = 'status status-error';
-        }
-    });
-    
-    // 暂停MIDI播放
-    pauseMidiBtn.addEventListener('click', () => {
-        midiPlayer.pauseMidiPlay();
-        updateUIForPause();
-        midiStatus.textContent = '已暂停';
-    });
+        });
+    }
     
     // 停止MIDI播放
-    stopMidiBtn.addEventListener('click', () => {
-        midiPlayer.stopMidiPlay();
-        resetPlayerUI();
-        midiStatus.textContent = '已停止';
-    });
+    if (stopMidiBtn) {
+        stopMidiBtn.addEventListener('click', () => {
+            midiPlayer.stopMidiPlay();
+            resetPlayerUI();
+            midiStatus.textContent = '已停止';
+        });
+    }
+    
+    // 播放转换后的MIDI文件
+    if (playConvertedMidiBtn) {
+        playConvertedMidiBtn.addEventListener('click', () => {
+            const sessionId = localStorage.getItem('midi_session_id');
+            if (sessionId) {
+                midiStatus.textContent = '正在检查必要的库...';
+                midiStatus.className = 'status';
+                
+                // 检查必要的库是否已加载
+                if (!checkLibrariesLoaded()) {
+                    return;
+                }
+                
+                midiStatus.textContent = '正在启动音频系统...';
+                
+                // 确保音频上下文已启动
+                ensureAudioContext().then(success => {
+                    if (success) {
+                        const midiUrl = `/download/midi/${sessionId}`;
+                        
+                        // 获取当前播放状态
+                        const playbackInfo = midiPlayer.getPlaybackInfo();
+                        
+                        // 如果当前播放的不是转换后的文件，或者是不同的URL，重置播放状态
+                        if (!playbackInfo.isConverted || (playbackInfo.fileId && playbackInfo.fileId !== midiUrl)) {
+                            midiPlayer.resetPlayStatus();
+                        }
+                        
+                        midiStatus.textContent = '正在加载转换后的MIDI文件...';
+                        
+                        // 加载并播放MIDI文件，明确标记为转换后文件(isConverted=true)
+                        midiPlayer.loadMidiAndPlay(midiUrl, true);
+                        
+                        // 更新UI
+                        updateUIForPlayback(true);
+                        midiStatus.textContent = '正在播放转换后的MIDI...';
+                    }
+                });
+            } else {
+                midiStatus.textContent = '错误: 未找到转换后的MIDI文件';
+                midiStatus.className = 'status status-error';
+            }
+        });
+    }
+    
+    // 播放转换前的MIDI文件
+    if (playOriginalMidiBtn) {
+        playOriginalMidiBtn.addEventListener('click', function() {
+            const sessionId = localStorage.getItem('midi_session_id');
+            if (sessionId) {
+                midiStatus.textContent = '正在检查必要的库...';
+                midiStatus.className = 'status';
+                
+                // 检查必要的库是否已加载
+                if (!checkLibrariesLoaded()) {
+                    return;
+                }
+                
+                midiStatus.textContent = '正在启动音频系统...';
+                
+                // 确保音频上下文已启动
+                ensureAudioContext().then(success => {
+                    if (success) {
+                        const midiUrl = `/download/original-midi/${sessionId}`;
+                        
+                        // 获取当前播放状态
+                        const playbackInfo = midiPlayer.getPlaybackInfo();
+                        
+                        // 如果当前播放的不是转换前的文件，或者是不同的URL，重置播放状态
+                        if (playbackInfo.isConverted || (playbackInfo.fileId && playbackInfo.fileId !== midiUrl)) {
+                            midiPlayer.resetPlayStatus();
+                        }
+                        
+                        midiStatus.textContent = '正在加载转换前的MIDI文件...';
+                        
+                        // 加载并播放MIDI文件，明确标记为转换前文件(isConverted=false)
+                        midiPlayer.loadMidiAndPlay(midiUrl, false);
+                        
+                        // 更新UI
+                        updateUIForPlayback(true);
+                        midiStatus.textContent = '正在播放转换前的MIDI...';
+                    }
+                });
+            } else {
+                midiStatus.textContent = '错误: 未找到转换前的MIDI文件';
+                midiStatus.className = 'status status-error';
+            }
+        });
+    }
     
     // 上传按钮点击处理
     uploadBtn.addEventListener('click', () => {
@@ -437,6 +522,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 更新转换后的文件名显示
                 document.getElementById('converted-midi-filename').textContent = data.converted_midi_name;
                 document.getElementById('converted-pdf-filename').textContent = data.converted_pdf_name;
+                
+                // 启用播放转换后的MIDI按钮和播放转换前的MIDI按钮
+                if (playConvertedMidiBtn) playConvertedMidiBtn.disabled = false;
+                if (playOriginalMidiBtn) playOriginalMidiBtn.disabled = false;
                 
                 document.getElementById('download-midi-btn').onclick = () => downloadFile('midi', data.session_id);
                 document.getElementById('download-pdf-btn').onclick = () => downloadFile('pdf', data.session_id);
@@ -541,7 +630,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const pdfViewContainer = document.getElementById('pdf-view-container');
+        const togglePdfBtn = document.getElementById('toggle-pdf-btn');
+        
         if (pdfViewContainer) {
+            // 自动展开PDF查看器
+            pdfViewContainer.classList.remove('collapsed');
+            if (togglePdfBtn) {
+                togglePdfBtn.textContent = '收起';
+            }
+            
             pdfViewContainer.scrollIntoView({ behavior: 'smooth' });
         }
         
@@ -584,6 +681,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     viewOriginalPdfBtn.style.display = 'inline-block';
                     downloadOriginalPdfBtn.style.display = 'inline-block';
                     
+                    // 确保播放转换前的MIDI按钮也启用
+                    if (playOriginalMidiBtn) {
+                        playOriginalMidiBtn.disabled = false;
+                    }
+                    
                     // 自动显示原始PDF
                     loadPdfToViewer(`/view-original-pdf/${sessionId}`);
                     
@@ -606,6 +708,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 出错时也触发完成事件以隐藏加载提示
                 document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
             });
+    }
+
+    // 添加PDF展开/收起功能
+    const togglePdfBtn = document.getElementById('toggle-pdf-btn');
+    const pdfViewContainer = document.getElementById('pdf-view-container');
+    
+    if (togglePdfBtn && pdfViewContainer) {
+        togglePdfBtn.addEventListener('click', function() {
+            if (pdfViewContainer.classList.contains('collapsed')) {
+                // 展开
+                pdfViewContainer.classList.remove('collapsed');
+                togglePdfBtn.textContent = '收起';
+            } else {
+                // 收起
+                pdfViewContainer.classList.add('collapsed');
+                togglePdfBtn.textContent = '展开';
+            }
+        });
     }
 });
 

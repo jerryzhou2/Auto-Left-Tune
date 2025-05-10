@@ -1,6 +1,5 @@
 import subprocess
 import os
-
 def find_musescore_executable():
     # 在WSL中使用Linux路径格式
     return "/mnt/c/Program Files/MuseScore 4/bin/MuseScore4.exe"

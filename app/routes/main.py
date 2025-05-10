@@ -193,4 +193,20 @@ def download_original_pdf(session_id):
         return jsonify({'error': '原始MIDI的PDF文件不存在'}), 404
         
     return send_file(file_path, as_attachment=True, 
-                    download_name=f"original_{session['original_filename'].replace('.mid', '.pdf')}") 
+                    download_name=f"original_{session['original_filename'].replace('.mid', '.pdf')}")
+
+@main.route('/download/original-midi/<session_id>', methods=['GET'])
+def download_original_midi(session_id):
+    """
+    获取原始MIDI文件（转换前的）
+    """
+    session = session_manager.get_session(session_id)
+    if not session:
+        return jsonify({'error': '会话不存在'}), 404
+    
+    file_path = session['input_path']
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': '原始MIDI文件不存在'}), 404
+        
+    return send_file(file_path, mimetype='audio/midi') 
