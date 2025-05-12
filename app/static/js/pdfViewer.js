@@ -1,8 +1,8 @@
 // PDF查看器模块
 class PdfViewer {
     constructor() {
-        // 初始化PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '/static/js/pdfjs/build/pdf.worker.mjs';
+        // 初始化PDF.js - 使用CDN
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         
         // DOM元素
         this.pdfViewer = document.getElementById('pdf-viewer');
