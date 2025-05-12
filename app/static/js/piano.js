@@ -585,7 +585,23 @@ class Piano {
       });
 
 
-      const filename = 'pianonotes.mid';
+      // 弹出输入框，提示用户输入文件名（不含扩展名）
+      var filename = prompt("请输入要保存的MIDI文件名（不含 .mid 扩展名）：", "my_song");
+
+      if (!filename) {
+        alert("文件名不能为空，取消保存。");
+        return;
+      }
+
+      // 可选：判断非法字符
+      const invalidChars = /[\/\\:*?"<>|]/;
+      if (invalidChars.test(filename)) {
+        alert("文件名包含非法字符，请重新输入！");
+        return;
+      }
+
+      filename += '.mid';
+
       // 创建文件对象
       const midiFile = new File([midiBlob], filename, { type: 'audio/midi' });
       // 显示加载指示器
@@ -630,7 +646,7 @@ class Piano {
       const url = URL.createObjectURL(midiBlob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `composition_${new Date().toISOString().slice(0, 10)}.mid`;
+      anchor.download = `${filename}`;
       document.body.appendChild(anchor);
       anchor.click();
 
