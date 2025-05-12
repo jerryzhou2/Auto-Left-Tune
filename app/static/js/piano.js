@@ -45,8 +45,7 @@ class Piano {
         </div>
 
         <div class='button-group'>
-            <button id="begin">开始记录</button>
-            <button id="end">结束记录</button>
+            <button id="toggleRecord">开始记录</button>
         </div>
 
         <canvas id="audioEffectCanvas"></canvas>
@@ -127,17 +126,10 @@ class Piano {
           }
     
           /* 生成按钮渐变 */
-          #end {
+          #toggleRecord {
             background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
             color: white;
             box-shadow: 0 2px 6px rgba(33,150,243,0.3);
-          }
-    
-          /* 清空按钮渐变 */
-          #begin {
-            background: linear-gradient(135deg, #FF5722 0%, #F4511E 100%);
-            color: white;
-            box-shadow: 0 2px 6px rgba(255,87,34,0.3);
           }
     
           /* 按钮图标样式 */
@@ -151,13 +143,8 @@ class Piano {
           }
     
           /* MIDI图标 */
-          #end::before {
+          #toggleRecord::before {
             background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zm-9-7h2v2H9v-2zm0-4h2v2H9v-2zm0-4h2v2H9V9z"/></svg>');
-          }
-    
-          /* 清空图标 */
-          #begin::before {
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="white" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>');
           }
     
           /* 加载动画 */
@@ -235,18 +222,27 @@ class Piano {
     // 监听窗口大小变化，重新计算键盘尺寸
     window.addEventListener('resize', this.computeEleSize);
 
-    // 在初始化代码中添加点击监听
-    document.getElementById('end').addEventListener('click', async () => {
-      await this.generateMidiFromStorage();   // 在生成函数内部清空
+    const toggleButton = document.getElementById('toggleRecord');
+    let isRecording = false;
+    localStorage.setItem('beginTag', 'False');
+    console.log("beginTag is initially false");
+
+    toggleButton.addEventListener('click', async () => {
+      if (!isRecording) {
+        // 开始记录
+        console.log("Turn to end state.");
+        this.recordBegin();
+        toggleButton.textContent = '结束记录';
+        isRecording = true;
+      } else {
+        // 结束记录并生成MIDI
+        console.log("Turn to begin state.");
+        await this.generateMidiFromStorage();
+        toggleButton.textContent = '开始记录';
+        isRecording = false;
+      }
     });
 
-    const beginButton = document.getElementById('begin');
-    if (beginButton) {
-      beginButton.addEventListener('click', this.recordBegin);
-    }
-
-    localStorage.setItem('beginTag', 'False');
-    console.log("begin tag is initially false");
   }
 
   recordBegin() {
@@ -536,7 +532,7 @@ class Piano {
   }
 
   async generateMidiFromStorage() {
-    const generateButton = document.getElementById('end');
+    const generateButton = document.getElementById('toggleRecord');
     const originalHTML = generateButton.innerHTML;
     let midiGenerated = false;
 
