@@ -3,6 +3,9 @@ import SampleLibrary from './lib/SampleLibrary.js';
 import MidiPlayer from './midiPlayer.js';
 import pdfViewer from './pdfViewer.js';
 
+// 全局变量，用于跟踪PDF加载状态
+let isPdfLoading = false;
+
 // 使用localStorage保存会话ID以保持状态
 document.addEventListener('DOMContentLoaded', function() {
     console.log('页面加载完成，检查库的可用性');
@@ -622,44 +625,137 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 加载PDF到查看器中
-    function loadPdfToViewer(url) {
-        // 检查pdfViewer是否可用
-        if (!pdfViewer) {
-            console.error('PDF查看器未初始化');
+    function loadPdfToViewer(url, forceLoad = false) {
+        // 如果已经在加载中，而且不是强制模式，则跳过
+        if (isPdfLoading && !forceLoad) {
+            console.log('已有PDF正在加载，跳过此次加载请求');
             return;
         }
         
-        const pdfViewContainer = document.getElementById('pdf-view-container');
-        const togglePdfBtn = document.getElementById('toggle-pdf-btn');
+        // 设置加载状态标志
+        isPdfLoading = true;
         
-        if (pdfViewContainer) {
-            // 自动展开PDF查看器
-            pdfViewContainer.classList.remove('collapsed');
-            if (togglePdfBtn) {
-                togglePdfBtn.textContent = '收起';
-            }
-            
-            pdfViewContainer.scrollIntoView({ behavior: 'smooth' });
+        // 检查pdfViewer是否可用
+        if (!pdfViewer) {
+            console.error('PDF查看器未初始化');
+            isPdfLoading = false;
+            return;
         }
+        
+        // 设置加载状态
+        const pdfViewContainer = document.getElementById('pdf-view-container');
+        if (!pdfViewContainer) {
+            console.error('找不到PDF查看器容器元素');
+            isPdfLoading = false;
+            return;
+        }
+        
+        // 日志记录调用堆栈，便于调试
+        console.log('PDF加载请求:', url, '调用来源:', new Error().stack);
+        
+        // 显示独立的全局加载指示器
+        showPdfLoadingIndicator();
+        
+        // 自动展开PDF查看器
+        const togglePdfBtn = document.getElementById('toggle-pdf-btn');
+        pdfViewContainer.classList.remove('collapsed');
+        if (togglePdfBtn) {
+            togglePdfBtn.textContent = '收起';
+        }
+        
+        pdfViewContainer.scrollIntoView({ behavior: 'smooth' });
+        
+        // 使用单独的Promise和超时处理来确保加载完成
+        console.log('开始加载PDF:', url);
         
         // 开始加载PDF
         pdfViewer.loadPdfFromUrl(url)
             .then(success => {
+                // 隐藏加载指示器
+                hidePdfLoadingIndicator();
+                
+                // 重置加载状态标志
+                isPdfLoading = false;
+                
                 if (success) {
                     console.log('PDF加载成功');
                     // 触发PDF生成完成事件
                     document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
                 } else {
                     console.error('PDF加载失败');
+                    // 在PDF查看器中显示错误信息
+                    const pdfViewer = document.getElementById('pdf-viewer');
+                    if (pdfViewer && pdfViewer.childElementCount === 0) {
+                        const errorMsg = document.createElement('p');
+                        errorMsg.className = 'error';
+                        errorMsg.textContent = '无法加载PDF';
+                        pdfViewer.appendChild(errorMsg);
+                    }
+                    
                     // 即使加载失败也触发完成事件，以隐藏加载指示器
                     document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
                 }
             })
             .catch(error => {
+                // 隐藏加载指示器
+                hidePdfLoadingIndicator();
+                
+                // 重置加载状态标志
+                isPdfLoading = false;
+                
                 console.error('加载PDF发生错误:', error);
+                
+                // 在PDF查看器中显示错误信息
+                const pdfViewer = document.getElementById('pdf-viewer');
+                if (pdfViewer) {
+                    const errorMsg = document.createElement('p');
+                    errorMsg.className = 'error';
+                    errorMsg.textContent = `加载PDF失败: ${error.message}`;
+                    pdfViewer.appendChild(errorMsg);
+                }
+                
                 // 发生错误时也触发完成事件
                 document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
             });
+    }
+    
+    // 显示PDF加载指示器
+    function showPdfLoadingIndicator() {
+        // 移除可能已存在的加载指示器
+        removePdfLoadingIndicator();
+        
+        // 创建新的加载指示器
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.id = 'pdf-global-loading';
+        loadingIndicator.className = 'pdf-loading-overlay';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        
+        const loadingText = document.createElement('p');
+        loadingText.textContent = '正在加载PDF...';
+        
+        loadingIndicator.appendChild(spinner);
+        loadingIndicator.appendChild(loadingText);
+        
+        // 添加到PDF容器
+        const pdfContainer = document.getElementById('pdf-container');
+        if (pdfContainer) {
+            pdfContainer.appendChild(loadingIndicator);
+        }
+    }
+    
+    // 隐藏PDF加载指示器
+    function hidePdfLoadingIndicator() {
+        removePdfLoadingIndicator();
+    }
+    
+    // 移除PDF加载指示器
+    function removePdfLoadingIndicator() {
+        const existingIndicator = document.getElementById('pdf-global-loading');
+        if (existingIndicator && existingIndicator.parentNode) {
+            existingIndicator.parentNode.removeChild(existingIndicator);
+        }
     }
     
     // 实现自动导出原始MIDI文件的PDF
@@ -686,8 +782,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         playOriginalMidiBtn.disabled = false;
                     }
                     
-                    // 自动显示原始PDF
-                    loadPdfToViewer(`/view-original-pdf/${sessionId}`);
+                    // 自动显示原始PDF - 使用强制加载模式
+                    loadPdfToViewer(`/view-original-pdf/${sessionId}`, true);
                     
                     // 如果没有由loadPdfToViewer触发事件（例如PDF加载失败），
                     // 我们仍然需要触发PDF生成完成事件
@@ -699,6 +795,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     pdfStatus.className = 'status status-error';
                     // PDF生成失败，也触发完成事件以隐藏加载提示
                     document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
+                    
+                    // 确保重置加载状态
+                    isPdfLoading = false;
                 }
             })
             .catch(error => {
@@ -707,6 +806,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 pdfStatus.className = 'status status-error';
                 // 出错时也触发完成事件以隐藏加载提示
                 document.dispatchEvent(new CustomEvent('pdf-generation-complete'));
+                
+                // 确保重置加载状态
+                isPdfLoading = false;
             });
     }
 

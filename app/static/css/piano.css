@@ -201,37 +201,37 @@
 /* C2组 */
 .bkey[data-name="C#2"] { left: 2.5%; }
 .bkey[data-name="D#2"] { left: 5.5%; }
-.bkey[data-name="F#2"] { left: 11%; }
-.bkey[data-name="G#2"] { left: 13.6%; }
-.bkey[data-name="A#2"] { left: 16.5%; }
+.bkey[data-name="F#2"] { left: 10.5%; }
+.bkey[data-name="G#2"] { left: 13.4%; }
+.bkey[data-name="A#2"] { left: 16.1%; }
 
 /* C3组 */
-.bkey[data-name="C#3"] { left: 22.2%; }
-.bkey[data-name="D#3"] { left: 25%; }
-.bkey[data-name="F#3"] { left: 30.3%; }
-.bkey[data-name="G#3"] { left: 33%; }
-.bkey[data-name="A#3"] { left: 35.8%; }
+.bkey[data-name="C#3"] { left: 21.5%; }
+.bkey[data-name="D#3"] { left: 24%; }
+.bkey[data-name="F#3"] { left: 29.6%; }
+.bkey[data-name="G#3"] { left: 32.4%; }
+.bkey[data-name="A#3"] { left: 35%; }
 
 /* C4组（中央C） */
-.bkey[data-name="C#4"] { left: 41.3%; }
-.bkey[data-name="D#4"] { left: 44%; }
-.bkey[data-name="F#4"] { left: 49.6%; }
-.bkey[data-name="G#4"] { left: 52.5%; }
-.bkey[data-name="A#4"] { left: 55%; }
+.bkey[data-name="C#4"] { left: 40.4%; }
+.bkey[data-name="D#4"] { left: 43%; }
+.bkey[data-name="F#4"] { left: 48.4%; }
+.bkey[data-name="G#4"] { left: 51%; }
+.bkey[data-name="A#4"] { left: 53.5%; }
 
 /* C5组 */
-.bkey[data-name="C#5"] { left: 60.7%; }
-.bkey[data-name="D#5"] { left: 63.5%; }
-.bkey[data-name="F#5"] { left: 68.9%; }
-.bkey[data-name="G#5"] { left: 72%; }
-.bkey[data-name="A#5"] { left: 74.5%; }
+.bkey[data-name="C#5"] { left: 59.3%; }
+.bkey[data-name="D#5"] { left: 61.8%; }
+.bkey[data-name="F#5"] { left: 67%; }
+.bkey[data-name="G#5"] { left: 70%; }
+.bkey[data-name="A#5"] { left: 72.5%; }
 
 /* C6组 */
-.bkey[data-name="C#6"] { left: 80%; }
-.bkey[data-name="D#6"] { left: 82.8%; }
-.bkey[data-name="F#6"] { left: 88.5%; }
-.bkey[data-name="G#6"] { left: 91.2%; }
-.bkey[data-name="A#6"] { left: 93.8%; }
+.bkey[data-name="C#6"] { left: 77.8%; }
+.bkey[data-name="D#6"] { left: 80.5%; }
+.bkey[data-name="F#6"] { left: 86%; }
+.bkey[data-name="G#6"] { left: 88.7%; }
+.bkey[data-name="A#6"] { left: 91.5%; }
 
 /* 隐藏黑键包装容器 */
 .bkey-wrap {
