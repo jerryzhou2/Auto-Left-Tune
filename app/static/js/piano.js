@@ -27,7 +27,7 @@ class Piano {
           <div class="option-item-wrap">
             <div class="option-item">
               <label class="label">
-                显示按键提示
+                <span class="label-text">显示按键提示</span>
                 <input type="checkbox" id="keyname" checked />
                 <i></i>
               </label>
@@ -35,7 +35,7 @@ class Piano {
 
             <div class="option-item">
               <label class="label">
-                显示音名
+                <span class="label-text">显示音名</span>
                 <input type="checkbox" id="notename" />
                 <i></i>
               </label>
