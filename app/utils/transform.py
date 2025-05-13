@@ -2,7 +2,7 @@ import subprocess
 import os
 def find_musescore_executable():
     # 在WSL中使用Linux路径格式
-    return "/mnt/c/Program Files/MuseScore 4/bin/MuseScore4.exe"
+    return "E:\\musescore\\bin\\MuseScore4.exe"
 
 def split_midi(input_file, output_file, musescore_path=None):
     # 1) 检查输入文件是否存在
@@ -71,14 +71,3 @@ def export_pdf(input_file, output_file, musescore_path=None):
     except subprocess.CalledProcessError as e:
         print(f"❌ MuseScore PDF导出失败，错误码 {e.returncode}")
         return False
-
-# if __name__ == "__main__":
-#     # —— 在这里直接写死路径（也可以改成从配置文件、GUI 里读）
-#     input_midi = r"D:\midi_test\input.mid"
-#     output_midi = r"D:\midi_test\output_split.mid"
-#     output_pdf = r"D:\midi_test\output.pdf"
-#     # 如果你安装在非默认位置，也可以在这里改
-#     musescore_exe = r"C:\Program Files\MuseScore 4\bin\MuseScore4.exe"
-
-#     split_midi(input_midi, output_midi, musescore_exe)
-#     export_pdf(input_midi, output_pdf, musescore_exe)

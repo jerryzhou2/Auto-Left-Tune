@@ -330,7 +330,7 @@ class Piano {
         elem.style.fontSize = '7px';
       });
       document.querySelectorAll('.bkey .keyname').forEach(elem => {
-        elem.style.fontSize = '6px';
+        elem.style.fontSize = '5px';
       });
     }
   }

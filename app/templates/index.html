@@ -6,6 +6,8 @@
     <title>MIDI处理工具</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/piano.css') }}">
+    <!-- 修改标题字体样式 --> 
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
     <!-- 使用本地存储的Tone.js和@tonejs/midi库 -->
     <script src="{{ url_for('static', filename='js/lib/Tone.js') }}"></script>
     <script src="{{ url_for('static', filename='js/lib/Midi.js') }}"></script>
@@ -124,5 +126,6 @@
     <script src="{{ url_for('static', filename='js/pdfViewer.js') }}" type="module"></script>
     <script src="{{ url_for('static', filename='js/midiPlayer.js') }}" type="module"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/techBackground.js') }}"></script>
 </body>
 </html> 
