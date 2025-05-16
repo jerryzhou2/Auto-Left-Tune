@@ -13,6 +13,8 @@ class Config:
     # 静态文件和模板配置
     STATIC_FOLDER = os.path.join(APP_DIR, 'static')
     TEMPLATE_FOLDER = os.path.join(APP_DIR, 'templates')
+    MUSESCORE_PATH_WINDOWS = os.path.join(APP_DIR, 'utils/MuseScoreWindows/bin/MuseScore4.exe')
+    MUSESCORE_PATH_LINUX = os.path.join(APP_DIR, 'utils/MuseScoreLinux/bin/mscore4portable')
     # 确保必要的目录存在
     @staticmethod
     def init_app():

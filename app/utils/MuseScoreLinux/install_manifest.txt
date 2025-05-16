@@ -1,0 +1,17 @@
+share/icons/hicolor/16x16/apps/mscore4portable.png
+share/icons/hicolor/24x24/apps/mscore4portable.png
+share/icons/hicolor/32x32/apps/mscore4portable.png
+share/icons/hicolor/48x48/apps/mscore4portable.png
+share/icons/hicolor/64x64/apps/mscore4portable.png
+share/icons/hicolor/96x96/apps/mscore4portable.png
+share/icons/hicolor/128x128/apps/mscore4portable.png
+share/icons/hicolor/512x512/apps/mscore4portable.png
+share/icons/hicolor/512x512/mimetypes/application-x-musescore4portable.png
+share/icons/hicolor/512x512/mimetypes/application-x-musescore4portable+xml.png
+share/icons/hicolor/scalable/mimetypes/application-x-musescore4portable.svg
+share/icons/hicolor/scalable/mimetypes/application-x-musescore4portable+xml.svg
+share/applications/org.musescore.MuseScore4portable.desktop
+share/metainfo/org.musescore.MuseScore4portable.appdata.xml
+share/man/man1/mscore4portable.1.gz
+share/man/man1/musescore4portable.1.gz
+share/mime/packages/musescore4portable.xml

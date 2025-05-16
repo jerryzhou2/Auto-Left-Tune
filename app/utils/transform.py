@@ -1,8 +1,12 @@
 import subprocess
 import os
+import platform
+from app.config.config import Config
 def find_musescore_executable():
-    # 在WSL中使用Linux路径格式
-    return "E:\\musescore\\bin\\MuseScore4.exe"
+    if platform.system() == "Windows":
+        return Config.MUSESCORE_PATH_WINDOWS
+    else:
+        return Config.MUSESCORE_PATH_LINUX
 
 def split_midi(input_file, output_file, musescore_path=None):
     # 1) 检查输入文件是否存在
@@ -11,7 +15,7 @@ def split_midi(input_file, output_file, musescore_path=None):
         return
 
     # 2) 确定 MuseScore CLI 路径
-    mscore = musescore_path or find_musescore_executable()
+    mscore =find_musescore_executable()
 
     # 3) 构造命令列表，交给 subprocess.run 自动处理路径
     cmd = [
