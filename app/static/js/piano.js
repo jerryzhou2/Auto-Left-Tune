@@ -503,7 +503,7 @@ class Piano {
       console.error('播放音符失败:', err);
     }
 
-    console.log(`Store note: ${note.name}`);
+    console.log(`Play note: ${note.name}`);
     const beginTag = localStorage.getItem('beginTag');
     if (beginTag === 'True') this.noteStorage(lowerCaseNoteName);
   }
