@@ -35,6 +35,21 @@ h2 {
     margin-bottom: 15px;
 }
 
+/* 按钮样式示例 */
+.btn-primary {
+    background-color: #4a90e2;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 10px 0;
+}
+
+.btn-primary:hover {
+    background-color: #357abd;
+}
+
 .upload-area {
     border: 2px dashed #3498db;
     border-radius: 5px;

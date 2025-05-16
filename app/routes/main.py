@@ -13,6 +13,10 @@ session_manager = SessionManager()
 def index():
     return render_template('index.html')
 
+@main.route('/MidiEditor')
+def index2():
+    return render_template('MidiEditor.html')
+
 @main.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:

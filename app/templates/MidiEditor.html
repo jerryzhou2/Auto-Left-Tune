@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>MIDI 可视化编辑器</title>
+    <link rel="stylesheet" href="../static/css/MidiEditor-style.css" />
+    <link rel="stylesheet" href='../static/css/piano.css'>
+</head>
+
+<body>
+    <h1>MIDI 可视化编辑器</h1>
+    <div class="controls">
+        <input type="file" id="midiFileInput" accept=".mid,.midi" />
+        <button id="playBtn">播放</button>
+        <button id="pauseBtn">暂停</button>
+        <button id="resetBtn">重置</button>
+        <button id="exportBtn">导出MIDI</button>
+    </div>
+
+    <!-- 新增轨道控制面板 -->
+    <div id="trackControls">
+    </div>
+
+    <div id="canvasContainer">
+        <canvas id="pianoRoll" height="800"></canvas>
+    </div>
+
+    <!-- 添加80%宽度的容器 -->
+    <div class="piano-wrapper" style="width: 80%; margin: 0 auto;">
+        <!-- 钢琴组件将在这里由piano.js动态插入，使用piano-visual.html中的精确参数 -->
+        <div id="piano-container"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tone@next/build/Tone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.min.js"></script>
+    <script src="../static/js/MidiEditor/pianoRoll.js" type="module"></script>
+
+    <!-- 导入模块化JS文件 -->
+    <script type="module">
+        import { Notes } from '../static/js/MidiEditor/lib/notes.js';
+        import Piano from '../static/js/MidiEditor/piano.js';
+
+        // 页面加载完成后初始化钢琴
+        document.addEventListener('DOMContentLoaded', () => {
+            const piano = new Piano();
+            piano.init('#piano-container');
+        });
+
+        // 添加用户交互来启动AudioContext
+        const startAudio = () => {
+            if (Tone.context.state !== 'running') {
+                Tone.context.resume();
+            }
+            document.removeEventListener('click', startAudio);
+        };
+
+        document.addEventListener('click', startAudio);
+    </script>
+
+</body>
+
+</html>
