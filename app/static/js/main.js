@@ -838,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openEditorBtn.addEventListener('click', () => {
             // 跳转到 MidiEditor.html（注意路径是否正确）
             console.log("Load html");
-            window.location.href = '/MidiEditor';
+            window.open('/MidiEditor', 'blank');
         });
     }
 });
