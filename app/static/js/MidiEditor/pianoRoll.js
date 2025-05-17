@@ -1,4 +1,4 @@
-import SampleLibrary from './lib/ToneInstruments.js';
+import SampleLibrary from '../lib/ToneInstruments.js';
 
 let midiData = null;
 let currentMidi = null;

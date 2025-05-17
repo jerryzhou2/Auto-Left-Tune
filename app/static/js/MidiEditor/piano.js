@@ -3,9 +3,9 @@
  * 实现钢琴键盘的交互和音符播放功能
  */
 
-import { Notes } from './lib/notes.js';
-import SampleLibrary from './lib/ToneInstruments.js';
-import Midi from './lib/jsmidgen.js';
+import { Notes } from '../lib/notes.js';
+import SampleLibrary from '../lib/ToneInstruments.js';
+import Midi from '../lib/jsmidgen.js';
 
 class Piano {
   constructor() {
@@ -51,7 +51,7 @@ class Piano {
         <canvas id="audioEffectCanvas"></canvas>
       </div>
 
-      <script type="module" src="./lib/jsmidgen.js"></script>
+      <script type="module" src="../lib/jsmidgen.js"></script>
     `;
 
     // 配置参数
