@@ -5,7 +5,12 @@
     <meta charset="UTF-8" />
     <title>MIDI 可视化编辑器</title>
     <link rel="stylesheet" href="../static/css/MidiEditor-style.css" />
-    <link rel="stylesheet" href='../static/css/piano.css'>
+    <link rel="stylesheet" href='../static/css/editor-piano.css'>
+    <style>
+        #piano-container {
+            display: none; /* 默认隐藏 */
+        }
+    </style>
 </head>
 
 <body>
@@ -16,6 +21,7 @@
         <button id="pauseBtn">暂停</button>
         <button id="resetBtn">重置</button>
         <button id="exportBtn">导出MIDI</button>
+        <button id="togglePianoBtn">显示钢琴</button> 
     </div>
 
     <!-- 新增轨道控制面板 -->
@@ -45,6 +51,22 @@
         document.addEventListener('DOMContentLoaded', () => {
             const piano = new Piano();
             piano.init('#piano-container');
+        }); 
+
+        let pianoVisualized = false;
+
+        document.getElementById('togglePianoBtn').addEventListener('click', () => {
+            const pianoContainer = document.getElementById('piano-container');
+
+            if(!pianoVisualized) {
+                // 显示钢琴
+                pianoContainer.style.display = 'block';
+                pianoVisualized = true;
+            } else {
+                // 隐藏钢琴
+                pianoContainer.style.display = 'none';
+                pianoVisualized = false;
+            }
         });
 
         // 添加用户交互来启动AudioContext
@@ -57,6 +79,8 @@
 
         document.addEventListener('click', startAudio);
     </script>
+
+    <script src="{{ url_for('static', filename='js/MidiEditor/EditorBackground.js') }}"></script>
 
 </body>
 

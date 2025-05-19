@@ -1,0 +1,411 @@
+/* 钢琴组件样式 */
+.piano-component {
+  width: 100%;
+  position: relative;
+  color: #000;
+  margin-bottom: 20px;
+}
+
+.piano-component #audioEffectCanvas {
+  display: none;
+}
+
+/* 修改钢琴滚动容器 */
+.piano-scroll-wrap {
+  width: 100%;
+  overflow: hidden;
+  /* 移除滚动条 */
+}
+
+/* 修改钢琴容器尺寸 */
+.piano-wrap {
+  width: 100%;
+  /* 保持100%适应其父容器 */
+  margin: 0 auto;
+  box-shadow: 5px 5px 20px 5px #888;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.piano-wrap.visible {
+  opacity: 1;
+}
+
+.piano-band {
+  width: 100%;
+  height: 40px;
+  line-height: 40px;
+  background: #000;
+  box-shadow: inset 0px -1px 2px rgba(255, 255, 255, 0.4), 0 2px 3px rgba(0, 0, 0, 0.4);
+  border-width: 3px 2px 2px;
+  border-style: solid;
+  border-color: #555 #222 #111 #777;
+  position: relative;
+}
+
+.piano-band-img {
+  width: 130px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.piano-tip {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  color: #fff;
+  font-size: 14px;
+}
+
+.piano-key-wrap {
+  width: 100%;
+  background: #000;
+  overflow: hidden;
+  /* 移除水平滚动，改用hidden */
+  position: relative;
+  min-height: 150px;
+  /* 确保最小高度 */
+  height: 200px;
+  /* 固定默认高度 */
+}
+
+/* 钢琴键盘内部容器 */
+#piano-keys-container {
+  width: 100%;
+  /* 保持100%宽度适应父容器 */
+  height: 100%;
+  position: relative;
+  white-space: nowrap;
+  /* 防止换行 */
+}
+
+.piano-key:hover {
+  cursor: pointer;
+}
+
+/* 调整白键尺寸 */
+.wkey {
+  display: inline-block;
+  width: 2.2%;
+  /* 白键宽度 */
+  height: 100%;
+  margin: 0 0.02% 0 0;
+  /* 减小间距 */
+  background: #fff;
+  background: linear-gradient(-30deg, #f5f5f5, #fff);
+  border: 1px solid #ccc;
+  box-shadow: inset 0 1px 0px #fff, inset 0 -1px 0px #fff, inset 1px 0px 0px #fff, inset -1px 0px 0px #fff, 0 4px 3px rgba(0, 0, 0, 0.7);
+  border-radius: 0 0 5px 5px;
+  position: relative;
+}
+
+.wkey:active,
+.wkey-active {
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
+  top: -1%;
+  height: 99%;
+  background: #ff9900 !important;
+  /* 橙色 */
+}
+
+.wkey:active:before,
+.wkey-active:before {
+  content: "";
+  border-width: 250px 5px 0px;
+  border-style: solid;
+  border-color: transparent transparent transparent rgba(0, 0, 0, 0.1);
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+.wkey:active:after,
+.wkey-active:after {
+  content: "";
+  border-width: 250px 5px 0px;
+  border-style: solid;
+  border-color: transparent rgba(0, 0, 0, 0.1) transparent transparent;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+/* 调整黑键尺寸 */
+.bkey {
+  display: inline-block;
+  width: 1.2%;
+  /* 黑键宽度 */
+  height: 65%;
+  background: linear-gradient(-20deg, #333, #000, #333);
+  border-width: 1px 2px 7px;
+  border-style: solid;
+  border-color: #666 #222 #111 #555;
+  border-radius: 0 0 2px 2px;
+  box-shadow: inset 0px -1px 2px rgba(255, 255, 255, 0.4), 0 2px 3px rgba(0, 0, 0, 0.4);
+  position: absolute;
+  top: 0;
+  overflow: hidden;
+  z-index: 1;
+  /* 确保黑键在白键上方 */
+  transform: translateX(-50%);
+  /* 添加居中调整，使黑键中心对准定位点 */
+}
+
+.bkey:active,
+.bkey-active {
+  height: 64%;
+  border-bottom-width: 2px;
+  box-shadow: inset 0px -1px 1px rgba(255, 255, 255, 0.4), 0 1px 0px rgba(0, 0, 0, 0.8), 0 2px 2px rgba(0, 0, 0, 0.4), 0 -1px 0px #000;
+  background: #3399ff !important;
+  /* 蓝色 */
+}
+
+.keytip {
+  width: 100%;
+  position: absolute;
+  bottom: 5%;
+  font-size: 9px;
+  /* 减小字体大小 */
+}
+
+.wkey .keytip {
+  color: #000;
+  text-align: center;
+}
+
+.bkey .keytip {
+  color: #fff;
+  left: 0;
+  overflow: hidden;
+}
+
+.keyname {
+  margin-bottom: 3px;
+}
+
+.bkey .keyname {
+  width: 100%;
+  text-align: center;
+  font-size: 7px;
+  /* 更小的字体 */
+}
+
+.notename {
+  color: #2c88d9;
+  font-weight: bold;
+  font-size: 8px;
+  /* 更小的字体 */
+}
+
+.wkey.auto-key-active {
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.4);
+  top: 0%;
+  height: 100%;
+  background: #ff9900 !important;
+  /* 橙色，与按下颜色保持一致 */
+}
+
+.bkey.auto-key-active {
+  height: 64%;
+  border-bottom-width: 2px;
+  box-shadow: inset 0px -1px 1px rgba(255, 255, 255, 0.4), 0 1px 0px rgba(0, 0, 0, 0.8), 0 2px 2px rgba(0, 0, 0, 0.4), 0 -1px 0px #000;
+  background: #3399ff !important;
+  /* 蓝色，与按下颜色保持一致 */
+}
+
+/* 黑键位置计算 - 固定位置 */
+/* C2组 */
+.bkey[data-name="C#2"] {
+  left: 2.5%;
+}
+
+.bkey[data-name="D#2"] {
+  left: 5.5%;
+}
+
+.bkey[data-name="F#2"] {
+  left: 10.5%;
+}
+
+.bkey[data-name="G#2"] {
+  left: 13.4%;
+}
+
+.bkey[data-name="A#2"] {
+  left: 16.1%;
+}
+
+/* C3组 */
+.bkey[data-name="C#3"] {
+  left: 21.5%;
+}
+
+.bkey[data-name="D#3"] {
+  left: 24%;
+}
+
+.bkey[data-name="F#3"] {
+  left: 29.6%;
+}
+
+.bkey[data-name="G#3"] {
+  left: 32.4%;
+}
+
+.bkey[data-name="A#3"] {
+  left: 35%;
+}
+
+/* C4组（中央C） */
+.bkey[data-name="C#4"] {
+  left: 40.4%;
+}
+
+.bkey[data-name="D#4"] {
+  left: 43%;
+}
+
+.bkey[data-name="F#4"] {
+  left: 48.4%;
+}
+
+.bkey[data-name="G#4"] {
+  left: 51%;
+}
+
+.bkey[data-name="A#4"] {
+  left: 53.5%;
+}
+
+/* C5组 */
+.bkey[data-name="C#5"] {
+  left: 59.3%;
+}
+
+.bkey[data-name="D#5"] {
+  left: 61.8%;
+}
+
+.bkey[data-name="F#5"] {
+  left: 67%;
+}
+
+.bkey[data-name="G#5"] {
+  left: 70%;
+}
+
+.bkey[data-name="A#5"] {
+  left: 72.5%;
+}
+
+/* C6组 */
+.bkey[data-name="C#6"] {
+  left: 77.8%;
+}
+
+.bkey[data-name="D#6"] {
+  left: 80.5%;
+}
+
+.bkey[data-name="F#6"] {
+  left: 86%;
+}
+
+.bkey[data-name="G#6"] {
+  left: 88.7%;
+}
+
+.bkey[data-name="A#6"] {
+  left: 91.5%;
+}
+
+/* 隐藏黑键包装容器 */
+.bkey-wrap {
+  display: none !important;
+}
+
+.piano-options {
+  width: 100%;
+  height: 50px;
+  margin: 10px auto 15px;
+  padding: 0;
+  position: relative;
+}
+
+.option-item-wrap {
+  position: absolute;
+  right: 1%;
+}
+
+.option-item {
+  display: inline-block;
+  height: 50px;
+  line-height: 50px;
+  margin: 0 15px;
+}
+
+.option-item .label>input {
+  display: none;
+}
+
+.option-item .label i {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 2px;
+  width: 40px;
+  height: 20px;
+  border-radius: 13px;
+  vertical-align: middle;
+  transition: .25s .09s;
+  position: relative;
+  background: #d8d9db;
+  box-sizing: initial;
+}
+
+.option-item .label i:after {
+  content: " ";
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  left: 2px;
+  transition: .25s;
+}
+
+.option-item .label>input:checked+i {
+  background: #4CAF50;
+}
+
+.option-item .label>input:checked+i:after {
+  transform: translateX(20px);
+}
+
+.option-item .label:hover {
+  cursor: pointer;
+}
+
+/* 新增宽度限制容器的样式 */
+.piano-wrapper {
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.option-item .label>input:checked~.label-text {
+  color: #6fb7f1;
+  /* 勾选时文字颜色 */
+}
+
+.option-item .label .label-text {
+  color: #fff;
+  /* 默认文字颜色 */
+  transition: color 0.2s ease;
+}
