@@ -15,9 +15,15 @@
 </head>
 
 <body>
-    <h1>MIDI 可视化编辑器</h1>
+    <h1 class="title-art">MIDI 可视化编辑器</h1>
     <div class="controls">
-        <input type="file" id="midiFileInput" accept=".mid,.midi" />
+        <div class="custom-file-input">
+            <input type="file" id="midiFileInput" accept=".mid,.midi" />
+            <label for="midiFileInput">
+              <span class="file-icon">🎹</span>
+              <span class="file-name">请选择文件</span>
+            </label>
+        </div>
         <button id="playBtn">播放</button>
         <button id="pauseBtn">暂停</button>
         <button id="resetBtn">重置</button>
@@ -55,10 +61,9 @@
         }); 
 
         let pianoVisualized = false;
+        const pianoContainer = document.getElementById('piano-container');
 
         document.getElementById('togglePianoBtn').addEventListener('click', () => {
-            const pianoContainer = document.getElementById('piano-container');
-
             if(!pianoVisualized) {
                 // 显示钢琴
                 pianoContainer.style.display = 'block';
@@ -79,6 +84,14 @@
         };
 
         document.addEventListener('click', startAudio);
+
+        const fileInput = document.getElementById('midiFileInput');
+        const fileNameSpan = document.querySelector('.file-name');
+      
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          fileNameSpan.textContent = file ? file.name : '未选择文件';
+        });
     </script>
 
     <script src="{{ url_for('static', filename='js/MidiEditor/EditorBackground.js') }}"></script>

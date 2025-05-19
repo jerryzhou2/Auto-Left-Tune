@@ -219,6 +219,27 @@ class Piano {
       this.updateKeyDisplay();
     });
 
+    const pianoContainer = document.getElementById('piano-container');
+    let isDragging = false;
+    let startX, startY;
+
+    pianoContainer.addEventListener('mousedown', (event) => {
+      isDragging = true;
+      startX = event.clientX - pianoContainer.offsetLeft;
+      startY = event.clientY - pianoContainer.offsetTop;
+    });
+
+    document.addEventListener('mousemove', (event) => {
+      if (isDragging) {
+        pianoContainer.style.left = `${event.clientX - startX}px`;
+        pianoContainer.style.top = `${event.clientY - startY}px`;
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
     // 监听窗口大小变化，重新计算键盘尺寸
     window.addEventListener('resize', this.computeEleSize);
 

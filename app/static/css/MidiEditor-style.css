@@ -10,6 +10,7 @@ h1 {
 
 .controls {
     margin-bottom: 10px;
+    display: flex;
 }
 
 button {
@@ -130,4 +131,161 @@ button {
 
 #pauseBtn::before {
     background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 19h4V5H6v14zm8 0h4V5h-4v14z"/></svg>');
+}
+
+.title-art {
+    /* 基础样式 */
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: bold;
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+    /* 用于定位伪元素 */
+
+    /* 渐变色彩（蓝紫色系模拟音符流动） */
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    color: transparent;
+    background-clip: text;
+
+    /* 立体光影效果 */
+    text-shadow:
+        2px 2px 8px rgba(102, 126, 234, 0.3),
+        /* 外层模糊阴影 */
+        0 0 12px rgba(118, 75, 162, 0.2);
+    /* 内层光晕 */
+
+    /* 钢琴键盘装饰（伪元素） */
+}
+
+.title-art::after {
+    content: "";
+    display: block;
+    width: 60%;
+    height: 4px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    margin: 8px auto 0;
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.2);
+    /* 阴影模拟按键立体感 */
+}
+
+.custom-file-input {
+    position: relative;
+    width: 250px;
+    margin: 10px;
+}
+
+/* 隐藏原生输入框 */
+#midiFileInput {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* 自定义按钮样式 */
+.custom-file-input label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 25px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* 图标样式 */
+.file-icon {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+/* 选中文件后的文字样式 */
+.file-name {
+    color: #e0e0e0;
+    font-size: 0.9em;
+    margin-left: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+    /* 限制文件名长度 */
+}
+
+/* 交互状态 */
+.custom-file-input label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(102, 126, 234, 0.3);
+}
+
+.custom-file-input label:focus-within {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2);
+}
+
+.custom-file-input {
+    position: relative;
+    width: 200px;
+    margin: 10px;
+}
+
+/* 隐藏原生输入框 */
+#midiFileInput {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* 自定义按钮样式 */
+.custom-file-input label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 25px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* 图标样式 */
+.file-icon {
+    margin-right: 8px;
+    font-size: 1.2em;
+}
+
+/* 选中文件后的文字样式 */
+.file-name {
+    color: #e0e0e0;
+    font-size: 0.9em;
+    margin-left: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+    /* 限制文件名长度 */
+}
+
+/* 交互状态 */
+.custom-file-input label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(102, 126, 234, 0.3);
+}
+
+.custom-file-input label:focus-within {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2);
 }
