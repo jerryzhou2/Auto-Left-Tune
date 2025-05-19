@@ -51,3 +51,83 @@ canvas {
 .track-label {
     margin-right: 10px;
 }
+
+/* 全局按钮样式 */
+button {
+    margin-right: 10px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    outline: none;
+}
+
+/* 主操作按钮（播放/暂停等） */
+#playBtn,
+#pauseBtn,
+#exportBtn {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+#playBtn:hover,
+#pauseBtn:hover,
+#exportBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+#playBtn:active,
+#pauseBtn:active,
+#exportBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.5);
+}
+
+/* 重置按钮（警示色） */
+#resetBtn {
+    background: #ff4444;
+    color: white;
+    box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
+}
+
+#resetBtn:hover {
+    background: #ff6b6b;
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+}
+
+/* 切换按钮（中性色） */
+#togglePianoBtn {
+    background: #5f6368;
+    color: white;
+    box-shadow: 0 2px 8px rgba(95, 99, 104, 0.3);
+}
+
+#togglePianoBtn:hover {
+    background: #75797e;
+    box-shadow: 0 4px 12px rgba(95, 99, 104, 0.4);
+}
+
+/* 按钮图标（示例：播放/暂停图标，需配合字体图标或SVG使用） */
+#playBtn::before,
+#pauseBtn::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-size: contain;
+    margin-right: 6px;
+    filter: brightness(0) invert(1);
+}
+
+#playBtn::before {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>');
+}
+
+#pauseBtn::before {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 19h4V5H6v14zm8 0h4V5h-4v14z"/></svg>');
+}
