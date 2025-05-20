@@ -56,24 +56,9 @@
 
         // 页面加载完成后初始化钢琴
         document.addEventListener('DOMContentLoaded', () => {
-            const piano = new Piano();
-            piano.init('#piano-container');
+            const pianoInstance = new Piano();
+            pianoInstance.init('#piano-container');
         }); 
-
-        let pianoVisualized = false;
-        const pianoContainer = document.getElementById('piano-container');
-
-        document.getElementById('togglePianoBtn').addEventListener('click', () => {
-            if(!pianoVisualized) {
-                // 显示钢琴
-                pianoContainer.style.display = 'block';
-                pianoVisualized = true;
-            } else {
-                // 隐藏钢琴
-                pianoContainer.style.display = 'none';
-                pianoVisualized = false;
-            }
-        });
 
         // 添加用户交互来启动AudioContext
         const startAudio = () => {
@@ -91,6 +76,34 @@
         fileInput.addEventListener('change', (e) => {
           const file = e.target.files[0];
           fileNameSpan.textContent = file ? file.name : '未选择文件';
+        });
+
+        // 钢琴显示按键
+        let pianoVisualized = false;
+        const pianoContainer = document.getElementById('piano-container');
+        let posInit = false;
+        let rect = null;
+
+        document.getElementById('togglePianoBtn').addEventListener('click', () => {
+            const myPiano = document.getElementById('pianoComponent');
+
+            // 如何实现恢复初始位置待定
+            if(!posInit) {
+                posInit = true;
+                // 获取位置
+                rect = myPiano.getBoundingClientRect();         // 获取元素的位置信息
+            }
+
+            if (!pianoVisualized) {
+                // 显示钢琴
+                pianoContainer.style.display = 'block';
+                pianoVisualized = true;
+            } 
+            else {
+                // 隐藏钢琴
+                pianoContainer.style.display = 'none';
+                pianoVisualized = false;
+            }
         });
     </script>
 

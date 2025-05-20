@@ -1,13 +1,22 @@
 /* 钢琴组件样式 */
 .piano-component {
   width: 100%;
-  position: relative;
+  /*修改*/
+  position: absolute;
   color: #000;
   margin-bottom: 20px;
+  cursor: grab;
+  /* 避免选中文本 */
+  user-select: none;
+  z-index: 1000;
 }
 
 .piano-component #audioEffectCanvas {
   display: none;
+}
+
+.piano-component.dragging {
+  cursor: grabbing;
 }
 
 /* 修改钢琴滚动容器 */

@@ -91,6 +91,8 @@ class Piano {
     this.clearStoredNotes = this.clearStoredNotes.bind(this);
     this.recordBegin = this.recordBegin.bind(this);
 
+    this.initDraggable = this.initDraggable.bind(this);
+
     // 添加样式到DOM
     const style = document.createElement('style');
     style.textContent = `
@@ -208,6 +210,8 @@ class Piano {
     // 初始化钢琴
     this.initPiano();
 
+    this.initDraggable();
+
     // 绑定开关事件
     document.getElementById('keyname').addEventListener('change', (e) => {
       this.showKeyName = e.target.checked;
@@ -217,27 +221,6 @@ class Piano {
     document.getElementById('notename').addEventListener('change', (e) => {
       this.showNoteName = e.target.checked;
       this.updateKeyDisplay();
-    });
-
-    const pianoContainer = document.getElementById('piano-container');
-    let isDragging = false;
-    let startX, startY;
-
-    pianoContainer.addEventListener('mousedown', (event) => {
-      isDragging = true;
-      startX = event.clientX - pianoContainer.offsetLeft;
-      startY = event.clientY - pianoContainer.offsetTop;
-    });
-
-    document.addEventListener('mousemove', (event) => {
-      if (isDragging) {
-        pianoContainer.style.left = `${event.clientX - startX}px`;
-        pianoContainer.style.top = `${event.clientY - startY}px`;
-      }
-    });
-
-    document.addEventListener('mouseup', () => {
-      isDragging = false;
     });
 
     // 监听窗口大小变化，重新计算键盘尺寸
@@ -264,6 +247,38 @@ class Piano {
       }
     });
 
+  }
+
+  initDraggable() {
+    const piano = document.getElementById('pianoComponent');
+    if (!piano) {
+      console.error("钢琴组件未插入，无法初始化拖动逻辑");
+      return;
+    }
+
+    let isDragging = false;
+    let offsetX = 0, offsetY = 0;
+
+    piano.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      piano.classList.add('dragging');
+      const rect = piano.getBoundingClientRect();
+      offsetX = e.clientX - rect.left;
+      offsetY = e.clientY - rect.top;
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      piano.style.position = 'absolute';
+      piano.style.left = `${e.clientX - offsetX}px`;
+      piano.style.top = `${e.clientY - offsetY}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+      piano.classList.remove('dragging');
+    });
   }
 
   recordBegin() {
