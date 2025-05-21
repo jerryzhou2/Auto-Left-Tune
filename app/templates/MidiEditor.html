@@ -87,13 +87,6 @@
         document.getElementById('togglePianoBtn').addEventListener('click', () => {
             const myPiano = document.getElementById('pianoComponent');
 
-            // 如何实现恢复初始位置待定
-            if(!posInit) {
-                posInit = true;
-                // 获取位置
-                rect = myPiano.getBoundingClientRect();         // 获取元素的位置信息
-            }
-
             if (!pianoVisualized) {
                 // 显示钢琴
                 pianoContainer.style.display = 'block';

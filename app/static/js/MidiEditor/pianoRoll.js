@@ -189,6 +189,8 @@ function drawGrid() {
 
     const measureWidth = timeScale * 4; // 一小节 4 拍
     const beatWidth = timeScale;       // 每拍的宽度
+    const secondsPerBeat = 0.5;        // 假设每拍是 0.5 秒（可调）
+
     ctx.lineWidth = 1;
 
     // 1. 绘制音高横线（水平）
@@ -201,7 +203,7 @@ function drawGrid() {
         ctx.stroke();
     }
 
-    // 2. 绘制垂直拍线 + 小节线 + 小节编号
+    // 2. 绘制垂直拍线 + 小节线 + 小节编号 + 时间刻度
     for (let x = 0; x < canvas.width; x += beatWidth) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -213,14 +215,20 @@ function drawGrid() {
         ctx.strokeStyle = isMeasureStart ? '#999' : '#ddd'; // 小节线加深
         ctx.stroke();
 
+        // 时间轴显示（每拍时间）
+        const timeInSeconds = beatsToSeconds(beatIndex) * 2;
+        ctx.fillStyle = '#007';
+        ctx.font = '10px Arial';
+        ctx.fillText(`${timeInSeconds}s`, x + 2, 10);
+
         // 小节编号
         if (isMeasureStart) {
             const measureNumber = Math.floor(beatIndex / 4) + 1;
             ctx.fillStyle = '#333';
             ctx.font = '10px Arial';
-            ctx.fillText(`M${measureNumber}`, x + 3, 12);
+            ctx.fillText(`M${measureNumber}`, x + 3, 22); // 往下移一点，避免与时间重叠
 
-            // A0 到 F（A0 到 F8）的纵向音高标号
+            // A0 到 F 的纵向音高标号
             for (let i = 0; i < visibleRange; i++) {
                 const midiNum = pitchBase + i;
                 const noteName = getNoteName(midiNum);
@@ -228,12 +236,12 @@ function drawGrid() {
 
                 ctx.fillStyle = '#444';
                 ctx.font = '9px Arial';
-                ctx.fillText(noteName, x + 2, y - 2); // 纵向标签，靠近该列
+                ctx.fillText(noteName, x + 2, y - 2); // 纵向标签
             }
         }
     }
 
-    // 3. 标记每个横线的音名（在最左侧标记一次）
+    // 3. 最左侧标记音名
     for (let i = 0; i < visibleRange; i++) {
         const y = canvas.height - (i * noteHeight);
         const midiNum = pitchBase + i;
@@ -243,6 +251,15 @@ function drawGrid() {
         ctx.font = '9px Arial';
         ctx.fillText(noteName, 2, y - 2);
     }
+}
+
+function getCurrentBPM() {
+    return Tone.Transport.bpm.value;
+}
+
+function beatsToSeconds(beats) {
+    const bpm = getCurrentBPM();
+    return (beats * 60) / bpm;
 }
 
 function drawProgressLine() {
