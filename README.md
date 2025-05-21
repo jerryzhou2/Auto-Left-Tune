@@ -1,7 +1,8 @@
 ## Quick Start
 ### Platform
 Windows 10+
-buntu 20.04
+
+ubuntu 20.04+
 ### Start APP
 pip install -r requirements.txt
 
