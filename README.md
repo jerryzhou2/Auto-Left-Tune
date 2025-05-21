@@ -1,21 +1,12 @@
 ## Quick Start
+### Platform
+Windows 10+
+buntu 20.04
+### Start APP
 pip install -r requirements.txt
 
-将app/utils/transform.py中的
-```
-def find_musescore_executable():
-    # 在WSL中使用Linux路径格式
-    return "/mnt/c/Program Files/MuseScore 4/bin/MuseScore4.exe"
-...
-if __name__=="__main__":
-    musescore_exe = r"C:\Program Files\MuseScore 4\bin\MuseScore4.exe"
-```
-改为你本地电脑的MuseScore Studio 4.exe所在位置
-
 python3 run.py
-
 ## 项目介绍
-目前实现了传入midi文件→后端处理后，进行播放、导出钢琴谱pdf，以及下载的功能
 ### 各个文件夹介绍
 config: 配置文件，里面存了一些路径的信息
 
