@@ -15,7 +15,7 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    width: 90%;
     margin: 0 auto;
     background-color: #fff;
     padding: 30px;
@@ -51,6 +51,12 @@ h2 {
 }
 
 .upload-area {
+    width: 100%;
+    margin: 0 auto;
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     border: 2px dashed #3498db;
     border-radius: 5px;
     padding: 25px;
@@ -105,8 +111,7 @@ h2 {
 }
 
 .result-area {
-    margin-top: 30px;
-    display: none;
+    margin-top: 5px;
 }
 
 .progress-bar {
@@ -166,19 +171,21 @@ h2 {
 
 /* MIDI播放器样式 */
 .midi-player {
-    margin-top: 30px;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
+    margin-top: 0;
+    height: 100%;
 }
 
 .player-controls {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
     margin-bottom: 15px;
+}
+
+.player-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .player-btn {
@@ -245,13 +252,11 @@ h2 {
 
 /* 将播放按钮变成绿色 */
 #play-pause-midi-btn {
-    background-color: #2ecc71;
-    /* 绿色 */
+    background-color: #2ecc71; /* 绿色 */
 }
 
 #play-pause-midi-btn:hover {
-    background-color: #27ae60;
-    /* 深绿色 */
+    background-color: #27ae60; /* 深绿色 */
 }
 
 /* 播放按钮的播放和暂停图标切换 */
@@ -273,14 +278,12 @@ h2 {
 
 /* 原始MIDI和转换MIDI的按钮样式区分 */
 #play-midi-btn {
-    background-color: #3498db;
-    /* 蓝色 */
+    background-color: #3498db; /* 蓝色 */
 }
 
 /* 转换后的MIDI播放按钮样式 */
 #play-converted-midi-btn {
-    background-color: #9b59b6;
-    /* 紫色 */
+    background-color: #9b59b6; /* 紫色 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -288,8 +291,7 @@ h2 {
 }
 
 #play-converted-midi-btn:hover {
-    background-color: #8e44ad;
-    /* 深紫色 */
+    background-color: #8e44ad; /* 深紫色 */
 }
 
 #play-converted-midi-btn .play-icon::before {
@@ -298,8 +300,7 @@ h2 {
 
 /* 转换前的MIDI播放按钮样式 */
 #play-original-midi-btn {
-    background-color: #3498db;
-    /* 蓝色 */
+    background-color: #3498db; /* 蓝色 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -307,37 +308,99 @@ h2 {
 }
 
 #play-original-midi-btn:hover {
-    background-color: #2980b9;
-    /* 深蓝色 */
+    background-color: #2980b9; /* 深蓝色 */
 }
 
 #play-original-midi-btn .play-icon::before {
     border-left-color: #fff;
 }
 
+.progress-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+}
+
 .midi-progress-container {
     flex-grow: 1;
-    height: 10px;
+    height: 12px;
     background-color: #ddd;
-    border-radius: 5px;
-    margin: 0 10px;
+    border-radius: 6px;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+    cursor: pointer;
 }
 
 .midi-progress {
     height: 100%;
     background-color: #3498db;
     width: 0;
-    border-radius: 5px;
-    transition: width 0.3s linear;
+    border-radius: 6px;
+    transition: width 0.1s linear;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.midi-progress-handle {
+    width: 18px;
+    height: 18px;
+    background-color: #fff;
+    border: 2px solid #3498db;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    cursor: grab;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.midi-progress-container:hover .midi-progress-handle,
+.midi-progress-handle.active {
+    opacity: 1;
+}
+
+.midi-progress-handle:active {
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.1); /* 拖动时略微放大 */
+}
+
+.midi-progress-hover {
+    position: absolute;
+    height: 100%;
+    width: 0;
+    background-color: rgba(52, 152, 219, 0.3);
+    border-radius: 6px;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.midi-progress-container:hover .midi-progress-hover {
+    opacity: 1;
 }
 
 .time-display {
     font-family: monospace;
     font-size: 14px;
-    min-width: 50px;
-    text-align: right;
+    min-width: 90px;
+    text-align: center;
+    background-color: #f5f5f5;
+    padding: 3px 8px;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.time-display span {
+    margin: 0 2px;
 }
 
 .midi-visualizer {
@@ -417,17 +480,17 @@ h2 {
 /* 原始PDF按钮样式 */
 .original-pdf-buttons {
     margin: 15px 0;
-    text-align: center;
+    text-align: left;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    align-items: flex-start;
 }
 
 .original-pdf-buttons .btn {
     background-color: #e74c3c;
-    /* 红色主题 */
-    padding: 8px 15px;
-    font-size: 14px;
+    padding: 10px 20px;
+    font-size: 16px;
     transition: all 0.3s ease;
     margin: 0;
 }
@@ -468,7 +531,7 @@ h2 {
 /* 添加应用程序布局样式 */
 .app-content-wrapper {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: space-between;
     gap: 20px;
     margin-bottom: 30px;
@@ -493,25 +556,19 @@ h2 {
 
 /* PDF查看器样式 */
 #pdf-view-container {
-    display: flex;
-    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 #pdf-container {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    height: 600px;
-    /* 增加高度 */
-    overflow-y: auto;
-    padding: 20px;
-    margin-top: 10px;
+    height: 100%;
+    max-height: 400px;
+    overflow: auto;
 }
 
 #pdf-viewer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    min-height: 350px;
 }
 
 .pdf-page {
@@ -525,10 +582,11 @@ h2 {
 #midi-player {
     flex: 1;
     min-width: 300px;
+    margin-right: 20px;
 }
 
 /* 当屏幕变小时，让布局变成垂直排列 */
-@media (max-width: 768px) {
+@media all and (max-width: 768px) {
     .app-content-wrapper {
         flex-direction: column;
     }
@@ -536,7 +594,9 @@ h2 {
     #upload-container,
     #midi-player,
     #pdf-view-container {
-        max-width: 100%;
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 20px;
     }
 
     #pdf-container {
@@ -593,6 +653,11 @@ h2 {
     margin-bottom: 10px;
 }
 
+.pdf-controls {
+    display: flex;
+    gap: 8px;
+}
+
 .btn-sm {
     padding: 5px 10px;
     font-size: 14px;
@@ -624,13 +689,29 @@ h2 {
 
 /* 停止按钮样式 */
 #stop-midi-btn {
-    background-color: #e74c3c;
-    /* 红色 */
+    background-color: #e74c3c; /* 红色 */
 }
 
 #stop-midi-btn:hover {
-    background-color: #c0392b;
-    /* 深红色 */
+    background-color: #c0392b; /* 深红色 */
+}
+
+/* 播放器中的下载MIDI按钮样式 */
+#download-current-midi-btn {
+    background-color: #f39c12; /* 橙色 */
+    margin-left: 10px;
+}
+
+#download-current-midi-btn:hover {
+    background-color: #d35400; /* 深橙色 */
+}
+
+/* 下载MIDI按钮禁用状态 */
+#download-current-midi-btn:disabled {
+    background-color: #bdc3c7; /* 灰色 */
+    color: #7f8c8d;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 /* PDF加载指示器样式 */
@@ -701,4 +782,90 @@ h2 {
     text-align: center;
     width: 90%;
     max-width: 500px;
+}
+
+/* 网格布局样式 */
+.grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    grid-gap: 20px;
+    min-height: 600px;
+}
+
+.grid-item {
+    overflow: auto;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.top-left {
+    grid-area: 1 / 1 / 2 / 2;
+}
+
+.top-right {
+    grid-area: 1 / 2 / 2 / 3;
+}
+
+.bottom-left {
+    grid-area: 2 / 1 / 3 / 2;
+}
+
+.bottom-right {
+    grid-area: 2 / 2 / 3 / 3;
+}
+
+/* 按钮区域调整 */
+#buttons-area .buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start;
+    margin: 10px 0;
+}
+
+/* 对于小屏幕的响应式布局 */
+@media (max-width: 992px) {
+    .grid-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+    }
+    
+    .top-left {
+        grid-area: 1 / 1 / 2 / 2;
+    }
+    
+    .top-right {
+        grid-area: 2 / 1 / 3 / 2;
+    }
+    
+    .bottom-left {
+        grid-area: 3 / 1 / 4 / 2;
+    }
+    
+    .bottom-right {
+        grid-area: 4 / 1 / 5 / 2;
+    }
+}
+
+/* 当前播放文件名显示区域样式 */
+.current-file-info {
+    margin: 5px 0 15px 0;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 3px solid #3498db;
+}
+
+#current-midi-filename {
+    font-style: italic;
+    font-weight: 500;
 }
