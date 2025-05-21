@@ -22,6 +22,8 @@ const timeScale = 150;
 const pitchBase = 21; // A0
 const visibleRange = 88;
 
+canvas.height = noteHeight * visibleRange;
+
 // ✅ 新增：进度线相关变量
 let currentTime = 0; // 当前时间（秒）
 let progressLineX = 0; // 进度线X坐标
@@ -43,6 +45,8 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
 
     // 更新轨道控制面板
     updateTrackControls(midiData);
+
+    drawSidebarNoteNames();
 
     currentMidi = midiData;
 });
@@ -184,6 +188,30 @@ function getNoteName(midi) {
     return `${note}${octave}`;
 }
 
+function drawSidebarNoteNames() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.innerHTML = '';
+
+    sidebar.style.position = 'relative';
+    sidebar.style.height = `${visibleRange * noteHeight}px`;
+
+    for (let i = 0; i < visibleRange; i++) {
+        const midiNum = pitchBase + i;
+        const noteName = getNoteName(midiNum);
+        const div = document.createElement('div');
+
+        div.textContent = noteName;
+        div.style.height = `${noteHeight}px`;
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';      // 垂直居中
+        div.style.justifyContent = 'flex-end';// 水平右对齐
+        div.style.fontSize = `${Math.floor(noteHeight * 0.5)}px`; // 比如 noteHeight=20 → 14px 字号
+        div.style.paddingRight = '5px';
+
+        sidebar.prepend(div); // 从高音往低音画，和 canvas 对齐
+    }
+}
+
 function drawGrid() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -227,29 +255,7 @@ function drawGrid() {
             ctx.fillStyle = '#333';
             ctx.font = '10px Arial';
             ctx.fillText(`M${measureNumber}`, x + 3, 22); // 往下移一点，避免与时间重叠
-
-            // A0 到 F 的纵向音高标号
-            for (let i = 0; i < visibleRange; i++) {
-                const midiNum = pitchBase + i;
-                const noteName = getNoteName(midiNum);
-                const y = canvas.height - (i * noteHeight);
-
-                ctx.fillStyle = '#444';
-                ctx.font = '9px Arial';
-                ctx.fillText(noteName, x + 2, y - 2); // 纵向标签
-            }
         }
-    }
-
-    // 3. 最左侧标记音名
-    for (let i = 0; i < visibleRange; i++) {
-        const y = canvas.height - (i * noteHeight);
-        const midiNum = pitchBase + i;
-        const noteName = getNoteName(midiNum);
-
-        ctx.fillStyle = '#666';
-        ctx.font = '9px Arial';
-        ctx.fillText(noteName, 2, y - 2);
     }
 }
 
