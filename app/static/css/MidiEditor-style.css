@@ -42,7 +42,7 @@ canvas {
     overflow-x: auto;
     overflow-y: hidden;
     /* 只滚动这里 */
-    height: 1584px;
+    height: 1600px;
     width: 100%;
     flex: 1;
 }
@@ -54,7 +54,7 @@ canvas {
     position: sticky;
     z-index: 10;
     left: 0;
-    height: 1584px;
+    height: 1600px;
 }
 
 #trackControls {

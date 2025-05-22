@@ -215,9 +215,7 @@ function drawSidebarNoteNames() {
 function drawGrid() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const measureWidth = timeScale * 4; // 一小节 4 拍
-    const beatWidth = timeScale;       // 每拍的宽度
-    const secondsPerBeat = 0.5;        // 假设每拍是 0.5 秒（可调）
+    const beatWidth = timeScale * beatsToSeconds(1);       // 每拍的宽度
 
     ctx.lineWidth = 1;
 
@@ -244,7 +242,7 @@ function drawGrid() {
         ctx.stroke();
 
         // 时间轴显示（每拍时间）
-        const timeInSeconds = beatsToSeconds(beatIndex) * 2;
+        const timeInSeconds = beatsToSeconds(beatIndex);
         ctx.fillStyle = '#007';
         ctx.font = '10px Arial';
         ctx.fillText(`${timeInSeconds}s`, x + 2, 10);
@@ -263,9 +261,9 @@ function getCurrentBPM() {
     return Tone.Transport.bpm.value;
 }
 
-function beatsToSeconds(beats) {
+function beatsToSeconds(num_beats) {
     const bpm = getCurrentBPM();
-    return (beats * 60) / bpm;
+    return (num_beats * 60) / bpm;
 }
 
 function drawProgressLine() {
