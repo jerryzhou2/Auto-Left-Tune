@@ -22,7 +22,71 @@ const timeScale = 150;
 const pitchBase = 21; // A0
 const visibleRange = 88;
 
+const allNotes = [];        // 用于存储所有音符对象，在对音符进行操作时使用
+let isDragging = false;
+let draggedNote = null;
+let startX = 0;
+let startY = 0;
+
 canvas.height = noteHeight * visibleRange;
+
+const offscreenCanvas = document.createElement('canvas');
+const offCtx = offscreenCanvas.getContext('2d');
+
+offscreenCanvas.height = canvas.height;
+offCtx.fillStyle = '#fff';
+
+canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;                // 网页左上角为原点
+    const y = e.clientY - rect.top;
+    draggedNote = allNotes.find(note => {
+        return x >= note.x && x < note.x + note.width && y >= note.y && y < note.y + note.height;       // 定位选中的音符
+    });
+    if (draggedNote) {
+        isDragging = true;
+        startX = x;
+        startY = y;
+    }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const dx = x - startX;
+        const dy = y - startY;
+        draggedNote.x += dx;
+        draggedNote.y += dy;
+        startX = x;
+        startY = y;
+        ctx.fillRect(x, y, width, height);
+    }
+});
+
+canvas.addEventListener('mouseup', (e) => {
+    if (isDragging) {
+        isDragging = false;
+        const nearestY = Math.round(draggedNote.y / noteHeight) * noteHeight;
+        draggedNote.y = nearestY;
+        const track = currentMidi.tracks[draggedNote.trackIndex];
+        const noteIndex = track.notes.findIndex(n => n === draggedNote.note);
+        if (noteIndex > -1) {
+            const newMidi = pitchBase + (canvas.height - draggedNote.y) / noteHeight;
+            track.notes[noteIndex].midi = newMidi;
+        }
+        // 处理x坐标对齐到合适节拍位置（需进一步完善）
+        const beatWidth = timeScale * beatsToSeconds(1);
+        const nearestX = Math.round(draggedNote.x / beatWidth) * beatWidth;
+        draggedNote.x = nearestX;
+        // 更新时间属性（需进一步完善）
+        if (noteIndex > -1) {
+            track.notes[noteIndex].time = draggedNote.x / timeScale;
+        }
+        drawPianoRoll(currentMidi);
+    }
+});
 
 // ✅ 新增：进度线相关变量
 let currentTime = 0; // 当前时间（秒）
@@ -158,10 +222,15 @@ function drawPianoRoll(midi) {
     const canvasWidth = maxTime * timeScale;
     canvas.width = canvasWidth;
 
+    offscreenCanvas.width = canvas.width;
+    offCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height); // 白色背景
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // ✅ 绘制网格在底层
-    drawGrid();
+    drawGrid();     // 画在离屏画布上
+
+    ctx.drawImage(offscreenCanvas, 0, 0); // 将离屏画布绘制到主画布上
 
     midi.tracks.forEach((track, trackIndex) => {
         if (!trackVisibility[trackIndex]) return;
@@ -170,8 +239,17 @@ function drawPianoRoll(midi) {
             const y = canvas.height - ((note.midi - pitchBase) * noteHeight);
             const width = note.duration * timeScale;
             const height = noteHeight - 1;
-            ctx.fillStyle = getColor(trackIndex);
+            ctx.fillStyle = getColor(trackIndex);       // track通过颜色区分
             ctx.fillRect(x, y, width, height);
+            const noteObj = {
+                note,
+                x,
+                y,
+                width,
+                height,
+                trackIndex
+            };
+            allNotes.push(noteObj);
         });
     });
 }
@@ -213,27 +291,27 @@ function drawSidebarNoteNames() {
 }
 
 function drawGrid() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    offCtx.clearRect(0, 0, canvas.width, canvas.height);
 
     const beatWidth = timeScale * beatsToSeconds(1);       // 每拍的宽度
 
-    ctx.lineWidth = 1;
+    offCtx.lineWidth = 1;
 
     // 1. 绘制音高横线（水平）
     for (let i = 0; i < visibleRange; i++) {
         const y = canvas.height - (i * noteHeight);
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.strokeStyle = i % 12 === 0 ? '#bbb' : '#eee'; // 每个C音高加深
-        ctx.stroke();
+        offCtx.beginPath();
+        offCtx.moveTo(0, y);
+        offCtx.lineTo(canvas.width, y);
+        offCtx.strokeStyle = i % 12 === 0 ? '#bbb' : '#eee'; // 每个C音高加深
+        offCtx.stroke();
     }
 
     // 2. 绘制垂直拍线 + 小节线 + 小节编号 + 时间刻度
     for (let x = 0; x < canvas.width; x += beatWidth) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+        offCtx.beginPath();
+        offCtx.moveTo(x, 0);
+        offCtx.lineTo(x, canvas.height);
 
         const beatIndex = x / beatWidth;
         const isMeasureStart = beatIndex % 4 === 0;
@@ -243,16 +321,16 @@ function drawGrid() {
 
         // 时间轴显示（每拍时间）
         const timeInSeconds = beatsToSeconds(beatIndex);
-        ctx.fillStyle = '#007';
-        ctx.font = '10px Arial';
-        ctx.fillText(`${timeInSeconds}s`, x + 2, 10);
+        offCtx.fillStyle = '#007';
+        offCtx.font = '10px Arial';
+        offCtx.fillText(`${timeInSeconds}s`, x + 2, 10);
 
         // 小节编号
         if (isMeasureStart) {
             const measureNumber = Math.floor(beatIndex / 4) + 1;
-            ctx.fillStyle = '#333';
-            ctx.font = '10px Arial';
-            ctx.fillText(`M${measureNumber}`, x + 3, 22); // 往下移一点，避免与时间重叠
+            offCtx.fillStyle = '#333';
+            offCtx.font = '10px Arial';
+            offCtx.fillText(`M${measureNumber}`, x + 3, 22); // 往下移一点，避免与时间重叠
         }
     }
 }
