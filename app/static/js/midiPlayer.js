@@ -534,26 +534,46 @@ class MidiPlayer {
   stopMidiPlay() {
     this.midiStop = true;
     this.isPaused = false; // 重置暂停状态
+    
+    // 保留文件ID和转换状态，以便停止后仍能下载
+    // 不要清除: this.currentFileId 和 this.isConvertedFile
+    
+    // 清理播放状态
     this.currentMidiData = null;
     this.midiNotes = [];
     this.lastPlayedTime = 0; // 重置已播放时间
-    // 注意：不清除currentFileId，因为可能还会再次播放同一文件
     
     // 如果有正在播放的音符，全部停止
     if (this.synth) {
       this.synth.releaseAll();
     }
     
-    if (this.debug) console.log('停止播放，重置所有状态');
+    if (this.debug) console.log('停止播放，保留文件标识以便下载');
   }
 
   // 暂停播放
   pauseMidiPlay() {
+    if (this.currentMidiData && !this.midiStop) {
+      this.isPaused = true;
+      this.midiStop = true;
+      this.lastPlayedTime = +new Date() - this.startTime;
+      if (this.debug) console.log('暂停播放，已播放时间:', this.lastPlayedTime, 'ms');
+    }
+  }
+
+  // 专门用于拖拽进度条时的暂停，不清空当前播放状态
+  pauseForSeek() {
+    if (!this.currentMidiData || !this.midiNotes || this.midiNotes.length === 0) {
+      return false;
+    }
+    
+    // 只设置暂停和停止标志，不清空数据
+    this.isPaused = true;
     this.midiStop = true;
-    this.isPaused = true; // 设置暂停状态为true
     this.lastPlayedTime = +new Date() - this.startTime;
     
-    if (this.debug) console.log('暂停播放，已播放时间:', this.lastPlayedTime, 'ms');
+    if (this.debug) console.log('暂停用于跳转，当前播放时间:', this.lastPlayedTime, 'ms');
+    return true;
   }
 
   // 恢复播放
@@ -585,6 +605,25 @@ class MidiPlayer {
     }
   }
 
+  // 从指定时间位置恢复播放（用于拖拽进度条后）
+  resumeFromSeek(seekTimeMs) {
+    if (!this.currentMidiData || !this.midiNotes || this.midiNotes.length === 0) {
+      if (this.debug) console.error('无法从跳转恢复：没有有效的MIDI数据');
+      return false;
+    }
+    
+    this.startTime = +new Date() - seekTimeMs;
+    this.lastPlayedTime = seekTimeMs;
+    this.isPaused = false;
+    this.midiStop = false;
+    
+    if (this.debug) console.log(`从 ${seekTimeMs/1000} 秒位置恢复播放，共有 ${this.midiNotes.length} 个音符，已标记播放 ${this.midiNotes.filter(n => n.played).length} 个`);
+    
+    // 立即开始播放循环
+    this.playLoop();
+    return true;
+  }
+
   // 获取当前播放文件的状态信息
   getPlaybackInfo() {
     return {
@@ -594,6 +633,20 @@ class MidiPlayer {
       isConverted: this.isConvertedFile,
       playbackTime: this.lastPlayedTime || (+new Date() - this.startTime)
     };
+  }
+
+  // 计算MIDI文件的总时长（秒）
+  calculateTotalDuration() {
+    if (!this.midiNotes || this.midiNotes.length === 0) {
+      return 0;
+    }
+    
+    // 计算最后一个音符的结束时间
+    const lastNote = this.midiNotes.reduce((prev, current) => {
+      return (prev.time + prev.duration > current.time + current.duration) ? prev : current;
+    });
+    
+    return lastNote.time + lastNote.duration;
   }
 }
 
