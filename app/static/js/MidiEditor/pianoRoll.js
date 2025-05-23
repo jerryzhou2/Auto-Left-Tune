@@ -140,12 +140,6 @@ canvas.addEventListener('mouseup', (e) => {
     }
 });
 
-// ✅ 新增：进度线相关变量
-let currentTime = 0; // 当前时间（秒）
-let progressLineX = 0; // 进度线X坐标
-const progressLineWidth = 2; // 线宽
-const timeDisplayOffset = 20; // 时间数字偏移量
-
 document.getElementById("midiFileInput").addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -202,34 +196,53 @@ function updateTrackControls(midi) {
     });
 }
 
-document.getElementById("playBtn").addEventListener("click", async () => {
-    if (!currentMidi || isPlaying) return;
+const playPauseBtn = document.getElementById("playBtn");
+let hasScheduled = false;
 
-    // 重置上一帧位置
-    lastProgressLineX = 0;
+playPauseBtn.addEventListener("click", async () => {
+    if (!currentMidi) return;
 
-    isPlaying = true;
-    Tone.Transport.cancel();
-    Tone.Transport.bpm.value = 120;
-    Tone.Transport.start();
+    if (!isPlaying) {
+        isPlaying = true;
+        playPauseBtn.textContent = "暂停";
 
-    updateProgressLoop(); // 启动进度线刷新
+        if (Tone.Transport.state === "stopped" || !hasScheduled) {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+            Tone.Transport.bpm.value = 120;
 
-    currentMidi.tracks.forEach((track, trackIndex) => {
-        if (!trackVisibility[trackIndex]) return;
-        track.notes.forEach(note => {
-            Tone.Transport.scheduleOnce((time) => {
-                synth.triggerAttackRelease(note.name, note.duration, time);
-            }, note.time);
-        });
-    });
-});
+            let maxTime = 0;
 
-document.getElementById("pauseBtn").addEventListener("click", () => {
-    Tone.Transport.pause();
-    isPlaying = false;
+            currentMidi.tracks.forEach((track, trackIndex) => {
+                if (!trackVisibility[trackIndex]) return;
+                track.notes.forEach(note => {
+                    Tone.Transport.scheduleOnce((time) => {
+                        synth.triggerAttackRelease(note.name, note.duration, time);
+                    }, note.time);
+                    maxTime = Math.max(maxTime, note.time + note.duration);
+                });
+            });
 
-    cancelAnimationFrame(animationFrameId);
+            hasScheduled = true;
+            Tone.Transport.start();
+
+            // 播放结束后重置按钮状态
+            Tone.Transport.scheduleOnce(() => {
+                isPlaying = false;
+                playPauseBtn.textContent = "播放";
+                hasScheduled = false; // 允许再次调度
+            }, maxTime + 0.1); // 加一点偏移避免截断
+        } else {
+            // 继续播放
+            Tone.Transport.start();
+        }
+
+    } else {
+        // 暂停播放
+        Tone.Transport.pause();
+        isPlaying = false;
+        playPauseBtn.textContent = "播放";
+    }
 });
 
 document.getElementById("resetBtn").addEventListener("click", () => {
@@ -237,12 +250,6 @@ document.getElementById("resetBtn").addEventListener("click", () => {
     isPlaying = false;
 
     currentTime = 0; // 重置时间
-    progressLineX = 0; // 重置进度线位置
-
-    cancelAnimationFrame(animationFrameId);
-
-    // 擦除进度线
-    ctx.clearRect(progressLineX, 0, progressLineWidth + 1, canvas.height);
 
     // 重绘音符和网格
     drawPianoRoll(currentMidi);
@@ -394,37 +401,4 @@ function getCurrentBPM() {
 function beatsToSeconds(num_beats) {
     const bpm = getCurrentBPM();
     return (num_beats * 60) / bpm;
-}
-
-function drawProgressLine() {
-    // 擦除上一帧的进度线
-    ctx.clearRect(lastProgressLineX, 0, progressLineWidth + 1, canvas.height);
-
-    // 当前播放时间
-    currentTime = Tone.Transport.seconds;
-    progressLineX = currentTime * timeScale;
-
-    // 绘制新的进度线
-    ctx.beginPath();
-    ctx.moveTo(progressLineX, 0);
-    ctx.lineTo(progressLineX, canvas.height);
-    ctx.strokeStyle = "red";
-    ctx.lineWidth = progressLineWidth;
-    ctx.stroke();
-
-    // 显示时间数字
-    ctx.fillStyle = "black";
-    ctx.font = "12px Arial";
-    ctx.fillText(currentTime.toFixed(2) + "s", progressLineX + 4, timeDisplayOffset);
-
-    // 记录本次绘制位置用于下一帧擦除
-    lastProgressLineX = progressLineX;
-}
-
-let animationFrameId;
-
-function updateProgressLoop() {
-    if (!isPlaying) return;
-    drawProgressLine();
-    animationFrameId = requestAnimationFrame(updateProgressLoop);
 }
