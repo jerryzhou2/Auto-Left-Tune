@@ -36,6 +36,8 @@ const offCtx = offscreenCanvas.getContext('2d');
 offscreenCanvas.height = canvas.height;
 offCtx.fillStyle = '#fff';
 
+let hasModified = false; // 标记是否有修改
+
 canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
@@ -109,7 +111,8 @@ canvas.addEventListener('mouseup', (e) => {
             // 写入新音高，但是新的音高没办法立刻体现在播放器上
             const newNote = pitchBase + visibleRange - 1 - draggedNote.y / noteHeight;   // 计算新音高存在问题？canvas.height并非完全对应 --> 网格也占据了px
             const clampedMidi = getNoteName(newNote);
-            track.notes[noteIndex].midi = clampedMidi;
+            track.notes[noteIndex].midi = newNote;
+            track.notes[noteIndex].name = clampedMidi;      // 播放时使用字符串
             draggedNote.note = track.notes[noteIndex];
         }
 
@@ -137,6 +140,8 @@ canvas.addEventListener('mouseup', (e) => {
                 }
             });
         });
+
+        hasModified = true; // 标记为已修改
     }
 });
 
@@ -206,7 +211,7 @@ playPauseBtn.addEventListener("click", async () => {
         isPlaying = true;
         playPauseBtn.textContent = "暂停";
 
-        if (Tone.Transport.state === "stopped" || !hasScheduled) {
+        if (Tone.Transport.state === "stopped" || !hasScheduled || hasModified) {
             Tone.Transport.stop();
             Tone.Transport.cancel();
             Tone.Transport.bpm.value = 120;
@@ -232,6 +237,9 @@ playPauseBtn.addEventListener("click", async () => {
                 playPauseBtn.textContent = "播放";
                 hasScheduled = false; // 允许再次调度
             }, maxTime + 0.1); // 加一点偏移避免截断
+
+            hasModified = false; // 重置修改标记
+
         } else {
             // 继续播放
             Tone.Transport.start();
