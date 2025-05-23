@@ -37,14 +37,62 @@ offscreenCanvas.height = canvas.height;
 offCtx.fillStyle = '#fff';
 
 let hasModified = false; // 标记是否有修改
+let choosedIndex = -1;      // 被选中的音符下标
+
+const menu = document.getElementById('context-menu');
+
+// 显示菜单
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); // 阻止默认菜单
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;                // 网页左上角为原点
+    const y = e.clientY - rect.top;
+    choosedIndex = allNotes.findIndex(note => {
+        return x >= note.x && x < note.x + note.width && y >= note.y && y < note.y + note.height;       // 定位选中的音符
+    });
+
+    if (choosedIndex === -1) return; // 没有选中音符
+
+    // 设置菜单位置
+    menu.style.top = `${e.clientY}px`;
+    menu.style.left = `${e.clientX}px`;
+    menu.style.display = 'block';
+});
+
+// 点击页面其他地方隐藏菜单 --> 点击菜单中的按键有无影响？
+document.addEventListener('click', () => {
+    menu.style.display = 'none';
+});
+
+document.getElementById('delete').addEventListener('click', () => {
+    if (choosedIndex === -1) return; // 没有选中音符
+
+    const choosedNote = allNotes[choosedIndex];
+    const x = choosedNote.x;
+    const y = choosedNote.y;
+
+    ctx.clearRect(x, y, choosedNote.width, choosedNote.height); // 清除选中的音符
+
+    allNotes.splice(choosedIndex, 1); // 删除选中的音符
+
+    const track = currentMidi.tracks[choosedNote.trackIndex];
+    const noteIndex = track.notes.findIndex(n => n === choosedNote.note);
+    if (noteIndex > -1) {
+        track.notes.splice(noteIndex, 1); // 删除选中的音符
+    }
+});
+
+let draggedNoteIndex = -1; // 被拖动的音符索引
 
 canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
-    draggedNote = allNotes.find(note => {
+    draggedNoteIndex = allNotes.findIndex(note => {
         return x >= note.x && x < note.x + note.width && y >= note.y && y < note.y + note.height;       // 定位选中的音符
     });
+    draggedNote = allNotes[draggedNoteIndex];       // 选中音符
     if (draggedNote) {
         isDragging = true;
         startX = x;
@@ -113,7 +161,9 @@ canvas.addEventListener('mouseup', (e) => {
             const clampedMidi = getNoteName(newNote);
             track.notes[noteIndex].midi = newNote;
             track.notes[noteIndex].name = clampedMidi;      // 播放时使用字符串
+
             draggedNote.note = track.notes[noteIndex];
+            allNotes[draggedNoteIndex] = draggedNote; // 更新音符对象
         }
 
         // 重新绘制自动挪移的音符

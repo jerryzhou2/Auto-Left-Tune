@@ -313,3 +313,71 @@ button {
     outline: none;
     box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.2);
 }
+
+#context-menu {
+    position: absolute;
+    display: none;
+    background: #ffffff;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    min-width: 160px;
+    overflow: hidden;
+    animation: fadeIn 0.15s ease-in-out;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#context-menu button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background-color: transparent;
+    text-align: left;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#context-menu button:hover {
+    background-color: #f0f4f8;
+    color: #007acc;
+}
+
+/* 可选图标空间 */
+#context-menu button::before {
+    content: "🛠️";
+    /* 可换成不同 emoji 或 SVG 图标 */
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+/* 每个按钮不同图标（可选） */
+#setDuration::before {
+    content: "⏱️";
+}
+
+#setTime::before {
+    content: "🕒";
+}
+
+#delete::before {
+    content: "🗑️";
+    color: crimson;
+}
+
+/* 出现时淡入动画 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
