@@ -381,3 +381,18 @@ button {
         transform: scale(1);
     }
 }
+
+#sliderContainer {
+    display: none;
+    position: absolute;
+    /* 关键点！ */
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#valueDisplay {
+    font-weight: bold;
+}

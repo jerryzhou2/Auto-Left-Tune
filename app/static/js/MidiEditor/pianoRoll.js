@@ -41,6 +41,8 @@ let choosedIndex = -1;      // 被选中的音符下标
 
 const menu = document.getElementById('context-menu');
 
+let durationInput = 50;
+
 // 显示菜单
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault(); // 阻止默认菜单
@@ -83,6 +85,24 @@ document.getElementById('delete').addEventListener('click', () => {
     if (noteIndex > -1) {
         track.notes.splice(noteIndex, 1); // 删除选中的音符
     }
+});
+
+const showSliderBtn = document.getElementById('addOneNote');
+const sliderContainer = document.getElementById('sliderContainer');
+const slider = document.getElementById('slider');
+const valueDisplay = document.getElementById('valueDisplay');
+
+showSliderBtn.addEventListener('click', (e) => {
+    console.log("showSliderBtn");
+    sliderContainer.style.top = `${e.clientY}px`;
+    sliderContainer.style.left = `${e.clientX}px`;
+    sliderContainer.style.display = 'block';
+});
+
+// 滑动时更新显示的值
+slider.addEventListener('input', () => {
+    valueDisplay.textContent = slider.value;
+    durationInput = slider.value;
 });
 
 canvas.addEventListener('mousedown', (e) => {
