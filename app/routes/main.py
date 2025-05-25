@@ -1,5 +1,6 @@
 import os
 import uuid
+import re
 from flask import Blueprint, request, send_file, render_template, jsonify
 from werkzeug.utils import secure_filename
 from app.config.config import Config
@@ -8,6 +9,14 @@ from app.utils import transform
 
 main = Blueprint('main', __name__)
 session_manager = SessionManager()
+
+def contains_chinese(text):
+    """
+    检查文本是否包含中文字符
+    """
+    pattern = re.compile(r'[\u4e00-\u9fa5]')
+    match = pattern.search(text)
+    return match is not None
 
 @main.route('/')
 def index():
@@ -25,6 +34,10 @@ def upload_file():
     file = request.files['file']
     if file.filename == '':
         return jsonify({'error': '没有选择文件'}), 400
+    
+    # 检查文件名是否包含中文
+    if contains_chinese(file.filename):
+        return jsonify({'error': '文件名不能包含中文'}), 400
     
     if file and file.filename.endswith('.mid'):
         # 生成会话ID并保存文件
