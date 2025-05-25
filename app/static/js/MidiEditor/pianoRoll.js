@@ -52,6 +52,8 @@ canvas.addEventListener('contextmenu', (e) => {
         return x >= note.x && x < note.x + note.width && y >= note.y && y < note.y + note.height;       // 定位选中的音符
     });
 
+    console.log("choose = ", choosedIndex);
+
     if (choosedIndex === -1) return; // 没有选中音符
 
     // 设置菜单位置
@@ -83,16 +85,14 @@ document.getElementById('delete').addEventListener('click', () => {
     }
 });
 
-let draggedNoteIndex = -1; // 被拖动的音符索引
-
 canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return; // 只处理左键点击
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
-    draggedNoteIndex = allNotes.findIndex(note => {
+    draggedNote = allNotes.find(note => {
         return x >= note.x && x < note.x + note.width && y >= note.y && y < note.y + note.height;       // 定位选中的音符
     });
-    draggedNote = allNotes[draggedNoteIndex];       // 选中音符
     if (draggedNote) {
         isDragging = true;
         startX = x;
@@ -115,29 +115,16 @@ canvas.addEventListener('mousemove', (e) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
         ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
         const track = currentMidi.tracks[draggedNote.trackIndex];
-        const draggedNoteIndex = track.notes.findIndex(n => n === draggedNote.note);
-        if (draggedNoteIndex > -1) {
-            track.notes[draggedNoteIndex].time = draggedNote.x / timeScale; // 更新时间 --> 影响接下来的绘制
+        if (draggedNote) {
+            track.notes.find(note => note === draggedNote.note).time = draggedNote.x / timeScale; // 更新时间 --> 影响接下来的绘制
         }
 
         currentMidi.tracks.forEach((track, trackIndex) => {
             if (!trackVisibility[trackIndex]) return;
-            track.notes.forEach((note, noteIndex) => {
-                const height = noteHeight - 1;
-                const width = note.duration * timeScale;
+            track.notes.forEach(note => {
+                const thisNote = allNotes.find(n => n.note === note);
                 ctx.fillStyle = getColor(trackIndex);
-                // 正在拖动的音符
-                if (noteIndex === draggedNoteIndex) {
-                    const draggedX = draggedNote.x;
-                    const draggedY = draggedNote.y;
-                    ctx.fillRect(draggedX, draggedY, width, height);
-                }
-                //固定不动的那些
-                else {
-                    const x = note.time * timeScale;
-                    const y = canvas.height - ((note.midi - pitchBase) * noteHeight);
-                    ctx.fillRect(x, y, width, height);
-                }
+                ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
             });
         });
     }
@@ -145,6 +132,7 @@ canvas.addEventListener('mousemove', (e) => {
 
 // 鼠标抬起后，更新note的性质
 canvas.addEventListener('mouseup', (e) => {
+    if (e.button !== 0) return;
     if (isDragging) {
         isDragging = false;
         // 新的y需要更新到画布上
@@ -152,19 +140,28 @@ canvas.addEventListener('mouseup', (e) => {
         draggedNote.y = nearestY;
 
         const track = currentMidi.tracks[draggedNote.trackIndex];
-        const noteIndex = track.notes.findIndex(n => n === draggedNote.note);
-        if (noteIndex > -1) {
-            track.notes[noteIndex].time = draggedNote.x / timeScale;
+        const draggedNoteInNotes = track.notes.find(note => note === draggedNote.note);
+        // 两个数组进行同步
+        if (draggedNote && draggedNoteInNotes) {
+            draggedNoteInNotes.time = draggedNote.x / timeScale;        // 时间更新，其在notes数组中的位置也可能更新
 
             // 写入新音高，但是新的音高没办法立刻体现在播放器上
             const newNote = pitchBase + visibleRange - 1 - draggedNote.y / noteHeight;   // 计算新音高存在问题？canvas.height并非完全对应 --> 网格也占据了px
             const clampedMidi = getNoteName(newNote);
-            track.notes[noteIndex].midi = newNote;
-            track.notes[noteIndex].name = clampedMidi;      // 播放时使用字符串
+            if (newNote)
+                draggedNoteInNotes.midi = newNote;
+            if (clampedMidi)
+                draggedNoteInNotes.name = clampedMidi;      // 播放时使用字符串
 
-            draggedNote.note = track.notes[noteIndex];
-            allNotes[draggedNoteIndex] = draggedNote; // 更新音符对象
+            draggedNote.note = draggedNoteInNotes;
+
+            const newX = draggedNoteInNotes.time * timeScale;
+            const newY = canvas.height - ((draggedNoteInNotes.midi - pitchBase) * noteHeight);
+            draggedNote.x = newX;
+            draggedNote.y = newY;
         }
+
+        track.notes.sort((a, b) => a.time - b.time); // 不需要allNotes和其顺序一致
 
         // 重新绘制自动挪移的音符
         ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
@@ -172,26 +169,15 @@ canvas.addEventListener('mouseup', (e) => {
 
         currentMidi.tracks.forEach((track, trackIndex) => {
             if (!trackVisibility[trackIndex]) return;
-            track.notes.forEach((note, index) => {
-                const height = noteHeight - 1;
-                const width = note.duration * timeScale;
+            track.notes.forEach(note => {
+                const thisNote = allNotes.find(n => n.note === note);
                 ctx.fillStyle = getColor(trackIndex);
-                // 正在拖动的音符
-                if (index === noteIndex) {
-                    const draggedX = draggedNote.x;
-                    const draggedY = draggedNote.y;
-                    ctx.fillRect(draggedX, draggedY, width, height);
-                }
-                //固定不动的那些
-                else {
-                    const x = note.time * timeScale;
-                    const y = canvas.height - ((note.midi - pitchBase) * noteHeight);
-                    ctx.fillRect(x, y, width, height);
-                }
+                ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
             });
         });
 
         hasModified = true; // 标记为已修改
+        draggedNote = null; // 清除拖动的音符
     }
 });
 
