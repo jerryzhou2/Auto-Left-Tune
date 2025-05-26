@@ -37,11 +37,9 @@ offscreenCanvas.height = canvas.height;
 offCtx.fillStyle = '#fff';
 
 let hasModified = false; // 标记是否有修改
-let choosedIndex = -1;      // 被选中的音符下标
+let choosedNote = null;      // 被选中的音符下标
 
 const menu = document.getElementById('context-menu');
-
-let durationInput = 50;
 
 // 显示菜单
 canvas.addEventListener('contextmenu', (e) => {
@@ -50,13 +48,14 @@ canvas.addEventListener('contextmenu', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
-    choosedIndex = allNotes.findIndex(note => {
+    choosedNote = allNotes.find(note => {
         return x >= note.x && x < note.x + note.width && y >= note.y && y < note.y + note.height;       // 定位选中的音符
     });
 
-    console.log("choose = ", choosedIndex);
-
-    if (choosedIndex === -1) return; // 没有选中音符
+    if (!choosedNote) {
+        console.warn("contextmenu没有选中音符");
+        return; // 没有选中音符
+    }
 
     // 设置菜单位置
     menu.style.top = `${e.clientY}px`;
@@ -70,13 +69,14 @@ document.addEventListener('click', () => {
 });
 
 document.getElementById('delete').addEventListener('click', () => {
-    if (choosedIndex === -1) return; // 没有选中音符
+    if (!choosedNote) return; // 没有选中音符
 
-    const choosedNote = allNotes[choosedIndex];
     const x = choosedNote.x;
     const y = choosedNote.y;
 
     ctx.clearRect(x, y, choosedNote.width, choosedNote.height); // 清除选中的音符
+
+    choosedIndex = allNotes.findIndex(note => note === choosedNote.note);
 
     allNotes.splice(choosedIndex, 1); // 删除选中的音符
 
@@ -85,9 +85,11 @@ document.getElementById('delete').addEventListener('click', () => {
     if (noteIndex > -1) {
         track.notes.splice(noteIndex, 1); // 删除选中的音符
     }
+
+    console.log("delete note");
 });
 
-const showSliderBtn = document.getElementById('addOneNote');
+const showSliderBtn = document.getElementById('setDuration');
 const sliderContainer = document.getElementById('sliderContainer');
 const slider = document.getElementById('slider');
 const valueDisplay = document.getElementById('valueDisplay');
@@ -99,14 +101,44 @@ showSliderBtn.addEventListener('click', (e) => {
     sliderContainer.style.display = 'block';
 });
 
+let durationInput = 1;
 // 滑动时更新显示的值
 slider.addEventListener('input', () => {
     valueDisplay.textContent = slider.value;
-    durationInput = slider.value;
+    durationInput = parseFloat(slider.value);
+
+    const track = currentMidi.tracks[choosedNote.trackIndex];
+    const choosedNoteInNotes = track.notes.find(note => note === choosedNote.note);
+
+    if (choosedNoteInNotes && choosedNote) {
+        choosedNoteInNotes.duration = durationInput;
+        choosedNote.width = durationInput * timeScale; // 更新选中音符的宽度
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+        ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
+
+        currentMidi.tracks.forEach((track, trackIndex) => {
+            if (!trackVisibility[trackIndex]) return;
+            track.notes.forEach(note => {
+                const thisNote = allNotes.find(n => n.note === note);
+                ctx.fillStyle = getColor(trackIndex);
+                ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+            });
+        });
+
+        hasModified = true; // 标记为已修改
+    }
+    else {
+        console.warn("notes中找不到对应音符");
+    }
 });
 
 canvas.addEventListener('mousedown', (e) => {
+    if (menu.contains(e.target) || sliderContainer.contains(e.target)) {
+        return;
+    }
     if (e.button !== 0) return; // 只处理左键点击
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
