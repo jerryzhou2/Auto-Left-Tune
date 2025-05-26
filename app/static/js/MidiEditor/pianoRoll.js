@@ -39,7 +39,19 @@ offCtx.fillStyle = '#fff';
 let hasModified = false; // 标记是否有修改
 let choosedNote = null;      // 被选中的音符下标
 
+let initDurationValue = -1; // 初始化值为选中音符的持续时间
+let durationInput = -1;
+
 const menu = document.getElementById('context-menu');
+const setTimeBtn = document.getElementById('setTime');
+const timeInputBox = document.getElementById('timeInputBox');
+const timeInput = document.getElementById('timeInput');
+const confirmTime = document.getElementById('confirmTime');
+
+const showSliderBtn = document.getElementById('setDuration');
+const sliderContainer = document.getElementById('sliderContainer');
+const slider = document.getElementById('slider');
+const valueDisplay = document.getElementById('valueDisplay');
 
 function redrawCanvas(midi) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
@@ -75,17 +87,18 @@ canvas.addEventListener('contextmenu', (e) => {
     menu.style.top = `${e.clientY}px`;
     menu.style.left = `${e.clientX}px`;
     menu.style.display = 'block';
+
+    initDurationValue = String(choosedNote.note.duration);
+    console.log("initDurationValue:", initDurationValue);
+    durationInput = parseFloat(initDurationValue);
+    slider.value = initDurationValue; // 设置滑块初始值
+    valueDisplay.textContent = slider.value;
 });
 
 // 点击页面其他地方隐藏菜单 --> 点击菜单中的按键有无影响？
 document.addEventListener('click', () => {
     menu.style.display = 'none';
 });
-
-const setTimeBtn = document.getElementById('setTime');
-const timeInputBox = document.getElementById('timeInputBox');
-const timeInput = document.getElementById('timeInput');
-const confirmTime = document.getElementById('confirmTime');
 
 setTimeBtn.addEventListener('click', (e) => {
     if (!choosedNote) return;
@@ -134,11 +147,6 @@ document.getElementById('delete').addEventListener('click', () => {
     console.log("delete note");
 });
 
-const showSliderBtn = document.getElementById('setDuration');
-const sliderContainer = document.getElementById('sliderContainer');
-const slider = document.getElementById('slider');
-const valueDisplay = document.getElementById('valueDisplay');
-
 showSliderBtn.addEventListener('click', (e) => {
     console.log("showSliderBtn");
     sliderContainer.style.top = `${e.clientY}px`;
@@ -146,7 +154,6 @@ showSliderBtn.addEventListener('click', (e) => {
     sliderContainer.style.display = 'block';
 });
 
-let durationInput = 1;
 // 滑动时更新显示的值
 slider.addEventListener('input', () => {
     valueDisplay.textContent = slider.value;
