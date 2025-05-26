@@ -41,6 +41,20 @@ let choosedNote = null;      // 被选中的音符下标
 
 const menu = document.getElementById('context-menu');
 
+function redrawCanvas(midi) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+    ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
+
+    midi.tracks.forEach((track, trackIndex) => {
+        if (!trackVisibility[trackIndex]) return;
+        track.notes.forEach(note => {
+            const thisNote = allNotes.find(n => n.note === note);
+            ctx.fillStyle = getColor(trackIndex);
+            ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+        });
+    });
+}
+
 // 显示菜单
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault(); // 阻止默认菜单
@@ -66,6 +80,37 @@ canvas.addEventListener('contextmenu', (e) => {
 // 点击页面其他地方隐藏菜单 --> 点击菜单中的按键有无影响？
 document.addEventListener('click', () => {
     menu.style.display = 'none';
+});
+
+const setTimeBtn = document.getElementById('setTime');
+const timeInputBox = document.getElementById('timeInputBox');
+const timeInput = document.getElementById('timeInput');
+const confirmTime = document.getElementById('confirmTime');
+
+setTimeBtn.addEventListener('click', (e) => {
+    if (!choosedNote) return;
+
+    // 设置初值和位置
+    timeInput.value = choosedNote.note.time;
+    timeInputBox.style.top = `${e.clientY}px`;
+    timeInputBox.style.left = `${e.clientX}px`;
+    timeInputBox.style.display = 'block';
+});
+
+confirmTime.addEventListener('click', () => {
+    const newTime = parseFloat(timeInput.value);
+    if (!isNaN(newTime)) {
+        const track = currentMidi.tracks[choosedNote.trackIndex];
+        const noteInTrack = track.notes.find(note => note === choosedNote.note);
+        if (noteInTrack) {
+            noteInTrack.time = newTime;
+            choosedNote.note.time = newTime;
+            choosedNote.x = newTime * timeScale;
+
+            redrawCanvas(currentMidi); // 重新绘制画布
+        }
+    }
+    timeInputBox.style.display = 'none';
 });
 
 document.getElementById('delete').addEventListener('click', () => {
@@ -114,17 +159,7 @@ slider.addEventListener('input', () => {
         choosedNoteInNotes.duration = durationInput;
         choosedNote.width = durationInput * timeScale; // 更新选中音符的宽度
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
-        ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
-
-        currentMidi.tracks.forEach((track, trackIndex) => {
-            if (!trackVisibility[trackIndex]) return;
-            track.notes.forEach(note => {
-                const thisNote = allNotes.find(n => n.note === note);
-                ctx.fillStyle = getColor(trackIndex);
-                ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-            });
-        });
+        redrawCanvas(currentMidi); // 重新绘制画布
 
         hasModified = true; // 标记为已修改
     }
@@ -358,7 +393,7 @@ document.getElementById("exportBtn").addEventListener("click", () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "exported.mid";
+    a.download = "NewMidi.mid";
     a.click();
     URL.revokeObjectURL(url);
 });

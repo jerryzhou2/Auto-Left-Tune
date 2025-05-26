@@ -396,3 +396,46 @@ button {
 #valueDisplay {
     font-weight: bold;
 }
+
+#timeInputBox {
+    position: absolute;
+    display: none;
+    padding: 12px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    transition: opacity 0.2s ease;
+    font-family: Arial, sans-serif;
+}
+
+#timeInputBox input[type="number"] {
+    width: 100px;
+    padding: 6px 10px;
+    font-size: 14px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    margin-right: 8px;
+    transition: border 0.2s;
+}
+
+#timeInputBox input[type="number"]:focus {
+    border-color: #4A90E2;
+    outline: none;
+}
+
+#confirmTime {
+    padding: 6px 14px;
+    font-size: 14px;
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#confirmTime:hover {
+    background-color: #357ABD;
+}
