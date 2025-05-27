@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倍速功能修复测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+
+        .test-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn.active {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.1s ease;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        .log-area {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .status.playing {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.paused {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.stopped {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>倍速功能修复测试</h1>
+        
+        <!-- 模拟播放器 -->
+        <div class="test-section">
+            <h3>模拟MIDI播放器</h3>
+            
+            <div class="progress-bar">
+                <div id="progress" class="progress" style="width: 0%;"></div>
+            </div>
+            
+            <div class="time-info">
+                <span>当前时间: <span id="current-time">00:00</span></span>
+                <span>总时长: <span id="total-time">03:00</span></span>
+                <span>倍速: <span id="current-speed">1x</span></span>
+            </div>
+            
+            <div>
+                <button class="btn" id="play-btn">▶️ 播放</button>
+                <button class="btn" id="pause-btn">⏸️ 暂停</button>
+                <button class="btn" id="stop-btn">⏹️ 停止</button>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <strong>倍速控制：</strong>
+                <button class="btn speed-btn" data-speed="0.75">0.75x</button>
+                <button class="btn speed-btn active" data-speed="1">1x</button>
+                <button class="btn speed-btn" data-speed="1.5">1.5x</button>
+                <button class="btn speed-btn" data-speed="2">2x</button>
+                <button class="btn speed-btn" data-speed="3">3x</button>
+            </div>
+            
+            <div id="status" class="status stopped">已停止</div>
+        </div>
+
+        <!-- 测试说明 -->
+        <div class="test-section">
+            <h3>测试说明</h3>
+            <ul>
+                <li><strong>播放测试：</strong>点击播放按钮开始模拟播放</li>
+                <li><strong>倍速切换：</strong>在播放过程中切换不同倍速，观察时间是否连续</li>
+                <li><strong>暂停恢复：</strong>暂停后恢复播放，检查时间是否正确</li>
+                <li><strong>进度跳转：</strong>点击进度条跳转到不同位置</li>
+                <li><strong>日志监控：</strong>查看下方日志了解内部时间计算</li>
+            </ul>
+        </div>
+
+        <!-- 日志区域 -->
+        <div class="test-section">
+            <h3>调试日志</h3>
+            <div id="log-area" class="log-area">等待操作...\n</div>
+            <button class="btn" onclick="clearLog()">清空日志</button>
+        </div>
+    </div>
+
+    <script>
+        // 模拟修复后的播放器逻辑
+        class TestMidiPlayer {
+            constructor() {
+                this.isPlaying = false;
+                this.isPaused = false;
+                this.startTime = 0;
+                this.lastPlayedTime = 0;
+                this.playbackSpeed = 1;
+                this.totalDuration = 180; // 3分钟，单位秒
+                this.updateInterval = null;
+                
+                this.initElements();
+                this.bindEvents();
+                this.log('播放器初始化完成');
+            }
+            
+            initElements() {
+                this.playBtn = document.getElementById('play-btn');
+                this.pauseBtn = document.getElementById('pause-btn');
+                this.stopBtn = document.getElementById('stop-btn');
+                this.progressBar = document.getElementById('progress');
+                this.currentTimeDisplay = document.getElementById('current-time');
+                this.totalTimeDisplay = document.getElementById('total-time');
+                this.currentSpeedDisplay = document.getElementById('current-speed');
+                this.statusDisplay = document.getElementById('status');
+                this.speedBtns = document.querySelectorAll('.speed-btn');
+                this.logArea = document.getElementById('log-area');
+                
+                // 设置总时长显示
+                this.totalTimeDisplay.textContent = this.formatTime(this.totalDuration);
+            }
+            
+            bindEvents() {
+                this.playBtn.addEventListener('click', () => this.play());
+                this.pauseBtn.addEventListener('click', () => this.pause());
+                this.stopBtn.addEventListener('click', () => this.stop());
+                
+                // 倍速按钮
+                this.speedBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const speed = parseFloat(btn.dataset.speed);
+                        this.setPlaybackSpeed(speed);
+                    });
+                });
+                
+                // 进度条点击
+                document.querySelector('.progress-bar').addEventListener('click', (e) => {
+                    const rect = e.target.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const percentage = clickX / rect.width;
+                    this.seekToPercentage(percentage);
+                });
+            }
+            
+            play() {
+                if (this.isPaused) {
+                    this.resume();
+                } else {
+                    this.start();
+                }
+            }
+            
+            start() {
+                this.log('开始播放');
+                this.isPlaying = true;
+                this.isPaused = false;
+                this.startTime = Date.now();
+                this.lastPlayedTime = 0;
+                this.updateStatus('playing', '正在播放');
+                this.startUpdateLoop();
+            }
+            
+            resume() {
+                this.log(`从暂停位置恢复播放，已播放时间: ${this.lastPlayedTime.toFixed(0)}ms，倍速: ${this.playbackSpeed}x`);
+                this.isPlaying = true;
+                this.isPaused = false;
+                // 修正：考虑倍速的开始时间计算
+                this.startTime = Date.now() - (this.lastPlayedTime / this.playbackSpeed);
+                this.updateStatus('playing', '正在播放');
+                this.startUpdateLoop();
+            }
+            
+            pause() {
+                if (!this.isPlaying) return;
+                
+                this.log('暂停播放');
+                this.isPlaying = false;
+                this.isPaused = true;
+                // 修正：考虑倍速的时间计算
+                this.lastPlayedTime = (Date.now() - this.startTime) * this.playbackSpeed;
+                this.log(`暂停时已播放时间: ${this.lastPlayedTime.toFixed(0)}ms，倍速: ${this.playbackSpeed}x`);
+                this.updateStatus('paused', '已暂停');
+                this.stopUpdateLoop();
+            }
+            
+            stop() {
+                this.log('停止播放');
+                this.isPlaying = false;
+                this.isPaused = false;
+                this.lastPlayedTime = 0;
+                this.updateStatus('stopped', '已停止');
+                this.stopUpdateLoop();
+                this.updateProgress(0);
+            }
+            
+            setPlaybackSpeed(speed) {
+                this.log(`设置播放倍速从 ${this.playbackSpeed}x 到 ${speed}x`);
+                
+                if (this.isPlaying) {
+                    // 计算当前音乐播放时间（考虑当前倍速）
+                    const musicTimeElapsed = (Date.now() - this.startTime) * this.playbackSpeed;
+                    this.log(`倍速切换时的音乐播放时间: ${musicTimeElapsed.toFixed(0)}ms`);
+                    
+                    // 更新倍速
+                    this.playbackSpeed = speed;
+                    
+                    // 重新设置开始时间，使得音乐播放时间保持一致
+                    this.startTime = Date.now() - (musicTimeElapsed / this.playbackSpeed);
+                    this.log(`新的开始时间差: ${(Date.now() - this.startTime).toFixed(0)}ms`);
+                } else {
+                    this.playbackSpeed = speed;
+                }
+                
+                // 更新UI
+                this.speedBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (parseFloat(btn.dataset.speed) === speed) {
+                        btn.classList.add('active');
+                    }
+                });
+                this.currentSpeedDisplay.textContent = `${speed}x`;
+            }
+            
+            seekToPercentage(percentage) {
+                const seekTime = this.totalDuration * percentage;
+                const seekTimeMs = seekTime * 1000;
+                
+                this.log(`跳转到 ${(percentage * 100).toFixed(1)}% 位置，时间: ${seekTime.toFixed(2)}秒`);
+                
+                if (this.isPlaying) {
+                    // 修正：考虑倍速的开始时间计算
+                    this.startTime = Date.now() - (seekTimeMs / this.playbackSpeed);
+                } else {
+                    this.lastPlayedTime = seekTimeMs;
+                }
+                
+                this.updateProgress(percentage);
+            }
+            
+            startUpdateLoop() {
+                this.updateInterval = setInterval(() => {
+                    this.updateProgress();
+                }, 100);
+            }
+            
+            stopUpdateLoop() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                    this.updateInterval = null;
+                }
+            }
+            
+            updateProgress(percentage = null) {
+                let currentTime;
+                
+                if (percentage !== null) {
+                    currentTime = this.totalDuration * percentage;
+                } else if (this.isPlaying) {
+                    // 修正：音乐播放时间 = (当前时间 - 开始时间) * 倍速
+                    currentTime = ((Date.now() - this.startTime) * this.playbackSpeed) / 1000;
+                } else {
+                    currentTime = this.lastPlayedTime / 1000;
+                }
+                
+                // 限制在总时长内
+                currentTime = Math.max(0, Math.min(currentTime, this.totalDuration));
+                
+                const progressPercentage = (currentTime / this.totalDuration) * 100;
+                this.progressBar.style.width = `${progressPercentage}%`;
+                this.currentTimeDisplay.textContent = this.formatTime(currentTime);
+                
+                // 播放完成检查
+                if (this.isPlaying && currentTime >= this.totalDuration) {
+                    this.log('播放完成');
+                    this.stop();
+                }
+            }
+            
+            updateStatus(type, text) {
+                this.statusDisplay.className = `status ${type}`;
+                this.statusDisplay.textContent = text;
+            }
+            
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                this.logArea.textContent += `[${timestamp}] ${message}\n`;
+                this.logArea.scrollTop = this.logArea.scrollHeight;
+            }
+        }
+        
+        // 全局函数
+        function clearLog() {
+            document.getElementById('log-area').textContent = '日志已清空\n';
+        }
+        
+        // 初始化测试播放器
+        const testPlayer = new TestMidiPlayer();
+        
+        // 添加一些测试快捷键
+        document.addEventListener('keydown', (e) => {
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    if (testPlayer.isPlaying) {
+                        testPlayer.pause();
+                    } else {
+                        testPlayer.play();
+                    }
+                    break;
+                case 'KeyS':
+                    testPlayer.stop();
+                    break;
+                case 'Digit1':
+                    testPlayer.setPlaybackSpeed(1);
+                    break;
+                case 'Digit2':
+                    testPlayer.setPlaybackSpeed(2);
+                    break;
+                case 'Digit3':
+                    testPlayer.setPlaybackSpeed(3);
+                    break;
+            }
+        });
+        
+        console.log('倍速功能测试页面已加载');
+        console.log('快捷键: 空格键=播放/暂停, S=停止, 1/2/3=倍速切换');
+    </script>
+</body>
+</html> 

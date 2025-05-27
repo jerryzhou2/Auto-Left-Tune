@@ -21,6 +21,7 @@ class MidiPlayer {
     this.initialized = false;
     this.volume = options.volume || 0.7; // 默认音量70%
     this.lastPlayedTime = 0; // 上次播放的时间点
+    this.playbackSpeed = 1; // 播放倍速，默认1倍速
     
     // 添加对当前文件的标识
     this.currentFileId = null; // 可以是文件名、URL或其他唯一标识
@@ -28,6 +29,9 @@ class MidiPlayer {
     
     // 在构造函数中检查Midi对象
     this.checkMidiLibrary();
+    
+    // 绑定增强功能事件
+    this.bindEnhancedEvents();
   }
   
   // 检查Midi库是否可用
@@ -44,6 +48,24 @@ class MidiPlayer {
         console.error('Midi库未加载');
       }
     }
+  }
+
+  // 绑定增强功能事件
+  bindEnhancedEvents() {
+    // 监听进度跳转事件
+    document.addEventListener('midi-seek', (e) => {
+      this.seekToPercentage(e.detail.percentage);
+    });
+
+    // 监听音量变化事件
+    document.addEventListener('midi-volume-change', (e) => {
+      this.setVolume(e.detail.volume);
+    });
+
+    // 监听倍速变化事件
+    document.addEventListener('midi-speed-change', (e) => {
+      this.setPlaybackSpeed(e.detail.speed);
+    });
   }
 
   initAudio() {
@@ -287,6 +309,55 @@ class MidiPlayer {
     }
   }
 
+  // 设置播放倍速
+  setPlaybackSpeed(speed) {
+    if (this.debug) console.log('设置播放倍速从', this.playbackSpeed, '到', speed);
+    
+    // 如果正在播放，需要重新计算时间
+    if (!this.midiStop && this.currentMidiData) {
+      // 计算当前音乐播放时间（考虑当前倍速）
+      const musicTimeElapsed = (+new Date() - this.startTime) * this.playbackSpeed;
+      
+      if (this.debug) console.log('倍速切换时的音乐播放时间:', musicTimeElapsed, 'ms');
+      
+      // 更新倍速
+      this.playbackSpeed = speed;
+      
+      // 重新设置开始时间，使得音乐播放时间保持一致
+      this.startTime = +new Date() - (musicTimeElapsed / this.playbackSpeed);
+      
+      if (this.debug) console.log('新的开始时间:', this.startTime, '当前时间:', +new Date());
+    } else {
+      // 如果没有在播放，直接更新倍速
+      this.playbackSpeed = speed;
+    }
+  }
+
+  // 跳转到指定百分比位置
+  seekToPercentage(percentage) {
+    if (!this.currentMidiData || !this.midiNotes || this.midiNotes.length === 0) {
+      if (this.debug) console.warn('无法跳转：没有有效的MIDI数据');
+      return;
+    }
+
+    const totalDuration = this.calculateTotalDuration();
+    const seekTime = totalDuration * percentage;
+    const seekTimeMs = seekTime * 1000;
+
+    if (this.debug) console.log(`跳转到 ${(percentage * 100).toFixed(1)}% 位置，时间: ${seekTime.toFixed(2)}秒`);
+
+    // 暂停当前播放
+    this.pauseForSeek();
+
+    // 重新标记音符的播放状态
+    this.midiNotes.forEach(note => {
+      note.played = note.time < seekTime;
+    });
+
+    // 从新位置开始播放
+    this.resumeFromSeek(seekTimeMs);
+  }
+
   // 播放已加载的MIDI文件
   playMidi() {
     if (this.currentMidiData) {
@@ -374,10 +445,11 @@ class MidiPlayer {
     }
     
     let now = +new Date();
-    let playedTime = now - this.startTime; // 单位毫秒ms
+    // 修正：音乐播放时间 = (当前时间 - 开始时间) * 倍速
+    let playedTime = (now - this.startTime) * this.playbackSpeed;
     
-    if (this.debug && playedTime % 1000 < 30) { // 每秒只打印一次，避免日志过多
-      console.log(`当前播放时间: ${(playedTime/1000).toFixed(1)}秒, 剩余音符: ${unPlayedNotes.length}`);
+    if (this.debug && Math.floor(playedTime / 1000) !== Math.floor((playedTime - 100) / 1000)) { // 每秒只打印一次
+      console.log(`当前播放时间: ${(playedTime/1000).toFixed(1)}秒 (${this.playbackSpeed}x倍速), 剩余音符: ${unPlayedNotes.length}`);
     }
     
     unPlayedNotes.forEach((note) => {
@@ -388,9 +460,14 @@ class MidiPlayer {
       }
     });
     
+    // 根据倍速调整循环间隔 - 倍速越快，间隔越短
+    const loopInterval = Math.max(5, 30 / this.playbackSpeed);
     setTimeout(() => {
       this.playLoop();
-    }, 30);
+    }, loopInterval);
+    
+    // 发送进度更新事件给增强控制器
+    this.dispatchProgressUpdate();
   }
 
   // 播放单个音符
@@ -556,8 +633,9 @@ class MidiPlayer {
     if (this.currentMidiData && !this.midiStop) {
       this.isPaused = true;
       this.midiStop = true;
-      this.lastPlayedTime = +new Date() - this.startTime;
-      if (this.debug) console.log('暂停播放，已播放时间:', this.lastPlayedTime, 'ms');
+      // 修正：考虑倍速的时间计算
+      this.lastPlayedTime = (+new Date() - this.startTime) * this.playbackSpeed;
+      if (this.debug) console.log('暂停播放，已播放时间:', this.lastPlayedTime, 'ms，倍速:', this.playbackSpeed);
     }
   }
 
@@ -570,9 +648,10 @@ class MidiPlayer {
     // 只设置暂停和停止标志，不清空数据
     this.isPaused = true;
     this.midiStop = true;
-    this.lastPlayedTime = +new Date() - this.startTime;
+    // 修正：考虑倍速的时间计算
+    this.lastPlayedTime = (+new Date() - this.startTime) * this.playbackSpeed;
     
-    if (this.debug) console.log('暂停用于跳转，当前播放时间:', this.lastPlayedTime, 'ms');
+    if (this.debug) console.log('暂停用于跳转，当前播放时间:', this.lastPlayedTime, 'ms，倍速:', this.playbackSpeed);
     return true;
   }
 
@@ -600,7 +679,8 @@ class MidiPlayer {
       
       this.midiStop = false;
       this.isPaused = false; // 重置暂停状态
-      this.startTime = +new Date() - this.lastPlayedTime;
+      // 修正：考虑倍速的开始时间计算
+      this.startTime = +new Date() - (this.lastPlayedTime / this.playbackSpeed);
       this.playLoop();
     }
   }
@@ -612,12 +692,13 @@ class MidiPlayer {
       return false;
     }
     
-    this.startTime = +new Date() - seekTimeMs;
+    // 修正：考虑倍速的开始时间计算
+    this.startTime = +new Date() - (seekTimeMs / this.playbackSpeed);
     this.lastPlayedTime = seekTimeMs;
     this.isPaused = false;
     this.midiStop = false;
     
-    if (this.debug) console.log(`从 ${seekTimeMs/1000} 秒位置恢复播放，共有 ${this.midiNotes.length} 个音符，已标记播放 ${this.midiNotes.filter(n => n.played).length} 个`);
+    if (this.debug) console.log(`从 ${seekTimeMs/1000} 秒位置恢复播放，倍速: ${this.playbackSpeed}x，共有 ${this.midiNotes.length} 个音符，已标记播放 ${this.midiNotes.filter(n => n.played).length} 个`);
     
     // 立即开始播放循环
     this.playLoop();
@@ -647,6 +728,20 @@ class MidiPlayer {
     });
     
     return lastNote.time + lastNote.duration;
+  }
+
+  // 分发进度更新事件
+  dispatchProgressUpdate() {
+    if (!this.currentMidiData || this.midiStop) return;
+    
+    // 修正：音乐播放时间 = (当前时间 - 开始时间) * 倍速 / 1000（转换为秒）
+    const currentTime = ((+new Date() - this.startTime) * this.playbackSpeed) / 1000;
+    const totalTime = this.calculateTotalDuration();
+    
+    const event = new CustomEvent('midi-progress-update', {
+      detail: { currentTime, totalTime }
+    });
+    document.dispatchEvent(event);
   }
 }
 

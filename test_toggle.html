@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF收起展开测试</title>
+    <style>
+        /* 复制相关的CSS样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            min-width: auto;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        #pdf-view-container {
+            border: 2px solid #ccc;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+        }
+
+        #pdf-container {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+            min-height: 200px;
+            transition: all 0.3s ease;
+        }
+
+        /* PDF展开/收起功能 */
+        #pdf-view-container.collapsed #pdf-container {
+            height: 0;
+            max-height: 0;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+
+        #pdf-view-container:not(.collapsed) #pdf-container {
+            height: auto;
+            max-height: 2000px;
+            opacity: 1;
+            transition: all 0.3s ease-in;
+        }
+
+        .pdf-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PDF收起展开功能测试</h1>
+    
+    <div id="pdf-view-container">
+        <div class="pdf-controls">
+            <button id="toggle-pdf-btn" class="btn btn-primary">📖 收起</button>
+        </div>
+        <div id="pdf-container">
+            <h3>这是PDF内容区域</h3>
+            <p>当点击"收起"按钮时，这个区域应该会隐藏。</p>
+            <p>当点击"展开"按钮时，这个区域应该会显示。</p>
+            <p>这里模拟PDF查看器的内容...</p>
+        </div>
+    </div>
+
+    <script>
+        // 复制相关的JavaScript代码
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePdfBtn = document.getElementById('toggle-pdf-btn');
+            const pdfViewContainer = document.getElementById('pdf-view-container');
+
+            if (togglePdfBtn && pdfViewContainer) {
+                // 设置初始状态（默认展开）
+                pdfViewContainer.classList.remove('collapsed');
+                togglePdfBtn.innerHTML = '📖 收起';
+                
+                togglePdfBtn.addEventListener('click', function () {
+                    console.log('按钮被点击了');
+                    if (pdfViewContainer.classList.contains('collapsed')) {
+                        // 展开
+                        pdfViewContainer.classList.remove('collapsed');
+                        togglePdfBtn.innerHTML = '📖 收起';
+                        console.log('PDF区域已展开');
+                    } else {
+                        // 收起
+                        pdfViewContainer.classList.add('collapsed');
+                        togglePdfBtn.innerHTML = '📂 展开';
+                        console.log('PDF区域已收起');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

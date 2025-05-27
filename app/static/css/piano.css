@@ -93,7 +93,7 @@
 /* 调整白键尺寸 */
 .wkey {
   display: inline-block;
-  width: 2.2%;
+  width: 2.5%;
   /* 白键宽度 */
   height: 100%;
   margin: 0 0.02% 0 0;
@@ -140,7 +140,7 @@
 /* 调整黑键尺寸 */
 .bkey {
   display: inline-block;
-  width: 1.2%;
+  width: 1.4%;
   /* 黑键宽度 */
   height: 65%;
   background: linear-gradient(-20deg, #333, #000, #333);
@@ -231,99 +231,99 @@
 }
 
 .bkey[data-name="F#2"] {
-  left: 10.2%;
+  left: 10.9%;
 }
 
 .bkey[data-name="G#2"] {
-  left: 13%;
+  left: 13.7%;
 }
 
 .bkey[data-name="A#2"] {
-  left: 15.8%;
+  left: 16.5%;
 }
 
 /* C3组 */
 .bkey[data-name="C#3"] {
-  left: 20.7%;
+  left: 22%;
 }
 
 .bkey[data-name="D#3"] {
-  left: 23.2%;
+  left: 24.5%;
 }
 
 .bkey[data-name="F#3"] {
-  left: 28.8%;
+  left: 30%;
 }
 
 .bkey[data-name="G#3"] {
-  left: 31.4%;
+  left: 33%;
 }
 
 .bkey[data-name="A#3"] {
-  left: 34%;
+  left: 36%;
 }
 
 /* C4组（中央C） */
 .bkey[data-name="C#4"] {
-  left: 39%;
+  left: 41.4%;
 }
 
 .bkey[data-name="D#4"] {
-  left: 42%;
+  left: 44%;
 }
 
 .bkey[data-name="F#4"] {
-  left: 47%;
-}
-
-.bkey[data-name="G#4"] {
   left: 49.5%;
 }
 
+.bkey[data-name="G#4"] {
+  left: 52.5%;
+}
+
 .bkey[data-name="A#4"] {
-  left: 52%;
+  left: 55%;
 }
 
 /* C5组 */
 .bkey[data-name="C#5"] {
-  left: 57.5%;
+  left: 60.7%;
 }
 
 .bkey[data-name="D#5"] {
-  left: 60%;
+  left: 63.5%;
 }
 
 .bkey[data-name="F#5"] {
-  left: 65.5%;
+  left: 68.8%;
 }
 
 .bkey[data-name="G#5"] {
-  left: 67.8%;
+  left: 72%;
 }
 
 .bkey[data-name="A#5"] {
-  left: 70.5%;
+  left: 75%;
 }
 
 /* C6组 */
 .bkey[data-name="C#6"] {
-  left: 75.5%;
+  left: 80%;
 }
 
 .bkey[data-name="D#6"] {
-  left: 78.5%;
+  left: 83%;
 }
 
 .bkey[data-name="F#6"] {
-  left: 83.5%;
+  left: 88.5%;
 }
 
 .bkey[data-name="G#6"] {
-  left: 86%;
+  left: 91.5%;
 }
 
 .bkey[data-name="A#6"] {
-  left: 89%;
+  left: 94%;
 }
 
 /* 隐藏黑键包装容器 */
