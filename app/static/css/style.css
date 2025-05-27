@@ -423,6 +423,12 @@ body::before {
     position: relative;
     cursor: pointer;
     overflow: visible;
+    transition: all 0.2s ease;
+}
+
+.midi-progress-container.dragging {
+    height: 10px;
+    background: rgba(102, 126, 234, 0.2);
 }
 
 .midi-progress {
