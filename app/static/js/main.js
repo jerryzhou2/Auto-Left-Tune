@@ -887,7 +887,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const togglePdfBtn = document.getElementById('toggle-pdf-btn');
         pdfViewContainer.classList.remove('collapsed');
         if (togglePdfBtn) {
-            togglePdfBtn.textContent = '收起';
+            togglePdfBtn.innerHTML = '📖 收起';
         }
 
         pdfViewContainer.scrollIntoView({ behavior: 'smooth' });
@@ -1059,15 +1059,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const pdfViewContainer = document.getElementById('pdf-view-container');
 
     if (togglePdfBtn && pdfViewContainer) {
+        // 设置初始状态（默认展开）
+        pdfViewContainer.classList.remove('collapsed');
+        togglePdfBtn.innerHTML = '📖 收起';
+        
         togglePdfBtn.addEventListener('click', function () {
             if (pdfViewContainer.classList.contains('collapsed')) {
                 // 展开
                 pdfViewContainer.classList.remove('collapsed');
-                togglePdfBtn.textContent = '收起';
+                togglePdfBtn.innerHTML = '📖 收起';
+                console.log('PDF区域已展开');
             } else {
                 // 收起
                 pdfViewContainer.classList.add('collapsed');
-                togglePdfBtn.textContent = '展开';
+                togglePdfBtn.innerHTML = '📂 展开';
+                console.log('PDF区域已收起');
             }
         });
     }

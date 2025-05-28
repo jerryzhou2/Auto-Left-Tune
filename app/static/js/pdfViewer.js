@@ -131,6 +131,14 @@ class PdfViewer {
                 await this.renderPage(pageNum);
             }
             
+            // 确保最后一页有足够的底部边距
+            if (this.pdfViewer && this.pdfViewer.children.length > 0) {
+                const lastPage = this.pdfViewer.children[this.pdfViewer.children.length - 1];
+                if (lastPage && lastPage.classList.contains('pdf-page')) {
+                    lastPage.style.marginBottom = '20px';
+                }
+            }
+            
             this.isLoading = false;
             return true;
         } catch (error) {
@@ -180,6 +188,11 @@ class PdfViewer {
             
             // 添加到查看器
             this.pdfViewer.appendChild(canvas);
+            
+            // 确保PDF容器不再是空状态
+            if (this.pdfContainer.classList.contains('empty')) {
+                this.pdfContainer.classList.remove('empty');
+            }
             
             // 渲染页面到canvas
             const renderContext = {
