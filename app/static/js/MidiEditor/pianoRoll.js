@@ -88,12 +88,101 @@ addBtn.addEventListener('click', (e) => {
 
     trackInput_add.value = 0; // 设置初始轨道索引为当前选中的轨道
 
-    timeInput_add.value = 0; // 设置初始时间为0
+    timeInput_add.value = 1; // 设置初始时间为0
 
-    nameInput_add.value = 'A0'; // 设置初始音符名称为A0
+    nameInput_add.value = 'G3'; // 设置初始音符名称鼠标所在位置
 
     slider_add.value = 1; // 设置滑块初始值
     valueDisplay_add.textContent = slider_add.value;
+});
+
+function updatePreview() {
+    const trackIndex = parseInt(trackInput_add.value, 10);
+    const newTime = parseFloat(timeInput_add.value);
+    const newDuration = parseFloat(slider_add.value);
+    const newName = nameInput_add.value.trim();
+    const newMidi = noteNameToMidi(newName);
+
+    const track = currentMidi.tracks[trackIndex];
+    const allNotes_copy = allNotes.slice();
+    const track_notes_copy = track.notes.slice();
+
+    let isValid = true;
+    if (!isNaN(newTime) && newTime !== '' && !isNaN(newDuration) && newDuration > 0 && newName !== '' && trackIndex !== '') {
+        const track = currentMidi.tracks[trackIndex];
+        const newNote = {
+            time: newTime,
+            duration: newDuration,
+            name: newName,
+            midi: newMidi
+        };
+
+        track_notes_copy.push(newNote); // 添加到轨道的notes数组中
+        track_notes_copy.sort((a, b) => a.time - b.time); // 确保按时间排序
+
+        const x = newNote.time * timeScale;
+        const y = canvas.height - ((newNote.midi - pitchBase + 1) * noteHeight);
+        const width = newNote.duration * timeScale;
+        const height = noteHeight - 1;
+        const noteObj = {
+            note: newNote,
+            x,
+            y,
+            width,
+            height,
+            trackIndex
+        };
+
+        allNotes_copy.push(noteObj); // 添加到全局音符数组
+    }
+    else {
+        console.log("1");
+        alert("请确保输入的时间、持续时间和音符名称有效！");
+        isValid = false;
+    }
+
+    if (!isValid) {
+        return;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+    ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
+
+    if (!trackVisibility[trackIndex]) return;
+    track_notes_copy.forEach(note => {
+        const thisNote = allNotes_copy.find(n => n.note === note);
+        console.log("name = ", thisNote.note.name);
+        ctx.fillStyle = getColor(trackIndex);
+        ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+    });
+}
+
+function isValidNoteName(name) {
+    // 允许 A-G 开头，后跟 # 或 b 可选，再跟 0-9 的数字
+    return /^[A-G](#|b)?\d$/.test(name);
+}
+
+trackInput_add.addEventListener('input', () => {
+    if (trackInput_add.value !== '') {
+        updatePreview();
+    }
+});
+
+timeInput_add.addEventListener('input', () => {
+    if (timeInput_add.value !== '') {
+        updatePreview();
+    }
+});
+
+slider_add.addEventListener('input', () => {
+    valueDisplay_add.textContent = slider_add.value;
+    updatePreview();
+});
+
+nameInput_add.addEventListener('input', () => {
+    if (isValidNoteName(nameInput_add.value)) {
+        updatePreview();
+    }
 });
 
 confirmBtn.addEventListener('click', () => {
@@ -103,7 +192,7 @@ confirmBtn.addEventListener('click', () => {
     const newName = nameInput_add.value.trim();
     const newMidi = noteNameToMidi(newName);
     let isValid = true;
-    if (!isNaN(newTime) && !isNaN(newDuration) && newDuration > 0 && newName !== '') {
+    if (!isNaN(newTime) && newTime !== '' && !isNaN(newDuration) && newDuration > 0 && newName !== '' && trackIndex !== '') {
         const track = currentMidi.tracks[trackIndex];
         const newNote = {
             time: newTime,
@@ -111,8 +200,6 @@ confirmBtn.addEventListener('click', () => {
             name: newName,
             midi: newMidi
         };
-
-        console.log("create new note:", newNote);
 
         track.notes.push(newNote); // 添加到轨道的notes数组中
         track.notes.sort((a, b) => a.time - b.time); // 确保按时间排序
@@ -131,18 +218,13 @@ confirmBtn.addEventListener('click', () => {
         };
 
         allNotes.push(noteObj); // 添加到全局音符数组
-
-        console.log("add to allNotes");
+        console.log("push ", noteObj);
     }
     else {
         alert("请确保输入的时间、持续时间和音符名称有效！");
         isValid = false;
     }
 
-    trackInputBox_add.style.display = 'none';
-    timeInputBox_add.style.display = 'none';
-    nameInputBox_add.style.display = 'none';
-    sliderContainer_add.style.display = 'none';
     addNoteContainer.style.display = 'none';
 
     if (!isValid) {
@@ -154,27 +236,9 @@ confirmBtn.addEventListener('click', () => {
     hasModified = true; // 标记为已修改
 });
 
-// // 滑动时更新显示的值
-// slider_add.addEventListener('input', () => {
-//     valueDisplay_add.textContent = slider_add.value;
-//     durationInput = parseFloat(slider.value);
-
-//     const track = currentMidi.tracks[choosedNote.trackIndex];
-//     const choosedNoteInNotes = track.notes.find(note => note === choosedNote.note);
-
-//     if (choosedNoteInNotes && choosedNote) {
-//         choosedNoteInNotes.duration = durationInput;
-//         choosedNote.width = durationInput * timeScale; // 更新选中音符的宽度
-
-//         redrawCanvas(currentMidi); // 重新绘制画布
-//     }
-//     else {
-//         console.warn("notes中找不到对应音符");
-//     }
-// });
-
 resetBtn.addEventListener('click', () => {
-
+    addNoteContainer.style.display = 'none';
+    redrawCanvas(currentMidi);
 });
 
 function noteNameToMidi(noteName) {
@@ -220,10 +284,9 @@ canvas.addEventListener('contextmenu', (e) => {
     if (!choosedNote) {
         console.warn("contextmenu没有选中音符");
         // 单独显示添加音符按钮
-        addBtnContainer.style.top = `${e.clientY}px`;
-        addBtnContainer.style.left = `${e.clientX}px`;
+        addBtnContainer.style.top = `${e.clientY}px`;   // 在鼠标点下方偏移一点
+        addBtnContainer.style.left = `${e.clientX}px`; // 在鼠标点右侧偏移一点
         addBtnContainer.style.display = 'block';
-
         // 记得隐藏其他菜单
         menu.style.display = 'none';
 

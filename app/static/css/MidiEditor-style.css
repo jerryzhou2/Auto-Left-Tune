@@ -465,7 +465,6 @@ button {
     padding: 10px;
     z-index: 1000;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    display: flex;
     /* 新增 */
     flex-direction: column;
     /* 垂直排列，可按需调整 */
@@ -477,7 +476,6 @@ button {
 #trackInputBox-add,
 #timeInputBox-add,
 #nameInputBox-add {
-    display: flex;
     align-items: center;
     gap: 6px;
     font-family: Arial, sans-serif;
@@ -504,7 +502,6 @@ button {
 
 /* 滑动条容器 */
 #sliderContainer-add {
-    display: flex;
     align-items: center;
     gap: 10px;
     font-family: Arial, sans-serif;
