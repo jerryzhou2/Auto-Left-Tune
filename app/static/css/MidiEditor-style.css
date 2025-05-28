@@ -393,7 +393,8 @@ button {
     border-radius: 4px;
 }
 
-#valueDisplay {
+#valueDisplay,
+#valueDisplay-add {
     font-weight: bold;
 }
 
@@ -425,7 +426,9 @@ button {
     outline: none;
 }
 
-#confirmTime {
+#confirmTime,
+#setSliderValue,
+#resetSlider {
     padding: 6px 14px;
     font-size: 14px;
     background-color: #4A90E2;
@@ -436,6 +439,103 @@ button {
     transition: background-color 0.2s;
 }
 
-#confirmTime:hover {
+#confirmTime:hover,
+#setSliderValue:hover,
+#resetSlider:hover {
+    background-color: #357ABD;
+}
+
+#addBtnContainer {
+    display: none;
+    position: absolute;
+    /* 需要这个，才能用 left/top 定位 */
+    z-index: 1000;
+    /* 确保不被 canvas 等遮挡 */
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 5px;
+    cursor: pointer;
+}
+
+#addNoteContainer {
+    position: absolute;
+    display: none;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    /* 新增 */
+    flex-direction: column;
+    /* 垂直排列，可按需调整 */
+    gap: 10px;
+    /* 元素间间距，可按需调整 */
+}
+
+/* 输入框容器统一样式 */
+#trackInputBox-add,
+#timeInputBox-add,
+#nameInputBox-add {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: Arial, sans-serif;
+}
+
+/* 统一的输入框样式 */
+#trackInputBox-add input[type="number"],
+#timeInputBox-add input[type="number"],
+#nameInputBox-add input[type="text"] {
+    width: 120px;
+    padding: 6px 10px;
+    font-size: 14px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    transition: border 0.2s;
+}
+
+#trackInputBox-add input:focus,
+#timeInputBox-add input:focus,
+#nameInputBox-add input:focus {
+    border-color: #4A90E2;
+    outline: none;
+}
+
+/* 滑动条容器 */
+#sliderContainer-add {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: Arial, sans-serif;
+}
+
+/* 滑动条美化 */
+#slider-add {
+    width: 140px;
+    accent-color: #4A90E2;
+}
+
+/* 值显示 */
+#valueDisplay-add {
+    font-weight: bold;
+    min-width: 30px;
+}
+
+/* 按钮样式（和 timeInputBox 中一致） */
+#confirm-add,
+#reset-add {
+    padding: 6px 14px;
+    font-size: 14px;
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#confirm-add:hover,
+#reset-add:hover {
     background-color: #357ABD;
 }

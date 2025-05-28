@@ -13,7 +13,6 @@ let synth = SampleLibrary.load({
 let isPlaying = false;
 let trackVisibility = []; // 全局轨道可见性控制数组
 // ✅ 新增：记录上一帧的进度线位置
-let lastProgressLineX = 0;
 
 const canvas = document.getElementById("pianoRoll");
 const ctx = canvas.getContext("2d");
@@ -41,8 +40,10 @@ let choosedNote = null;      // 被选中的音符下标
 
 let initDurationValue = -1; // 初始化值为选中音符的持续时间
 let durationInput = -1;
+let initWidth = -1;
 
 const menu = document.getElementById('context-menu');
+
 const setTimeBtn = document.getElementById('setTime');
 const timeInputBox = document.getElementById('timeInputBox');
 const timeInput = document.getElementById('timeInput');
@@ -52,6 +53,143 @@ const showSliderBtn = document.getElementById('setDuration');
 const sliderContainer = document.getElementById('sliderContainer');
 const slider = document.getElementById('slider');
 const valueDisplay = document.getElementById('valueDisplay');
+const setSliderValue = document.getElementById('setSliderValue');
+const resetSliderValue = document.getElementById('resetSlider');
+
+
+const addBtn = document.getElementById('addOneNote');
+const addBtnContainer = document.getElementById('addBtnContainer');
+const addNoteContainer = document.getElementById('addNoteContainer');
+
+const trackInputBox_add = document.getElementById('trackInputBox-add');
+const trackInput_add = document.getElementById('trackInput-add');
+
+const timeInputBox_add = document.getElementById('timeInputBox-add');
+const timeInput_add = document.getElementById('timeInput-add');
+
+const nameInputBox_add = document.getElementById('nameInputBox-add');
+const nameInput_add = document.getElementById('nameInput-add');
+
+const sliderContainer_add = document.getElementById('sliderContainer-add');
+const slider_add = document.getElementById('slider-add');
+const valueDisplay_add = document.getElementById('valueDisplay-add');
+
+const confirmBtn = document.getElementById('confirm-add');
+const resetBtn = document.getElementById('reset-add');
+
+addBtn.addEventListener('click', (e) => {
+    if (!currentMidi) return;
+
+    addBtnContainer.style.display = 'none'; // 隐藏添加按钮容器
+
+    addNoteContainer.style.top = `${e.clientY}px`;
+    addNoteContainer.style.left = `${e.clientX}px`;
+    addNoteContainer.style.display = 'block';
+
+    trackInput_add.value = 0; // 设置初始轨道索引为当前选中的轨道
+
+    timeInput_add.value = 0; // 设置初始时间为0
+
+    nameInput_add.value = 'A0'; // 设置初始音符名称为A0
+
+    slider_add.value = 1; // 设置滑块初始值
+    valueDisplay_add.textContent = slider_add.value;
+});
+
+confirmBtn.addEventListener('click', () => {
+    const trackIndex = parseInt(trackInput_add.value, 10);
+    const newTime = parseFloat(timeInput_add.value);
+    const newDuration = parseFloat(slider_add.value);
+    const newName = nameInput_add.value.trim();
+    const newMidi = noteNameToMidi(newName);
+    let isValid = true;
+    if (!isNaN(newTime) && !isNaN(newDuration) && newDuration > 0 && newName !== '') {
+        const track = currentMidi.tracks[trackIndex];
+        const newNote = {
+            time: newTime,
+            duration: newDuration,
+            name: newName,
+            midi: newMidi
+        };
+
+        console.log("create new note:", newNote);
+
+        track.notes.push(newNote); // 添加到轨道的notes数组中
+        track.notes.sort((a, b) => a.time - b.time); // 确保按时间排序
+
+        const x = newNote.time * timeScale;
+        const y = canvas.height - ((newNote.midi - pitchBase + 1) * noteHeight);
+        const width = newNote.duration * timeScale;
+        const height = noteHeight - 1;
+        const noteObj = {
+            note: newNote,
+            x,
+            y,
+            width,
+            height,
+            trackIndex
+        };
+
+        allNotes.push(noteObj); // 添加到全局音符数组
+
+        console.log("add to allNotes");
+    }
+    else {
+        alert("请确保输入的时间、持续时间和音符名称有效！");
+        isValid = false;
+    }
+
+    trackInputBox_add.style.display = 'none';
+    timeInputBox_add.style.display = 'none';
+    nameInputBox_add.style.display = 'none';
+    sliderContainer_add.style.display = 'none';
+    addNoteContainer.style.display = 'none';
+
+    if (!isValid) {
+        return;
+    }
+
+    redrawCanvas(currentMidi); // 重新绘制画布
+
+    hasModified = true; // 标记为已修改
+});
+
+// // 滑动时更新显示的值
+// slider_add.addEventListener('input', () => {
+//     valueDisplay_add.textContent = slider_add.value;
+//     durationInput = parseFloat(slider.value);
+
+//     const track = currentMidi.tracks[choosedNote.trackIndex];
+//     const choosedNoteInNotes = track.notes.find(note => note === choosedNote.note);
+
+//     if (choosedNoteInNotes && choosedNote) {
+//         choosedNoteInNotes.duration = durationInput;
+//         choosedNote.width = durationInput * timeScale; // 更新选中音符的宽度
+
+//         redrawCanvas(currentMidi); // 重新绘制画布
+//     }
+//     else {
+//         console.warn("notes中找不到对应音符");
+//     }
+// });
+
+resetBtn.addEventListener('click', () => {
+
+});
+
+function noteNameToMidi(noteName) {
+    const noteRegex = /^([A-Ga-g])(#|b)?(\d+)$/;
+    const match = noteName.match(noteRegex);
+    if (!match) throw new Error("Invalid note name: " + noteName);
+
+    const [, letter, accidental, octaveStr] = match;
+    const semitones = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    const base = semitones[letter.toUpperCase()];
+    const accidentalOffset = accidental === "#" ? 1 : accidental === "b" ? -1 : 0;
+    const octave = parseInt(octaveStr, 10);
+
+    return (octave + 1) * 12 + base + accidentalOffset;
+}
 
 function redrawCanvas(midi) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
@@ -61,6 +199,7 @@ function redrawCanvas(midi) {
         if (!trackVisibility[trackIndex]) return;
         track.notes.forEach(note => {
             const thisNote = allNotes.find(n => n.note === note);
+            console.log("name = ", thisNote.note.name);
             ctx.fillStyle = getColor(trackIndex);
             ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
         });
@@ -80,6 +219,14 @@ canvas.addEventListener('contextmenu', (e) => {
 
     if (!choosedNote) {
         console.warn("contextmenu没有选中音符");
+        // 单独显示添加音符按钮
+        addBtnContainer.style.top = `${e.clientY}px`;
+        addBtnContainer.style.left = `${e.clientX}px`;
+        addBtnContainer.style.display = 'block';
+
+        // 记得隐藏其他菜单
+        menu.style.display = 'none';
+
         return; // 没有选中音符
     }
 
@@ -91,8 +238,11 @@ canvas.addEventListener('contextmenu', (e) => {
     initDurationValue = String(choosedNote.note.duration);
     console.log("initDurationValue:", initDurationValue);
     durationInput = parseFloat(initDurationValue);
+
     slider.value = initDurationValue; // 设置滑块初始值
     valueDisplay.textContent = slider.value;
+
+    initWidth = choosedNote.width; // 记录初始宽度
 });
 
 // 点击页面其他地方隐藏菜单 --> 点击菜单中的按键有无影响？
@@ -167,11 +317,23 @@ slider.addEventListener('input', () => {
         choosedNote.width = durationInput * timeScale; // 更新选中音符的宽度
 
         redrawCanvas(currentMidi); // 重新绘制画布
-
-        hasModified = true; // 标记为已修改
     }
     else {
         console.warn("notes中找不到对应音符");
+    }
+});
+
+setSliderValue.addEventListener('click', () => {
+    hasModified = true; // 标记为已修改
+});
+
+resetSliderValue.addEventListener('click', () => {
+    if (initWidth > -1) {
+        const track = currentMidi.tracks[choosedNote.trackIndex];
+        const choosedNoteInNotes = track.notes.find(note => note === choosedNote.note);
+        choosedNoteInNotes.duration = initWidth / timeScale; // 恢复初始持续时间
+        choosedNote.width = initWidth; // 更新选中音符的宽度
+        redrawCanvas(currentMidi); // 重新绘制画布
     }
 });
 
@@ -416,7 +578,7 @@ function drawPianoRoll(midi) {
     });
 
     // 计算需要的canvas宽度（例如：1秒 = 150像素）
-    const canvasWidth = maxTime * timeScale;
+    const canvasWidth = maxTime * timeScale + 1500;     // 留一些富余的位置
     canvas.width = canvasWidth;
 
     offscreenCanvas.width = canvas.width;
@@ -433,7 +595,7 @@ function drawPianoRoll(midi) {
         if (!trackVisibility[trackIndex]) return;
         track.notes.forEach(note => {
             const x = note.time * timeScale;
-            const y = canvas.height - ((note.midi - pitchBase) * noteHeight);
+            const y = canvas.height - ((note.midi - pitchBase + 1) * noteHeight);
             const width = note.duration * timeScale;
             const height = noteHeight - 1;
             ctx.fillStyle = getColor(trackIndex);       // track通过颜色区分
