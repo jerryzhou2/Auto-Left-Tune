@@ -10,6 +10,10 @@ class MidiPlayerEnhanced {
         this.isSpeedOpen = false;
         this.pauseProgressUpdates = false; // 控制是否暂停进度更新
         
+        // 添加节流相关属性
+        this.lastSeekTime = 0;
+        this.seekThrottleDelay = 50; // 50ms节流延迟
+        
         this.initElements();
         this.bindEvents();
     }
@@ -230,13 +234,21 @@ class MidiPlayerEnhanced {
             this.progressThumb.offsetLeft;
             
             // 恢复transition
-            this.progressThumb.style.transition = originalTransition;
-            
-            // 添加一个临时的高亮效果，表示点击成功
-            this.progressThumb.style.transform = 'translate(-50%, -50%) scale(1.2)';
             setTimeout(() => {
-                this.progressThumb.style.transform = 'translate(-50%, -50%) scale(1)';
-            }, 200);
+                if (this.progressThumb) {
+                    this.progressThumb.style.transition = originalTransition;
+                }
+            }, 0);
+            
+            // 如果不是拖拽状态，添加一个临时的高亮效果，表示点击成功
+            if (!this.isDragging) {
+                this.progressThumb.style.transform = 'translate(-50%, -50%) scale(1.2)';
+                setTimeout(() => {
+                    if (this.progressThumb) {
+                        this.progressThumb.style.transform = 'translate(-50%, -50%) scale(1)';
+                    }
+                }, 200);
+            }
         }
     }
     
@@ -245,11 +257,20 @@ class MidiPlayerEnhanced {
         this.isDragging = true;
         this.progressThumb.classList.add('dragging');
         this.progressContainer.classList.add('dragging'); // 添加容器拖拽状态
+        
+        // 为整个播放器容器添加拖拽状态，便于MIDI播放器检测
+        const playerContainer = document.querySelector('.midi-player-enhanced') || 
+                               document.querySelector('.midi-player-container') ||
+                               document.body;
+        playerContainer.classList.add('dragging');
+        
         document.body.style.cursor = 'grabbing';
         document.body.style.userSelect = 'none';
         
         // 暂停进度更新，避免拖拽时的冲突
         this.pauseProgressUpdates = true;
+        
+        console.log('开始拖拽进度条，暂停自动进度更新');
     }
     
     // 处理拖拽
@@ -258,11 +279,15 @@ class MidiPlayerEnhanced {
         const dragX = e.clientX - rect.left;
         const percentage = Math.max(0, Math.min(1, dragX / rect.width));
         
-        // 立即更新视觉显示
-        this.updateProgressDisplay(percentage);
+        // 立即更新视觉显示 - 确保进度条和圆点同步
+        this.forceUpdateProgressDisplay(percentage);
         
-        // 实时发送跳转请求（可以考虑节流优化）
-        this.seekToPercentage(percentage);
+        // 节流处理跳转请求，避免过于频繁的更新
+        const now = Date.now();
+        if (now - this.lastSeekTime >= this.seekThrottleDelay) {
+            this.seekToPercentage(percentage);
+            this.lastSeekTime = now;
+        }
     }
     
     // 停止拖拽
@@ -270,11 +295,21 @@ class MidiPlayerEnhanced {
         this.isDragging = false;
         this.progressThumb.classList.remove('dragging');
         this.progressContainer.classList.remove('dragging'); // 移除容器拖拽状态
+        
+        // 移除播放器容器的拖拽状态
+        const playerContainer = document.querySelector('.midi-player-enhanced') || 
+                               document.querySelector('.midi-player-container') ||
+                               document.body;
+        playerContainer.classList.remove('dragging');
+        
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
         
-        // 恢复进度更新
-        this.pauseProgressUpdates = false;
+        // 延迟恢复进度更新，确保拖拽操作完全完成
+        setTimeout(() => {
+            this.pauseProgressUpdates = false;
+            console.log('拖拽结束，恢复自动进度更新');
+        }, 100);
         
         // 检查鼠标是否还在进度条上，决定是否隐藏小圆点
         const rect = this.progressContainer.getBoundingClientRect();
@@ -304,6 +339,12 @@ class MidiPlayerEnhanced {
     // 更新进度显示
     updateProgressDisplay(percentage) {
         const percentageValue = Math.max(0, Math.min(100, percentage * 100));
+        
+        // 如果正在拖拽，使用强制更新确保同步
+        if (this.isDragging) {
+            this.forceUpdateProgressDisplay(percentage);
+            return;
+        }
         
         if (this.progressBar) {
             this.progressBar.style.width = `${percentageValue}%`;
@@ -450,6 +491,12 @@ class MidiPlayerEnhanced {
         if (this.isDragging || this.pauseProgressUpdates) return;
         
         const percentage = totalTime > 0 ? currentTime / totalTime : 0;
+        
+        // 添加调试信息，帮助验证倍速播放时的时间同步
+        if (window.midiPlayer && window.midiPlayer.playbackSpeed !== 1) {
+            console.log(`增强控制器进度更新 - 当前时间: ${currentTime.toFixed(1)}s, 总时长: ${totalTime.toFixed(1)}s, 进度: ${(percentage * 100).toFixed(1)}%, 倍速: ${window.midiPlayer.playbackSpeed}x`);
+        }
+        
         this.updateProgressDisplay(percentage);
         
         // 更新时间显示

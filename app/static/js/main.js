@@ -149,24 +149,28 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 更新MIDI进度条
+    // 更新MIDI进度条 - 已被增强控制器接管，此函数保留用于兼容性
     function updateMidiProgress() {
-        if (midiPlayer.currentMidiData && !midiPlayer.midiStop) {
-            const now = +new Date();
-            const playedTime = now - midiPlayer.startTime; // 毫秒
+        // 注释掉旧的进度更新逻辑，现在由MidiPlayerEnhanced接管
+        // 保留函数以避免破坏现有的回调机制
+        
+        // if (midiPlayer.currentMidiData && !midiPlayer.midiStop) {
+        //     const now = +new Date();
+        //     // 修正：考虑倍速的时间计算
+        //     const playedTime = (now - midiPlayer.startTime) * midiPlayer.playbackSpeed; // 毫秒
 
-            // 如果正在拖动进度条，则不更新UI
-            if (!shouldUpdateProgress) return;
+        //     // 如果正在拖动进度条，则不更新UI
+        //     if (!shouldUpdateProgress) return;
 
-            // 计算总时长（取最后一个音符的时间+持续时间）
-            let totalDuration = calculateTotalDuration();
+        //     // 计算总时长（取最后一个音符的时间+持续时间）
+        //     let totalDuration = calculateTotalDuration();
 
-            // 更新进度条
-            if (totalDuration > 0) {
-                const percentage = Math.min((playedTime / totalDuration) * 100, 100);
-                updateProgressUI(percentage, playedTime, totalDuration);
-            }
-        }
+        //     // 更新进度条
+        //     if (totalDuration > 0) {
+        //         const percentage = Math.min((playedTime / totalDuration) * 100, 100);
+        //         updateProgressUI(percentage, playedTime, totalDuration);
+        //     }
+        // }
     }
 
     // 计算MIDI文件总时长
@@ -208,10 +212,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 重置播放器UI
     function resetPlayerUI() {
-        midiProgress.style.width = '0%';
-        midiProgressHandle.style.left = '0%';
-        currentTimeDisplay.textContent = '00:00';
-        totalTimeDisplay.textContent = '00:00';
+        // 通过增强控制器重置进度条，而不是直接操作DOM
+        // 这样可以避免与新系统的冲突
+        const midiPlayerEnhanced = window.midiPlayerEnhanced;
+        if (midiPlayerEnhanced && typeof midiPlayerEnhanced.reset === 'function') {
+            midiPlayerEnhanced.reset();
+        } else {
+            // 如果增强控制器不可用，回退到直接操作
+            midiProgress.style.width = '0%';
+            midiProgressHandle.style.left = '0%';
+            currentTimeDisplay.textContent = '00:00';
+            totalTimeDisplay.textContent = '00:00';
+        }
 
         // 重置文件名显示，但如果当前仍有文件信息则保留显示
         const currentFilenameElement = document.getElementById('current-midi-filename');
