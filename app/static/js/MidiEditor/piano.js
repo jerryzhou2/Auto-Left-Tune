@@ -562,8 +562,8 @@ class Piano {
   // 根据音符名称触发键盘效果
   triggerKeyByName(noteName, duration = 300) {
     if (!noteName) return;
-
     const key = document.querySelector(`.piano-key[data-name="${noteName}"]`);
+    console.log(`查找琴键 ${noteName}:`, key ? '存在' : '不存在'); // 新增调试日志
     this.triggerKeyEffect(key, duration);
   }
 

@@ -1,4 +1,11 @@
 import SampleLibrary from '../lib/ToneInstruments.js';
+import Piano from '/static/js/MidiEditor/piano.js';
+
+const piano = new Piano();
+// 页面加载完成后初始化钢琴
+document.addEventListener('DOMContentLoaded', () => {
+    piano.init('#piano-container');
+});
 
 let midiData = null;
 let currentMidi = null;
@@ -578,6 +585,9 @@ playPauseBtn.addEventListener("click", async () => {
                 track.notes.forEach(note => {
                     Tone.Transport.scheduleOnce((time) => {
                         synth.triggerAttackRelease(note.name, note.duration, time);
+                        setTimeout(() => {
+                            piano.triggerKeyByName(note.name, note.duration);
+                        }, 10);
                     }, note.time);
                     maxTime = Math.max(maxTime, note.time + note.duration);
                 });
@@ -585,6 +595,9 @@ playPauseBtn.addEventListener("click", async () => {
 
             hasScheduled = true;
             Tone.Transport.start();
+            if (Tone.Transport.state === 'started') {
+                requestAnimationFrame(animatePlayhead);
+            }
 
             // 播放结束后重置按钮状态
             Tone.Transport.scheduleOnce(() => {
@@ -598,6 +611,9 @@ playPauseBtn.addEventListener("click", async () => {
         } else {
             // 继续播放
             Tone.Transport.start();
+            if (Tone.Transport.state === 'started') {
+                requestAnimationFrame(animatePlayhead);
+            }
         }
 
     } else {
@@ -612,11 +628,57 @@ document.getElementById("resetBtn").addEventListener("click", () => {
     Tone.Transport.stop();
     isPlaying = false;
 
-    currentTime = 0; // 重置时间
-
     // 重绘音符和网格
     drawPianoRoll(currentMidi);
 });
+
+// 新增：播放结束时的回调函数
+function onPlaybackEnd() {
+    console.log('播放结束，停止进度线动画');
+    // 清除动画循环（若有残留的requestAnimationFrame）
+    cancelAnimationFrame(animatePlayhead.id); // 需记录动画ID
+}
+
+
+function animatePlayhead() {
+    const currentTime = Tone.Transport.seconds; // 或你的播放时间
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // 先清空画布
+    ctx.drawImage(offscreenCanvas, 0, 0); // 重绘音符网格背景
+    drawPlayheadLine(currentTime, canvas.height);
+    currentMidi.tracks.forEach((track, trackIndex) => {
+        if (!trackVisibility[trackIndex]) return;
+        track.notes.forEach(note => {
+            const thisNote = allNotes.find(n => n.note === note);
+            ctx.fillStyle = getColor(trackIndex);
+            ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+        });
+    });
+
+    let playheadAnimationId;
+    // 播放未结束则继续动画
+    if (currentTime < currentMidi.duration) {
+        playheadAnimationId = requestAnimationFrame(animatePlayhead);
+    } else {
+        // 停止播放并执行清理
+        Tone.Transport.stop();
+        cancelAnimationFrame(playheadAnimationId);
+        onPlaybackEnd();
+        redrawCanvas(currentMidi);
+    }
+}
+
+function drawPlayheadLine(currentTime, canvasHeight) {
+    const x = currentTime * timeScale;
+
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvasHeight);
+    ctx.stroke();
+    ctx.restore();
+}
 
 document.getElementById("exportBtn").addEventListener("click", () => {
     if (!currentMidi) return;

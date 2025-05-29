@@ -100,13 +100,6 @@
     <!-- 导入模块化JS文件 -->
     <script type="module">
         import { Notes } from '/static/js/lib/notes.js';
-        import Piano from '/static/js/MidiEditor/piano.js';
-
-        // 页面加载完成后初始化钢琴
-        document.addEventListener('DOMContentLoaded', () => {
-            const pianoInstance = new Piano();
-            pianoInstance.init('#piano-container');
-        }); 
 
         // 添加用户交互来启动AudioContext
         const startAudio = () => {
