@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AutoLeftPiano{% endblock %}</title>
+    
+    <!-- 通用样式 -->
+    <style>
+        /* 导航栏样式 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .navbar-brand {
+            font-family: 'Orbitron', monospace;
+            font-size: 24px;
+            font-weight: 500;
+            color: white;
+            text-decoration: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+        }
+        
+        .navbar-brand:hover {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 20px;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 25px;
+            transition: all 0.2s ease;
+            position: relative;
+            display: inline-block;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+        
+        /* 默认状态 */
+        .nav-link:visited {
+            color: white;
+            text-decoration: none;
+        }
+        
+        /* 悬停状态 */
+        .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.3);
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        /* 当前页面活跃状态 */
+        .nav-link.active {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.5);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        
+        /* 活跃状态的悬停效果 */
+        .nav-link.active:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.6);
+            transform: translateY(-1px);
+        }
+        
+        /* 点击状态 */
+        .nav-link:active {
+            transform: translateY(0px);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        
+        /* 页面内容区域 */
+        .page-content {
+            margin-top: 80px; /* 为固定导航栏留出空间 */
+            min-height: calc(100vh - 80px);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar-content {
+                flex-direction: column;
+                gap: 15px;
+                padding: 10px 20px;
+            }
+            
+            .navbar-nav {
+                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .nav-link {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .page-content {
+                margin-top: 120px;
+            }
+        }
+    </style>
+    
+    <!-- 页面特定的头部内容 -->
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="{{ url_for('main.index') }}" class="navbar-brand">AutoLeftPiano</a>
+            <ul class="navbar-nav">
+                <li>
+                    <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+                        🏠 首页
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('main.index2') }}" class="nav-link {% if request.endpoint == 'main.index2' %}active{% endif %}">
+                        🎹 MIDI编辑器
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- 页面内容 -->
+    <div class="page-content">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- 页面特定的脚本 -->
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

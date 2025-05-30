@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MIDI处理工具</title>
+{% extends "base.html" %}
+
+{% block title %}首页 - AutoLeftPiano{% endblock %}
+
+{% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/piano.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-gradients.css') }}">
@@ -13,12 +12,10 @@
     <!-- 使用本地存储的Tone.js和@tonejs/midi库 -->
     <script src="{{ url_for('static', filename='js/lib/Tone.js') }}"></script>
     <script src="{{ url_for('static', filename='js/lib/Midi.js') }}"></script>
-</head>
-<body>
-    <h1 class="app-title">AutoLeftPiano</h1>
+{% endblock %}
 
-    <!-- 新增跳转按钮 -->
-    <button class="btn btn-primary" id="open-editor-btn">🎹 打开MIDI编辑器</button>
+{% block content %}
+    <h1 class="app-title">AutoLeftPiano</h1>
     
     <!-- 添加80%宽度的容器 -->
     <div class="piano-wrapper" style="width: 80%; margin: 0 auto;">
@@ -161,7 +158,9 @@
             </div>
         </div>
     </div>
+{% endblock %}
 
+{% block scripts %}
     <!-- 导入模块化JS文件 -->
     <script type="module">
         import { Notes } from "{{ url_for('static', filename='js/lib/notes.js') }}";
@@ -209,5 +208,4 @@
     <script src="{{ url_for('static', filename='js/techBackground.js') }}"></script>
     <script src="{{ url_for('static', filename='js/enhancedEffects.js') }}" type="module"></script>
     <script src="{{ url_for('static', filename='js/visualEnhancements.js') }}" type="module"></script>
-</body>
-</html> 
+{% endblock %} 

@@ -37,12 +37,6 @@ class VisualEnhancements {
             playBtn.classList.add('btn-pulse');
         }
 
-        // 为编辑器按钮添加霓虹效果
-        const editorBtn = document.getElementById('open-editor-btn');
-        if (editorBtn) {
-            editorBtn.classList.add('btn-neon');
-        }
-
         // 为下载按钮添加渐变边框
         document.querySelectorAll('[id*="download"]').forEach(btn => {
             btn.classList.add('btn-gradient-border');
