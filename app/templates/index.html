@@ -176,8 +176,9 @@
             // 初始化DVD播放器
             const dvdPlayer = new DVDPlayer('dvd-player');
             
-            // 初始化增强的MIDI播放器控制器
+            // 初始化增强的MIDI播放器控制器，并设为全局可访问
             const midiPlayerEnhanced = new MidiPlayerEnhanced();
+            window.midiPlayerEnhanced = midiPlayerEnhanced; // 设为全局可访问
             
             // 初始化布局管理器
             const layoutManager = new LayoutManager();

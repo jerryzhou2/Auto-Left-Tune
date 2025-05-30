@@ -730,13 +730,34 @@ class MidiPlayer {
     return lastNote.time + lastNote.duration;
   }
 
+  // 获取当前播放时间（秒）- 用于调试和验证
+  getCurrentPlayTime() {
+    if (this.midiStop || !this.startTime) return 0;
+    
+    const realTimeElapsed = (+new Date() - this.startTime); // 实际经过的毫秒数
+    const musicTimeElapsed = realTimeElapsed * this.playbackSpeed; // 音乐时间轴上的毫秒数
+    return musicTimeElapsed / 1000; // 转换为秒
+  }
+
   // 分发进度更新事件
   dispatchProgressUpdate() {
     if (!this.currentMidiData || this.midiStop) return;
     
-    // 修正：音乐播放时间 = (当前时间 - 开始时间) * 倍速 / 1000（转换为秒）
-    const currentTime = ((+new Date() - this.startTime) * this.playbackSpeed) / 1000;
+    // 检查是否有增强控制器正在拖拽，如果是则不发送进度更新
+    const isDragging = document.querySelector('.midi-player-enhanced')?.classList.contains('dragging') || 
+                      document.querySelector('#midi-progress-thumb')?.classList.contains('dragging');
+    if (isDragging) return;
+    
+    // 正确计算：音乐播放时间 = (当前时间 - 开始时间) * 倍速 / 1000（转换为秒）
+    // 这里的逻辑是：实际经过的时间 * 倍速 = 音乐时间轴上的播放时间
+    const realTimeElapsed = (+new Date() - this.startTime); // 实际经过的毫秒数
+    const musicTimeElapsed = realTimeElapsed * this.playbackSpeed; // 音乐时间轴上的毫秒数
+    const currentTime = musicTimeElapsed / 1000; // 转换为秒
     const totalTime = this.calculateTotalDuration();
+    
+    if (this.debug && Math.floor(currentTime) !== Math.floor((currentTime - 0.1))) { // 每秒只打印一次
+      console.log(`进度更新 - 实际时间: ${(realTimeElapsed/1000).toFixed(1)}s, 音乐时间: ${currentTime.toFixed(1)}s, 倍速: ${this.playbackSpeed}x`);
+    }
     
     const event = new CustomEvent('midi-progress-update', {
       detail: { currentTime, totalTime }
