@@ -154,6 +154,11 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ url_for('main.performance') }}" class="nav-link {% if request.endpoint == 'main.performance' %}active{% endif %}">
+                        🎵 演奏区
+                    </a>
+                </li>
+                <li>
                     <a href="{{ url_for('main.about') }}" class="nav-link {% if request.endpoint == 'main.about' %}active{% endif %}">
                         ⓘ 关于
                     </a>
