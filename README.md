@@ -1,3 +1,64 @@
+# AutoLeftPiano
+
+
+
+## 使用方法
+
+1. 启动应用：
+```bash
+python run.py
+```
+
+2. 在浏览器中访问 `http://localhost:5000`
+
+3. 使用钢琴键盘：
+   - 点击钢琴键或使用键盘按键
+   - 观察美丽的卷帘窗动画效果
+   - 按住Shift键可以演奏黑键
+
+4. 记录和生成MIDI：
+   - 点击"开始记录"按钮
+   - 演奏钢琴
+   - 点击"结束记录"生成MIDI文件
+
+## 技术实现
+
+- **前端**: HTML5, CSS3, JavaScript (ES6 Modules)
+- **后端**: Flask (Python)
+- **音频**: Tone.js
+- **动画**: CSS3 Animations with cubic-bezier easing
+- **响应式**: CSS Media Queries
+
+## 钢琴卷帘窗技术细节
+
+卷帘窗效果通过以下技术实现：
+- CSS3 渐变背景和阴影效果
+- transform 和 opacity 动画
+- 模糊滤镜过渡
+- JavaScript 动态位置计算
+- 事件驱动的动画触发
+
+## 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+## 项目结构
+
+```
+AutoLeftPiano/
+├── app/
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── piano.css      # 钢琴和卷帘窗样式
+│   │   └── js/
+│   │       └── piano.js       # 钢琴功能和动画逻辑
+│   └── templates/
+│       └── index.html         # 主页模板
+└── run.py                     # 应用启动文件
+```
+
 ## Quick Start
 ### Platform
 Windows 10+

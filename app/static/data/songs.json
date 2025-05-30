@@ -1,0 +1,154 @@
+{
+  "songs": {
+    "song1": {
+      "id": "song1",
+      "name": "小星星",
+      "level": "初级",
+      "description": "经典儿歌，适合初学者练习",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "SSHHJJH GGFFDDS\nHHGGFFD HHGGFFD\nSSHHJJH GGFFDDS",
+        "tips": [
+          "保持稳定的节奏",
+          "注意手指的放松",
+          "每个音符都要清晰准确"
+        ]
+      }
+    },
+    "song2": {
+      "id": "song2", 
+      "name": "祝你生日快乐",
+      "level": "初级",
+      "description": "生日庆祝必备歌曲",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "OOPO SA\nOOPO DS\nOO H F S A P\nGG F S D S\nOOPO SA\nOOPO DS\nOO H F S A P\nGG F S D FS",
+        "tips": [
+          "注意重复段落的一致性",
+          "最后一段的FS要特别注意",
+          "可以适当加入感情色彩"
+        ]
+      }
+    },
+    "song3": {
+      "id": "song3",
+      "name": "隐形的翅膀",
+      "level": "中级", 
+      "description": "张韶涵经典歌曲，略有难度",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "OSF HF DSSS SPOO\nOSF HHH JH HDFD SDD\nJHF HHHJH FDSDP\nOPS FD FS\nFHL LK JHJL FDS SS SL JH FD SDD\n停顿\nFHL LK JHJL FDS SS SL JH FD DS S",
+        "tips": [
+          "注意中间的停顿",
+          "高音部分要控制力度",
+          "情感表达很重要"
+        ]
+      }
+    },
+    "song4": {
+      "id": "song4",
+      "name": "蒲公英的约定",
+      "level": "中级",
+      "description": "周杰伦作品，需要一定技巧",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "UIO OOO PAS SADP OOO DSDF\nSDFF FGF DF S PASD SSP FG D\nUO SF F GD DHAS FGHS SDF\nUO SF F GD DHAS FGHS SD S\nJH FDS FGD JH AS FGHS SDF\nUO SF F GD DHAS FGHS S D S",
+        "tips": [
+          "注意转调部分",
+          "保持节奏的连贯性",
+          "可以适当变化力度"
+        ]
+      }
+    },
+    "song5": {
+      "id": "song5",
+      "name": "欢乐颂",
+      "level": "初级",
+      "description": "贝多芬名曲，练习必备",
+      "tutorial": {
+        "instruction": "经典古典音乐，适合练习手指独立性",
+        "sequence": "FFGG A AG F DDSS ASSD\nFFGG A AG F DDSS ASSD\nDDFS DDFS GFS AGF\nFFGG A AG F DDSS ASSD",
+        "tips": [
+          "注意古典音乐的庄重感",
+          "保持均匀的节拍",
+          "手指要有力度但不要僵硬"
+        ]
+      }
+    },
+    "song6": {
+      "id": "song6",
+      "name": "茉莉花",
+      "level": "中级",
+      "description": "中国民歌，旋律优美",
+      "tutorial": {
+        "instruction": "传统民歌，注意中国音乐的韵味",
+        "sequence": "SFG A SFG A AS DF GF DS A\nSFG A SFG A AS DF GF DS S\nAAA AGF DF GFD SFG A\nAAA AGF DF GFD SFS",
+        "tips": [
+          "体现中国音乐的韵味",
+          "注意滑音和装饰音",
+          "表达要含蓄优雅"
+        ]
+      }
+    },
+    "song7": {
+      "id": "song7",
+      "name": "童年",
+      "level": "中级",
+      "description": "罗大佑经典，充满回忆",
+      "tutorial": {
+        "instruction": "经典怀旧歌曲，表达童年美好回忆",
+        "sequence": "DFGA S ASDF GA SFD\nDFGA S ASDF GA SFG\nAAA GF DF GA SFD\nAAA GF DF GA SFS",
+        "tips": [
+          "表达出怀旧的情感",
+          "节奏可以稍微自由一些",
+          "注意情感的起伏"
+        ]
+      }
+    },
+    "song8": {
+      "id": "song8",
+      "name": "天空之城",
+      "level": "高级",
+      "description": "久石让名曲，技巧要求较高",
+      "tutorial": {
+        "instruction": "宫崎骏动画经典配乐，需要一定技巧",
+        "sequence": "AS DF GA S ASDF GAS FD\nAS DF GA S ASDF GAS FDS\nJHG FDS ASDF GAS FD\nJHG FDS ASDF GAS FS",
+        "tips": [
+          "注意旋律的连贯性",
+          "表达出空灵的感觉",
+          "高音部分要特别注意"
+        ]
+      }
+    },
+    "song9": {
+      "id": "song9", 
+      "name": "卡农",
+      "level": "高级",
+      "description": "帕赫贝尔名作，结构复杂",
+      "tutorial": {
+        "instruction": "巴洛克时期经典作品，需要较高技巧",
+        "sequence": "DFS A DFS A SFD A SFD A\nGFD S GFD S DFS A DFS A\nASDF GASD FSAG ASDF\nGASD FSAG ASDF GASD",
+        "tips": [
+          "注意各声部的平衡",
+          "保持巴洛克音乐的严谨",
+          "速度要稳定"
+        ]
+      }
+    },
+    "song10": {
+      "id": "song10",
+      "name": "梦中的婚礼",
+      "level": "高级", 
+      "description": "理查德·克莱德曼经典，浪漫优美",
+      "tutorial": {
+        "instruction": "浪漫钢琴曲，需要表现力",
+        "sequence": "DFAS GASD FGAS ASDF\nGASD FGAS ASDF GASD\nJHGF DSAS DFGA SDFG\nASDF GASD FGAS ASFS",
+        "tips": [
+          "表达浪漫的情感",
+          "注意踏板的使用",
+          "音色要柔美"
+        ]
+      }
+    }
+  }
+} 

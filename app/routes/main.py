@@ -26,6 +26,14 @@ def index():
 def index2():
     return render_template('MidiEditor.html')
 
+@main.route('/performance')
+def performance():
+    return render_template('performance.html')
+
+@main.route('/about')
+def about():
+    return render_template('about.html')
+
 @main.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:

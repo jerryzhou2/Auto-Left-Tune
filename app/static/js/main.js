@@ -1266,14 +1266,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // 在页面加载完成后绑定事件
 document.addEventListener('DOMContentLoaded', () => {
-    const openEditorBtn = document.getElementById('open-editor-btn');
-    if (openEditorBtn) {
-        openEditorBtn.addEventListener('click', () => {
-            // 跳转到 MidiEditor.html（注意路径是否正确）
-            console.log("Load html");
-            window.open('/MidiEditor', 'blank');
-        });
-    }
+    // 已移除打开编辑器按钮的相关代码
 });
 
 // 修改全局函数，添加Global前缀避免与局部函数冲突

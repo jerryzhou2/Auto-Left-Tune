@@ -574,6 +574,13 @@ class MidiPlayer {
         // 添加按下效果
         pianoKey.classList.add(`${keyClass}-active`);
         
+        // 触发钢琴卷帘窗矩形条效果
+        // 检查是否存在piano实例和triggerPianoRollEffect方法
+        if (window.pianoInstance && typeof window.pianoInstance.triggerPianoRollEffect === 'function') {
+          window.pianoInstance.triggerPianoRollEffect(pianoKey);
+          if (this.debug) console.log(`MIDI播放触发矩形条效果: ${noteName}`);
+        }
+        
         // 在音符持续时间结束后移除效果
         setTimeout(() => {
           pianoKey.classList.remove(`${keyClass}-active`);

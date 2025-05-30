@@ -1,0 +1,322 @@
+/* 炫酷渐变背景增强样式 */
+
+/* 定义多彩渐变色彩变量 */
+:root {
+    --pdf-gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    --pdf-gradient-2: linear-gradient(45deg, #ff9a9e 0%, #fecfef 25%, #fecfef 75%, #ff9a9e 100%);
+    --midi-gradient-1: linear-gradient(135deg, #a8edea 0%, #fed6e3 25%, #d299c2 50%, #fef9d7 75%, #89f7fe 100%);
+    --midi-gradient-2: linear-gradient(45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+    --result-gradient-1: linear-gradient(135deg, #ffecd2 0%, #fcb69f 25%, #ff8177 50%, #ff867a 75%, #ff8c7f 100%);
+    --result-gradient-2: linear-gradient(45deg, #8fd3f4 0%, #84fab0 25%, #a8edea 50%, #fed6e3 75%, #d299c2 100%);
+    --upload-gradient-1: linear-gradient(135deg, #f093fb 0%, #f5576c 25%, #4facfe 50%, #00f2fe 75%, #a8edea 100%);
+    --upload-gradient-2: linear-gradient(45deg, #ffecd2 0%, #fcb69f 25%, #667eea 50%, #764ba2 75%, #f093fb 100%);
+    
+    --neon-glow: 0 0 20px rgba(102, 126, 234, 0.3), 0 0 40px rgba(240, 147, 251, 0.2), 0 0 60px rgba(118, 75, 162, 0.1);
+    --pulse-glow: 0 0 30px rgba(255, 255, 255, 0.4), 0 0 60px rgba(102, 126, 234, 0.3), 0 0 90px rgba(240, 147, 251, 0.2);
+}
+
+/* PDF查看器区域 - 紫蓝渐变主题 */
+#pdf-area {
+    background: var(--pdf-gradient-1);
+    background-size: 400% 400%;
+    animation: gradientFlow 8s ease infinite;
+    position: relative;
+    border: none !important;
+    overflow: hidden;
+}
+
+#pdf-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--pdf-gradient-2);
+    background-size: 400% 400%;
+    animation: gradientFlow 12s ease infinite reverse;
+    opacity: 0.7;
+    z-index: 0;
+}
+
+#pdf-area::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    animation: sparkle 6s ease-in-out infinite;
+    z-index: 1;
+}
+
+#pdf-view-container {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: var(--neon-glow);
+    height: 100%;
+}
+
+/* MIDI播放器区域 - 青绿渐变主题 */
+#player-area {
+    background: var(--midi-gradient-1);
+    background-size: 400% 400%;
+    animation: gradientFlow 10s ease infinite;
+    position: relative;
+    border: none !important;
+    overflow: hidden;
+}
+
+#player-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--midi-gradient-2);
+    background-size: 400% 400%;
+    animation: gradientFlow 14s ease infinite reverse;
+    opacity: 0.6;
+    z-index: 0;
+}
+
+#player-area::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 4s ease-in-out infinite;
+    z-index: 1;
+}
+
+#midi-player {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: var(--neon-glow);
+    height: 100%;
+}
+
+/* 处理结果区域 - 橙红渐变主题 */
+#buttons-area {
+    background: var(--result-gradient-1);
+    background-size: 400% 400%;
+    animation: gradientFlow 9s ease infinite;
+    position: relative;
+    border: none !important;
+    overflow: hidden;
+}
+
+#buttons-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--result-gradient-2);
+    background-size: 400% 400%;
+    animation: gradientFlow 13s ease infinite reverse;
+    opacity: 0.8;
+    z-index: 0;
+}
+
+#buttons-area::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.1) 49%, rgba(255, 255, 255, 0.1) 51%, transparent 52%);
+    animation: diagonalSweep 8s linear infinite;
+    z-index: 1;
+}
+
+#buttons-area > * {
+    position: relative;
+    z-index: 2;
+}
+
+#buttons-area h3,
+.result-area {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: var(--neon-glow);
+    margin-bottom: 15px;
+}
+
+/* 文件处理区域 - 彩虹渐变主题 */
+#upload-area {
+    background: var(--upload-gradient-1);
+    background-size: 400% 400%;
+    animation: gradientFlow 11s ease infinite;
+    position: relative;
+    border: none !important;
+    overflow: hidden;
+}
+
+#upload-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--upload-gradient-2);
+    background-size: 400% 400%;
+    animation: gradientFlow 15s ease infinite reverse;
+    opacity: 0.7;
+    z-index: 0;
+}
+
+#upload-area::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    animation: multiSparkle 7s ease-in-out infinite;
+    z-index: 1;
+}
+
+#upload-container {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: var(--neon-glow);
+    height: 100%;
+}
+
+/* 动画定义 */
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 100% 25%; }
+    50% { background-position: 50% 100%; }
+    75% { background-position: 25% 0%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    33% { opacity: 1; transform: scale(1.1); }
+    66% { opacity: 0.7; transform: scale(0.9); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+@keyframes diagonalSweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes multiSparkle {
+    0%, 100% { opacity: 0.7; }
+    25% { opacity: 1; }
+    50% { opacity: 0.5; }
+    75% { opacity: 0.9; }
+}
+
+/* 悬停效果增强 */
+#pdf-area:hover {
+    animation-duration: 4s;
+    box-shadow: var(--pulse-glow);
+}
+
+#player-area:hover {
+    animation-duration: 5s;
+    box-shadow: var(--pulse-glow);
+}
+
+#buttons-area:hover {
+    animation-duration: 4.5s;
+    box-shadow: var(--pulse-glow);
+}
+
+#upload-area:hover {
+    animation-duration: 5.5s;
+    box-shadow: var(--pulse-glow);
+}
+
+/* 额外的装饰元素 */
+.grid-item.enhanced-bg {
+    position: relative;
+    overflow: hidden;
+}
+
+.grid-item.enhanced-bg::before {
+    display: none;
+}
+
+/* 增强上传区域内部样式 */
+#upload-container .upload-area {
+    background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%);
+    border: 3px dashed rgba(240, 147, 251, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+#upload-container .upload-area::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+        rgba(240, 147, 251, 0.8) 0%, 
+        rgba(102, 126, 234, 0.8) 25%, 
+        rgba(245, 87, 108, 0.8) 50%, 
+        rgba(74, 172, 254, 0.8) 75%, 
+        rgba(240, 147, 251, 0.8) 100%);
+    background-size: 400% 400%;
+    animation: borderGlow 3s linear infinite;
+    border-radius: 15px;
+    z-index: -1;
+}
+
+@keyframes borderGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .grid-item::after {
+        display: none;
+    }
+    
+    .grid-item::before {
+        animation-duration: 6s;
+    }
+} 

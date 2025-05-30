@@ -1,22 +1,21 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MIDI处理工具</title>
+{% extends "base.html" %}
+
+{% block title %}首页 - AutoLeftPiano{% endblock %}
+
+{% block head %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/piano.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-gradients.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-buttons.css') }}">
     <!-- 修改标题字体样式 --> 
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
     <!-- 使用本地存储的Tone.js和@tonejs/midi库 -->
     <script src="{{ url_for('static', filename='js/lib/Tone.js') }}"></script>
     <script src="{{ url_for('static', filename='js/lib/Midi.js') }}"></script>
-</head>
-<body>
-    <h1 class="app-title">AutoLeftPiano</h1>
+{% endblock %}
 
-    <!-- 新增跳转按钮 -->
-    <button class="btn btn-primary" id="open-editor-btn">🎹 打开MIDI编辑器</button>
+{% block content %}
+    <h1 class="app-title">AutoLeftPiano</h1>
     
     <!-- 添加80%宽度的容器 -->
     <div class="piano-wrapper" style="width: 80%; margin: 0 auto;">
@@ -27,7 +26,7 @@
     <div class="container">
         <div class="grid-layout">
             <!-- 左上角：PDF查看器 -->
-            <div class="grid-item top-left" id="pdf-area">
+            <div class="grid-item top-left enhanced-bg" id="pdf-area">
                 <div id="pdf-view-container" class="app-section">
                     <div class="pdf-header">
                         <h2>查看乐谱</h2>
@@ -43,7 +42,7 @@
             </div>
             
             <!-- 右上角：MIDI播放器 -->
-            <div class="grid-item top-right" id="player-area">
+            <div class="grid-item top-right enhanced-bg" id="player-area">
                 <div id="midi-player" class="midi-player app-section">
                     <h2>MIDI播放器</h2>
                     
@@ -114,7 +113,7 @@
             </div>
             
             <!-- 左下角：功能按钮 -->
-            <div class="grid-item bottom-left" id="buttons-area">
+            <div class="grid-item bottom-left enhanced-bg" id="buttons-area">
                 <h3>处理结果</h3>
                 <div id="result-container" class="result-area" style="display: block;">
                     <div class="file-info">
@@ -139,7 +138,7 @@
             </div>
             
             <!-- 右下角：文件上传区 -->
-            <div class="grid-item bottom-right" id="upload-area">
+            <div class="grid-item bottom-right enhanced-bg" id="upload-area">
                 <div id="upload-container" class="app-section">
                     <h3>📁 文件处理区域</h3>
                     <div class="upload-area" id="drop-area">
@@ -159,7 +158,9 @@
             </div>
         </div>
     </div>
+{% endblock %}
 
+{% block scripts %}
     <!-- 导入模块化JS文件 -->
     <script type="module">
         import { Notes } from "{{ url_for('static', filename='js/lib/notes.js') }}";
@@ -172,6 +173,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             const piano = new Piano();
             piano.init('#piano-container');
+            
+            // 设置钢琴实例为全局变量，以便MIDI播放器可以访问矩形条效果
+            window.pianoInstance = piano;
             
             // 初始化DVD播放器
             const dvdPlayer = new DVDPlayer('dvd-player');
@@ -202,5 +206,6 @@
     <script src="{{ url_for('static', filename='js/midiPlayer.js') }}" type="module"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
     <script src="{{ url_for('static', filename='js/techBackground.js') }}"></script>
-</body>
-</html> 
+    <script src="{{ url_for('static', filename='js/enhancedEffects.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/visualEnhancements.js') }}" type="module"></script>
+{% endblock %} 
