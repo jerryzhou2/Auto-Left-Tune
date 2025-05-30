@@ -153,6 +153,11 @@
                         🎹 MIDI编辑器
                     </a>
                 </li>
+                <li>
+                    <a href="{{ url_for('main.about') }}" class="nav-link {% if request.endpoint == 'main.about' %}active{% endif %}">
+                        ⓘ 关于
+                    </a>
+                </li>
             </ul>
         </div>
     </nav>

@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}关于 - AutoLeftPiano{% endblock %}
+
+{% block head %}
+<style>
+    .about-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 0 20px;
+        line-height: 1.8;
+        color: #333;
+        font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    }
+    
+    .hero-section {
+        text-align: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 60px 40px;
+        border-radius: 15px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .hero-title {
+        font-size: 3em;
+        font-weight: 700;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .hero-subtitle {
+        font-size: 1.3em;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin: 40px 0;
+    }
+    
+    .feature-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 1px solid #f0f0f0;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .feature-icon {
+        font-size: 3em;
+        margin-bottom: 20px;
+        display: block;
+    }
+    
+    .feature-title {
+        font-size: 1.4em;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    
+    .feature-description {
+        color: #666;
+        line-height: 1.6;
+    }
+    
+    .tech-section {
+        background: #f8f9fa;
+        padding: 40px;
+        border-radius: 15px;
+        margin: 40px 0;
+    }
+    
+    .tech-title {
+        font-size: 1.8em;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+    
+    .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .tech-item {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .tech-category {
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+    
+    .tech-details {
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    .workflow-section {
+        margin: 40px 0;
+    }
+    
+    .workflow-title {
+        font-size: 1.8em;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .workflow-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .workflow-step {
+        display: flex;
+        align-items: center;
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        border-left: 5px solid #667eea;
+    }
+    
+    .step-number {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-right: 20px;
+        flex-shrink: 0;
+    }
+    
+    .step-content {
+        flex: 1;
+    }
+    
+    .step-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+    
+    .step-description {
+        color: #666;
+    }
+    
+    @media (max-width: 768px) {
+        .about-container {
+            padding: 0 15px;
+        }
+        
+        .hero-section {
+            padding: 40px 20px;
+        }
+        
+        .hero-title {
+            font-size: 2em;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1em;
+        }
+        
+        .tech-section {
+            padding: 30px 20px;
+        }
+        
+        .workflow-step {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .step-number {
+            margin-right: 0;
+            margin-bottom: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="about-container">
+    <!-- 英雄区域 -->
+    <div class="hero-section">
+        <h1 class="hero-title">🎹 AutoLeftPiano</h1>
+        <p class="hero-subtitle">智能钢琴左手伴奏生成软件</p>
+    </div>
+    
+    <!-- 软件简介 -->
+    <section>
+        <p style="font-size: 1.2em; text-align: center; color: #555; margin-bottom: 40px;">
+            AutoLeftPiano 是一款专为钢琴爱好者和音乐学习者设计的智能音乐软件。
+            它能够自动为您的钢琴旋律生成专业的左手伴奏，让您的演奏更加丰富多彩。
+        </p>
+    </section>
+    
+    <!-- 主要功能 -->
+    <section>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <span class="feature-icon">🎼</span>
+                <h3 class="feature-title">智能伴奏生成</h3>
+                <p class="feature-description">
+                    上传您的MIDI文件，软件将自动分析旋律结构，运用先进的音乐理论算法，
+                    为您生成和谐优美的左手伴奏，让单调的旋律瞬间变得丰富立体。
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="feature-icon">🎹</span>
+                <h3 class="feature-title">虚拟钢琴演奏</h3>
+                <p class="feature-description">
+                    内置专业的虚拟钢琴界面，支持鼠标点击和键盘按键演奏。
+                    独特的卷帘窗动画效果让每个音符都充满视觉美感，提供沉浸式的演奏体验。
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="feature-icon">📋</span>
+                <h3 class="feature-title">乐谱导出</h3>
+                <p class="feature-description">
+                    一键将处理后的音乐导出为标准PDF乐谱格式，支持打印和分享。
+                    生成的乐谱布局清晰，符合专业排版标准，便于阅读和练习。
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="feature-icon">✏️</span>
+                <h3 class="feature-title">MIDI编辑器</h3>
+                <p class="feature-description">
+                    内置强大的MIDI编辑功能，支持音符编辑、节拍调整、音色修改等操作。
+                    让您可以精确控制每一个音符，打造完美的音乐作品。
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="feature-icon">🎨</span>
+                <h3 class="feature-title">精美界面</h3>
+                <p class="feature-description">
+                    采用现代化的渐变设计和流畅的动画效果，界面美观且易用。
+                    响应式布局适配各种设备，无论是电脑还是平板都能获得出色体验。
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <h3 class="feature-title">快速处理</h3>
+                <p class="feature-description">
+                    基于高效的算法和优化的代码架构，能够快速处理MIDI文件。
+                    支持多种音乐格式，兼容性强，处理速度快，让您的创作更加高效。
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 使用流程 -->
+    <section class="workflow-section">
+        <h2 class="workflow-title">💡 使用流程</h2>
+        <div class="workflow-steps">
+            <div class="workflow-step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">上传MIDI文件</div>
+                    <div class="step-description">选择您的钢琴旋律MIDI文件上传到系统</div>
+                </div>
+            </div>
+            
+            <div class="workflow-step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">智能分析</div>
+                    <div class="step-description">系统自动分析旋律的调性、节奏和和声进行</div>
+                </div>
+            </div>
+            
+            <div class="workflow-step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">生成伴奏</div>
+                    <div class="step-description">运用音乐理论算法生成适合的左手伴奏</div>
+                </div>
+            </div>
+            
+            <div class="workflow-step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                    <div class="step-title">导出作品</div>
+                    <div class="step-description">下载完整的MIDI文件或PDF乐谱，开始您的演奏</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 技术栈 -->
+    <section class="tech-section">
+        <h2 class="tech-title">🔧 技术特色</h2>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <div class="tech-category">前端技术</div>
+                <div class="tech-details">HTML5 + CSS3 + JavaScript<br>响应式设计</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-category">后端框架</div>
+                <div class="tech-details">Flask (Python)<br>高性能Web服务</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-category">音频处理</div>
+                <div class="tech-details">Tone.js 音频引擎<br>实时音频合成</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-category">动画效果</div>
+                <div class="tech-details">CSS3 变换<br>流畅过渡动画</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-category">MIDI处理</div>
+                <div class="tech-details">专业音乐算法<br>智能和声分析</div>
+            </div>
+            
+            <div class="tech-item">
+                <div class="tech-category">乐谱生成</div>
+                <div class="tech-details">PDF导出<br>标准乐谱格式</div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 适用人群 -->
+    <section style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 40px; border-radius: 15px; text-align: center; margin: 40px 0;">
+        <h2 style="margin-bottom: 30px; font-size: 1.8em;">🎯 适用人群</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div style="padding: 20px;">
+                <div style="font-size: 2em; margin-bottom: 10px;">🎓</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">音乐学习者</div>
+                <div style="opacity: 0.9;">学习钢琴伴奏技巧</div>
+            </div>
+            <div style="padding: 20px;">
+                <div style="font-size: 2em; margin-bottom: 10px;">🎵</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">钢琴爱好者</div>
+                <div style="opacity: 0.9;">丰富演奏内容</div>
+            </div>
+            <div style="padding: 20px;">
+                <div style="font-size: 2em; margin-bottom: 10px;">🎼</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">音乐创作者</div>
+                <div style="opacity: 0.9;">快速生成伴奏灵感</div>
+            </div>
+            <div style="padding: 20px;">
+                <div style="font-size: 2em; margin-bottom: 10px;">👨‍🏫</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">音乐教师</div>
+                <div style="opacity: 0.9;">教学演示工具</div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- 版本信息 -->
+    <section style="text-align: center; padding: 40px 0; border-top: 1px solid #eee; margin-top: 40px; color: #666;">
+        <p style="font-size: 1.1em; margin-bottom: 10px;">
+            <strong>AutoLeftPiano</strong> - 让每个人都能演奏出美妙的钢琴伴奏
+        </p>
+        <p style="margin: 0; opacity: 0.8;">
+            版本: 1.0 | 开发平台: Python + Flask | 支持平台: Windows 10+, Ubuntu 20.04+
+        </p>
+    </section>
+</div>
+{% endblock %} 
