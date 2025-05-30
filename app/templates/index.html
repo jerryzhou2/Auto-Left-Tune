@@ -6,6 +6,8 @@
     <title>MIDI处理工具</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/piano.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-gradients.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/enhanced-buttons.css') }}">
     <!-- 修改标题字体样式 --> 
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
     <!-- 使用本地存储的Tone.js和@tonejs/midi库 -->
@@ -27,7 +29,7 @@
     <div class="container">
         <div class="grid-layout">
             <!-- 左上角：PDF查看器 -->
-            <div class="grid-item top-left" id="pdf-area">
+            <div class="grid-item top-left enhanced-bg" id="pdf-area">
                 <div id="pdf-view-container" class="app-section">
                     <div class="pdf-header">
                         <h2>查看乐谱</h2>
@@ -43,7 +45,7 @@
             </div>
             
             <!-- 右上角：MIDI播放器 -->
-            <div class="grid-item top-right" id="player-area">
+            <div class="grid-item top-right enhanced-bg" id="player-area">
                 <div id="midi-player" class="midi-player app-section">
                     <h2>MIDI播放器</h2>
                     
@@ -114,7 +116,7 @@
             </div>
             
             <!-- 左下角：功能按钮 -->
-            <div class="grid-item bottom-left" id="buttons-area">
+            <div class="grid-item bottom-left enhanced-bg" id="buttons-area">
                 <h3>处理结果</h3>
                 <div id="result-container" class="result-area" style="display: block;">
                     <div class="file-info">
@@ -139,7 +141,7 @@
             </div>
             
             <!-- 右下角：文件上传区 -->
-            <div class="grid-item bottom-right" id="upload-area">
+            <div class="grid-item bottom-right enhanced-bg" id="upload-area">
                 <div id="upload-container" class="app-section">
                     <h3>📁 文件处理区域</h3>
                     <div class="upload-area" id="drop-area">
@@ -202,5 +204,7 @@
     <script src="{{ url_for('static', filename='js/midiPlayer.js') }}" type="module"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" type="module"></script>
     <script src="{{ url_for('static', filename='js/techBackground.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/enhancedEffects.js') }}" type="module"></script>
+    <script src="{{ url_for('static', filename='js/visualEnhancements.js') }}" type="module"></script>
 </body>
 </html> 
