@@ -333,6 +333,8 @@ class Piano {
         elem.style.fontSize = '5px';
       });
     }
+
+    // 重新调整钢琴卷帘条位置（不再需要，因为矩形条是动态创建的）
   }
 
   // 渲染钢琴键 - 标准钢琴布局：白黑白黑白白黑白黑白黑白
@@ -373,6 +375,9 @@ class Piano {
     // 添加到容器DOM
     keysContainer.innerHTML = html;
 
+    // 创建钢琴卷帘窗容器
+    this.createPianoRollContainer();
+
     // 绑定点击事件
     const pianoKeys = document.querySelectorAll('.piano-key');
     pianoKeys.forEach(key => {
@@ -387,6 +392,27 @@ class Piano {
 
     // 验证黑白键布局
     console.log("已渲染键盘布局: 白键数量 =", whiteKeys.length, "黑键数量 =", blackKeys.length);
+  }
+
+  // 创建钢琴卷帘窗容器
+  createPianoRollContainer() {
+    console.log('开始创建钢琴卷帘窗容器');
+    
+    // 将卷帘窗容器添加到body，而不是pianoKeyWrap
+    let rollContainer = document.getElementById('piano-roll-container');
+    if (rollContainer) {
+      rollContainer.remove(); // 如果已存在，先移除
+    }
+    
+    // 创建空的卷帘窗容器
+    rollContainer = document.createElement('div');
+    rollContainer.className = 'piano-roll-container';
+    rollContainer.id = 'piano-roll-container';
+    
+    // 容器为空，矩形条将在按键时动态创建
+    document.body.appendChild(rollContainer);
+    
+    console.log('钢琴卷帘窗容器已创建并添加到body');
   }
 
   // 键盘事件绑定
@@ -461,10 +487,65 @@ class Piano {
     const keyClass = key.classList.contains('wkey') ? 'wkey' : 'bkey';
     key.classList.add(keyClass + '-active');
 
+    // 触发对应的钢琴卷帘窗效果
+    this.triggerPianoRollEffect(key);
+
     // 指定时间后移除active样式
     setTimeout(() => {
       key.classList.remove(keyClass + '-active');
     }, duration);
+  }
+
+  // 触发钢琴卷帘窗效果
+  triggerPianoRollEffect(key) {
+    if (!key) return;
+
+    const keyName = key.getAttribute('data-name');
+    const keyCode = key.getAttribute('data-keycode');
+    
+    // 检查卷帘窗容器是否存在
+    let rollContainer = document.getElementById('piano-roll-container');
+    if (!rollContainer) return;
+
+    // 为每次按键创建一个新的临时矩形条
+    const rollStrip = document.createElement('div');
+    rollStrip.className = 'piano-roll-strip';
+    
+    // 判断按键类型并添加对应样式
+    const keyType = key.classList.contains('wkey') ? 'white-key' : 'black-key';
+    rollStrip.classList.add(keyType);
+    
+    // 设置矩形条属性
+    rollStrip.setAttribute('data-name', keyName);
+    rollStrip.setAttribute('data-keycode', keyCode);
+
+    // 获取钢琴键在视口中的绝对位置
+    const keyRect = key.getBoundingClientRect();
+    
+    // 设置矩形条的初始位置和尺寸
+    rollStrip.style.position = 'absolute';
+    rollStrip.style.left = `${keyRect.left}px`;
+    rollStrip.style.width = `${keyRect.width}px`;
+    rollStrip.style.top = `${keyRect.top}px`;
+    rollStrip.style.height = '25px';
+    rollStrip.style.opacity = '0';
+    rollStrip.style.transform = 'translateY(0)';
+    
+    // 将矩形条添加到容器中
+    rollContainer.appendChild(rollStrip);
+
+    // 强制重排以确保样式应用
+    rollStrip.offsetHeight;
+    
+    // 添加激活类开始动画
+    rollStrip.classList.add('active');
+    
+    // 动画结束后移除这个临时矩形条
+    setTimeout(() => {
+      if (rollStrip && rollStrip.parentNode) {
+        rollStrip.parentNode.removeChild(rollStrip);
+      }
+    }, 5000); // 匹配CSS动画持续时间 5000ms
   }
 
   // 点击钢琴键处理

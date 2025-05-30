@@ -175,6 +175,9 @@
             const piano = new Piano();
             piano.init('#piano-container');
             
+            // 设置钢琴实例为全局变量，以便MIDI播放器可以访问矩形条效果
+            window.pianoInstance = piano;
+            
             // 初始化DVD播放器
             const dvdPlayer = new DVDPlayer('dvd-player');
             

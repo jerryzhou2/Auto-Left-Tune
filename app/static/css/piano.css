@@ -395,8 +395,12 @@
 
 /* 新增宽度限制容器的样式 */
 .piano-wrapper {
-  margin: 0 auto;
-  overflow: hidden;
+  position: relative;
+  overflow: visible !important; /* 允许卷帘窗显示在容器外 */
+  margin-top: 50px !important; /* 为卷帘窗留出空间 */
+  margin-bottom: 20px !important;
+  padding-top: 50px !important; /* 减少顶部填充 */
+  /* 移除调试边框 */
 }
 
 .option-item .label>input:checked~.label-text {
@@ -408,4 +412,174 @@
   color: #fff;
   /* 默认文字颜色 */
   transition: color 0.2s ease;
+}
+
+/* 钢琴卷帘窗效果样式 - 节奏大师风格短矩形条 */
+.piano-roll-container {
+  position: fixed; /* 固定定位，相对于视口 */
+  top: 0;
+  left: 0;
+  width: 100vw; /* 全屏宽度 */
+  height: 100vh; /* 全屏高度 */
+  overflow: visible;
+  pointer-events: none; /* 不阻挡其他元素的交互 */
+  z-index: 9999; /* 确保在最顶层 */
+}
+
+.piano-roll-strip {
+  position: absolute;
+  height: 25px; /* 减半高度，让矩形条更短 */
+  border-radius: 8px; /* 圆角矩形 */
+  transform: translateY(0); /* 初始位置在琴键位置 */
+  transition: none;
+  opacity: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* 白键对应的短矩形条 */
+.piano-roll-strip.white-key {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 215, 0, 1) 0%,      /* 金色顶部 */
+    rgba(255, 165, 0, 0.95) 30%,  /* 橙色 */
+    rgba(255, 140, 0, 0.9) 60%,   /* 深橙色 */
+    rgba(255, 69, 0, 0.85) 100%   /* 橙红色底部 */
+  );
+  border: 3px solid rgba(255, 215, 0, 0.8);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(255, 165, 0, 0.6),
+    0 0 40px rgba(255, 69, 0, 0.4);
+}
+
+/* 黑键对应的短矩形条 */
+.piano-roll-strip.black-key {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 191, 255, 1) 0%,      /* 亮蓝色顶部 */
+    rgba(30, 144, 255, 0.95) 30%, /* 道奇蓝 */
+    rgba(51, 153, 255, 0.9) 60%,  /* 中蓝色 */
+    rgba(65, 105, 225, 0.85) 100% /* 皇家蓝底部 */
+  );
+  border: 3px solid rgba(0, 191, 255, 0.8);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(30, 144, 255, 0.6),
+    0 0 40px rgba(65, 105, 225, 0.4);
+}
+
+/* 激活动画 - 从琴键位置向上移动，速度更慢 */
+.piano-roll-strip.active {
+  opacity: 1 !important;
+  animation: slideUpFromKey 5000ms linear forwards !important;
+}
+
+@keyframes slideUpFromKey {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.9;
+  }
+  15% {
+    transform: translateY(-108px) scale(1.02);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(-216px) scale(1.03);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-360px) scale(1.02);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-504px) scale(1.01);
+    opacity: 0.8;
+  }
+  85% {
+    transform: translateY(-612px) scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-720px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* 确保钢琴包装器不限制效果 */
+.piano-wrapper {
+  position: relative;
+  overflow: visible !important;
+  margin-top: 50px !important;
+  margin-bottom: 20px !important;
+  padding-top: 50px !important;
+}
+
+/* 钢琴包装器的顶部空间 */
+.piano-wrap {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* 为钢琴键盘区域添加相对定位 */
+.piano-key-wrap {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .piano-wrapper {
+    padding-top: 30px !important;
+  }
+  
+  .piano-roll-strip {
+    height: 20px; /* 小屏幕上更短，保持比例 */
+    border-width: 2px;
+  }
+  
+  @keyframes slideUpFromKey {
+    0% {
+      transform: translateY(0) scale(1);
+      opacity: 0.9;
+    }
+    8% {
+      transform: translateY(-35px) scale(1.05);
+      opacity: 1;
+    }
+    20% {
+      transform: translateY(-100px) scale(1.1);
+      opacity: 1;
+    }
+    40% {
+      transform: translateY(-200px) scale(1.08);
+      opacity: 1;
+    }
+    60% {
+      transform: translateY(-320px) scale(1.05);
+      opacity: 1;
+    }
+    80% {
+      transform: translateY(-480px) scale(1.02);
+      opacity: 0.7;
+    }
+    95% {
+      transform: translateY(-640px) scale(1);
+      opacity: 0.3;
+    }
+    100% {
+      transform: translateY(-720px) scale(0.9);
+      opacity: 0;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .piano-wrapper {
+    padding-top: 20px !important;
+  }
+  
+  .piano-roll-strip {
+    height: 18px; /* 更小屏幕上更短，保持比例 */
+    border-width: 2px;
+  }
 }
