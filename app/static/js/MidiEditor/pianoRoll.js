@@ -413,6 +413,8 @@ canvas.addEventListener('mousedown', (e) => {
     }
     if (e.button !== 0) return; // 只处理左键点击
 
+    addBtn.style.display = 'none';      // 点击任意地方鼠标隐藏
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
