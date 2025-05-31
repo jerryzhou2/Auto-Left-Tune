@@ -44,10 +44,6 @@ class Piano {
 
         </div>
 
-        <div class='button-group'>
-            <button id="toggleRecord">开始记录</button>
-        </div>
-
         <canvas id="audioEffectCanvas"></canvas>
       </div>
 
@@ -225,28 +221,6 @@ class Piano {
 
     // 监听窗口大小变化，重新计算键盘尺寸
     window.addEventListener('resize', this.computeEleSize);
-
-    const toggleButton = document.getElementById('toggleRecord');
-    let isRecording = false;
-    localStorage.setItem('beginTag', 'False');
-    console.log("beginTag is initially false");
-
-    toggleButton.addEventListener('click', async () => {
-      if (!isRecording) {
-        // 开始记录
-        console.log("Turn to end state.");
-        this.recordBegin();
-        toggleButton.textContent = '结束记录';
-        isRecording = true;
-      } else {
-        // 结束记录并生成MIDI
-        console.log("Turn to begin state.");
-        await this.generateMidiFromStorage();
-        toggleButton.textContent = '开始记录';
-        isRecording = false;
-      }
-    });
-
   }
 
   initDraggable() {

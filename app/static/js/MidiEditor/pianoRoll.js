@@ -1,5 +1,6 @@
 import SampleLibrary from '../lib/ToneInstruments.js';
 import Piano from '/static/js/MidiEditor/piano.js';
+import { MidiHistoryManager } from './MidiHistoryManager.js';
 
 const piano = new Piano();
 // 页面加载完成后初始化钢琴
@@ -9,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let midiData = null;
 let currentMidi = null;
+let historyManager = null;
+
 // let synth = new Tone.PolySynth().toDestination();
 let synth = SampleLibrary.load({
     instruments: "piano",
@@ -528,6 +531,8 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
     drawSidebarNoteNames();
 
     currentMidi = midiData;
+
+    historyManager = new MidiHistoryManager(currentMidi);
 });
 
 // 新增：轨道控制函数
