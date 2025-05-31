@@ -93,7 +93,7 @@
 /* 调整白键尺寸 */
 .wkey {
   display: inline-block;
-  width: 2.45%;
+  width: 2.5%;
   /* 白键宽度 */
   height: 100%;
   margin: 0 0.02% 0 0;

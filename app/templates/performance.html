@@ -37,12 +37,12 @@
                         <div class="song-list">
                             <div class="song-item" data-song="song1">
                                 <span class="song-number">1.</span>
-                                <span class="song-name">小星星</span>
+                                <span class="song-name">祝你生日快乐</span>
                                 <span class="song-level">初级</span>
                             </div>
                             <div class="song-item" data-song="song2">
                                 <span class="song-number">2.</span>
-                                <span class="song-name">祝你生日快乐</span>
+                                <span class="song-name">小星星</span>
                                 <span class="song-level">初级</span>
                             </div>
                             <div class="song-item" data-song="song3">
@@ -57,32 +57,32 @@
                             </div>
                             <div class="song-item" data-song="song5">
                                 <span class="song-number">5.</span>
-                                <span class="song-name">欢乐颂</span>
-                                <span class="song-level">初级</span>
+                                <span class="song-name">晴天</span>
+                                <span class="song-level">中级</span>
                             </div>
                             <div class="song-item" data-song="song6">
                                 <span class="song-number">6.</span>
-                                <span class="song-name">茉莉花</span>
-                                <span class="song-level">中级</span>
+                                <span class="song-name">千与千寻主题曲</span>
+                                <span class="song-level">高级</span>
                             </div>
                             <div class="song-item" data-song="song7">
                                 <span class="song-number">7.</span>
-                                <span class="song-name">童年</span>
+                                <span class="song-name">明天你好</span>
                                 <span class="song-level">中级</span>
                             </div>
                             <div class="song-item" data-song="song8">
                                 <span class="song-number">8.</span>
-                                <span class="song-name">天空之城</span>
-                                <span class="song-level">高级</span>
+                                <span class="song-name">遇见</span>
+                                <span class="song-level">中级</span>
                             </div>
                             <div class="song-item" data-song="song9">
                                 <span class="song-number">9.</span>
-                                <span class="song-name">卡农</span>
+                                <span class="song-name">夜曲</span>
                                 <span class="song-level">高级</span>
                             </div>
                             <div class="song-item" data-song="song10">
                                 <span class="song-number">10.</span>
-                                <span class="song-name">梦中的婚礼</span>
+                                <span class="song-name">不能说的秘密</span>
                                 <span class="song-level">高级</span>
                             </div>
                         </div>
@@ -130,10 +130,58 @@
             
             <!-- 右侧：演奏示例 -->
             <div class="info-box demo-box">
-                <h3>🎼 演奏示例</h3>
-                <div class="placeholder-text">
-                    <p>此区域将提供各种钢琴演奏示例和练习曲目</p>
-                    <p>敬请期待...</p>
+                <!-- 歌曲列表界面（默认显示） -->
+                <div id="demo-list-view" class="view-container active">
+                    <h3>🎼 演奏示例</h3>
+                    <div class="demo-list-container">
+                        <div class="demo-list">
+                            <div class="demo-item" data-demo="demo1">
+                                <span class="demo-number">1.</span>
+                                <span class="demo-name">打上花火</span>
+                                <div class="demo-controls" style="display: none;">
+                                    <button class="demo-play-btn" title="播放">▶️</button>
+                                    <button class="demo-pause-btn" title="暂停" style="display: none;">⏸️</button>
+                                    <button class="demo-stop-btn" title="停止" style="display: none;">⏹️</button>
+                                </div>
+                            </div>
+                            <div class="demo-item" data-demo="demo2">
+                                <span class="demo-number">2.</span>
+                                <span class="demo-name">等你下课</span>
+                                <div class="demo-controls" style="display: none;">
+                                    <button class="demo-play-btn" title="播放">▶️</button>
+                                    <button class="demo-pause-btn" title="暂停" style="display: none;">⏸️</button>
+                                    <button class="demo-stop-btn" title="停止" style="display: none;">⏹️</button>
+                                </div>
+                            </div>
+                            <div class="demo-item" data-demo="demo3">
+                                <span class="demo-number">3.</span>
+                                <span class="demo-name">梦中的婚礼</span>
+                                <div class="demo-controls" style="display: none;">
+                                    <button class="demo-play-btn" title="播放">▶️</button>
+                                    <button class="demo-pause-btn" title="暂停" style="display: none;">⏸️</button>
+                                    <button class="demo-stop-btn" title="停止" style="display: none;">⏹️</button>
+                                </div>
+                            </div>
+                            <div class="demo-item" data-demo="demo4">
+                                <span class="demo-number">4.</span>
+                                <span class="demo-name">晴天</span>
+                                <div class="demo-controls" style="display: none;">
+                                    <button class="demo-play-btn" title="播放">▶️</button>
+                                    <button class="demo-pause-btn" title="暂停" style="display: none;">⏸️</button>
+                                    <button class="demo-stop-btn" title="停止" style="display: none;">⏹️</button>
+                                </div>
+                            </div>
+                            <div class="demo-item" data-demo="demo5">
+                                <span class="demo-number">5.</span>
+                                <span class="demo-name">至少还有你</span>
+                                <div class="demo-controls" style="display: none;">
+                                    <button class="demo-play-btn" title="播放">▶️</button>
+                                    <button class="demo-pause-btn" title="暂停" style="display: none;">⏸️</button>
+                                    <button class="demo-stop-btn" title="停止" style="display: none;">⏹️</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -144,10 +192,14 @@
     <!-- 导入模块化JS文件 -->
     <script type="module">
         import { Notes } from "{{ url_for('static', filename='js/lib/notes.js') }}";
+        import SampleLibrary from "{{ url_for('static', filename='js/lib/SampleLibrary.js') }}";
         import Piano from "{{ url_for('static', filename='js/piano.js') }}";
         import DVDPlayer from "{{ url_for('static', filename='js/dvdPlayer.js') }}";
         import LayoutManager from "{{ url_for('static', filename='js/layoutManager.js') }}";
         import MidiPlayerEnhanced from "{{ url_for('static', filename='js/midiPlayerEnhanced.js') }}";
+        
+        // 设置SampleLibrary为全局变量，供performance.js使用
+        window.SampleLibrary = SampleLibrary;
         
         // 页面加载完成后初始化所有组件
         document.addEventListener('DOMContentLoaded', () => {
