@@ -129,63 +129,62 @@ class EnhancedEffects {
      */
     addMouseTracking() {
         let mouseTrailIndex = 0;
+        let lastTrailTime = 0;
+        const trailThrottle = 150; // 节流时间：150ms，减少音符生成频率
         
         document.addEventListener('mousemove', (e) => {
             this.mousePosition.x = e.clientX;
             this.mousePosition.y = e.clientY;
             
-            // 创建鼠标跟随的音符效果
-            this.createMouseMusicTrail(e.clientX, e.clientY, mouseTrailIndex);
-            mouseTrailIndex++;
+            // 添加节流机制，避免过于频繁的音符生成
+            const currentTime = Date.now();
+            if (currentTime - lastTrailTime < trailThrottle) {
+                return;
+            }
+            lastTrailTime = currentTime;
+            
+            // 降低音符生成概率
+            if (Math.random() < 0.3) { // 只有30%的鼠标移动会触发音符
+                this.createMouseMusicTrail(e.clientX, e.clientY, mouseTrailIndex);
+                mouseTrailIndex++;
+            }
         });
     }
 
     createMouseMusicTrail(x, y, index) {
-        // 更丰富的音符符号数组
-        const musicNotes = ['♪', '♫', '♬', '♩', '♭', '♯', '𝄞', '𝄢', '♮', '𝄽', '𝄐', '𝄑'];
-        const specialNotes = ['🎵', '🎶', '🎼', '🎹', '🎧'];
+        // 精简版音符符号数组 - 只保留常用的音符
+        const musicNotes = ['♪', '♫', '♩'];
         
-        // 创建3-5个音符跟随鼠标
-        const noteCount = 3 + Math.floor(Math.random() * 3);
+        // 减少音符数量：只创建1-2个音符跟随鼠标
+        const noteCount = 1 + Math.floor(Math.random() * 2); // 1-2个音符
         
-        // 偶尔创建特殊的音符效果
-        const shouldCreateSpecial = Math.random() < 0.15; // 15%概率
+        // 降低特殊音符的概率
+        const shouldCreateSpecial = Math.random() < 0.05; // 从15%降到5%
         
         for (let i = 0; i < noteCount; i++) {
             setTimeout(() => {
                 const note = document.createElement('div');
                 
-                // 选择音符类型
-                let randomNote, noteClass = '';
-                if (shouldCreateSpecial && i === 0) {
-                    randomNote = specialNotes[Math.floor(Math.random() * specialNotes.length)];
-                    noteClass = 'special-note';
-                } else {
-                    randomNote = musicNotes[Math.floor(Math.random() * musicNotes.length)];
-                    
-                    // 为不同音符添加特殊类
-                    if (randomNote === '𝄞') noteClass = 'note-treble-clef';
-                    else if (randomNote === '𝄢') noteClass = 'note-bass-clef';
-                    else if (randomNote === '♭' || randomNote === '♯') noteClass = 'note-sharp-flat';
-                    else noteClass = 'musical-particle';
-                }
+                // 简化音符选择逻辑
+                let randomNote = musicNotes[Math.floor(Math.random() * musicNotes.length)];
+                let noteClass = 'musical-particle';
                 
                 note.innerHTML = randomNote;
                 note.className = noteClass;
                 
-                // 为每个音符设置不同的偏移和属性
-                const angle = (i / noteCount) * Math.PI * 2; // 圆形分布
-                const radius = 15 + Math.random() * 25; // 15-40px半径
+                // 减小偏移范围，让音符更贴近鼠标
+                const angle = (i / noteCount) * Math.PI * 2;
+                const radius = 8 + Math.random() * 12; // 从15-40px减少到8-20px
                 const offsetX = Math.cos(angle) * radius;
                 const offsetY = Math.sin(angle) * radius;
                 
-                // 动态色相变化
-                const hue = (index * 15 + i * 45) % 360;
-                const saturation = 60 + Math.random() * 30; // 60-90%
-                const lightness = 50 + Math.random() * 30; // 50-80%
+                // 简化颜色设置
+                const hue = (index * 30 + i * 60) % 360; // 减少色相变化
+                const saturation = 70; // 固定饱和度
+                const lightness = 60; // 固定亮度
                 
-                const size = shouldCreateSpecial && i === 0 ? 18 + Math.random() * 6 : 12 + Math.random() * 8;
-                const rotation = Math.random() * 360;
+                const size = 10 + Math.random() * 4; // 减小尺寸：从12-18px减少到10-14px
+                const rotation = Math.random() * 180; // 减少旋转角度
                 
                 note.style.cssText = `
                     position: fixed;
@@ -193,82 +192,28 @@ class EnhancedEffects {
                     top: ${y + offsetY}px;
                     font-size: ${size}px;
                     color: hsl(${hue}, ${saturation}%, ${lightness}%);
-                    text-shadow: 
-                        0 0 8px hsl(${hue}, ${saturation}%, ${Math.min(lightness + 20, 100)}%),
-                        0 0 16px hsl(${hue}, ${saturation}%, ${Math.min(lightness + 10, 100)}%);
+                    text-shadow: 0 0 4px hsl(${hue}, ${saturation}%, ${Math.min(lightness + 15, 100)}%);
                     pointer-events: none;
                     z-index: 9999;
-                    animation: musicNoteTrail 1.5s ease-out forwards;
+                    animation: musicNoteTrail 1s ease-out forwards;
                     transform: translate(-50%, -50%) rotate(${rotation}deg);
                     user-select: none;
-                    font-weight: bold;
-                    filter: drop-shadow(0 0 4px hsl(${hue}, ${saturation}%, ${lightness}%));
+                    font-weight: normal;
                 `;
-
-                // 为特殊音符添加额外效果
-                if (shouldCreateSpecial && i === 0) {
-                    note.style.animation = 'musicTrailEnhanced 2s ease-out forwards';
-                    note.style.fontSize = (size * 1.3) + 'px';
-                }
 
                 document.body.appendChild(note);
 
-                // 音符移除
+                // 缩短音符存在时间
                 setTimeout(() => {
                     if (note.parentNode) {
                         note.parentNode.removeChild(note);
                     }
-                }, shouldCreateSpecial && i === 0 ? 2000 : 1500);
-            }, i * 30); // 更快的错开时间
+                }, 1000); // 从1500ms减少到1000ms
+            }, i * 50); // 增加间隔时间
         }
 
-        // 偶尔创建音符连线效果
-        if (Math.random() < 0.08) { // 8%概率
-            this.createMusicStaff(x, y);
-        }
-    }
-
-    /**
-     * 创建五线谱连线效果
-     */
-    createMusicStaff(x, y) {
-        const staff = document.createElement('div');
-        staff.style.cssText = `
-            position: fixed;
-            left: ${x - 30}px;
-            top: ${y - 2}px;
-            width: 60px;
-            height: 1px;
-            background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.6) 50%, transparent 100%);
-            pointer-events: none;
-            z-index: 9998;
-            animation: staffFade 1s ease-out forwards;
-            transform: translateY(-50%);
-        `;
-
-        document.body.appendChild(staff);
-
-        // 创建多条线
-        for (let i = 1; i < 5; i++) {
-            setTimeout(() => {
-                const line = staff.cloneNode(true);
-                line.style.top = (y - 2 + i * 6) + 'px';
-                line.style.animationDelay = (i * 0.1) + 's';
-                document.body.appendChild(line);
-                
-                setTimeout(() => {
-                    if (line.parentNode) {
-                        line.parentNode.removeChild(line);
-                    }
-                }, 1000 + i * 100);
-            }, i * 50);
-        }
-
-        setTimeout(() => {
-            if (staff.parentNode) {
-                staff.parentNode.removeChild(staff);
-            }
-        }, 1000);
+        // 完全移除五线谱连线效果
+        // 移除了 createMusicStaff 的调用
     }
 
     /**
@@ -564,24 +509,19 @@ const enhancedAnimations = `
 
     @keyframes musicNoteTrail {
         0% { 
-            opacity: 0.9; 
-            transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
+            opacity: 0.8; 
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
             filter: blur(0px);
         }
-        25% { 
-            opacity: 1; 
-            transform: translate(-50%, -50%) scale(1.2) rotate(90deg);
-            filter: blur(0px);
-        }
-        75% { 
+        50% { 
             opacity: 0.6; 
-            transform: translate(-50%, -50%) scale(1) rotate(270deg);
-            filter: blur(1px);
+            transform: translate(-50%, -50%) scale(0.8) rotate(45deg);
+            filter: blur(0px);
         }
         100% { 
             opacity: 0; 
-            transform: translate(-50%, -50%) scale(0.3) rotate(360deg);
-            filter: blur(2px);
+            transform: translate(-50%, -50%) scale(0.4) rotate(90deg);
+            filter: blur(1px);
         }
     }
 
