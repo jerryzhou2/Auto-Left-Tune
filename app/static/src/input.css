@@ -83,4 +83,9 @@
     .context-menu-item {
         @apply px-3 py-1.5 text-sm text-gray-700 rounded-md transition-colors duration-150 text-left whitespace-nowrap;
     }
+
+    /* ✅ 新增标题样式，可选复用 */
+    .title-art {
+        @apply text-3xl font-bold text-gray-800 tracking-tight mb-4;
+    }
 }

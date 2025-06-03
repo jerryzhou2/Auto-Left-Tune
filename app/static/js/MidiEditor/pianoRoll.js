@@ -7,14 +7,14 @@ const piano = new Piano();
 document.addEventListener('DOMContentLoaded', () => {
     piano.init('#piano-container');
 
-    // // ✅ 绑定快捷键处理函数
-    // document.addEventListener('keydown', (event) => {
-    //     // 仅在非输入框/文本区域时处理快捷键
-    //     const target = event.target;
-    //     if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-    //         historyManager.handleShortcut(event);
-    //     }
-    // });
+    // ✅ 绑定快捷键处理函数
+    document.addEventListener('keydown', (event) => {
+        // 仅在非输入框/文本区域时处理快捷键
+        const target = event.target;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+            historyManager.handleShortcut(event);
+        }
+    });
 });
 
 let midiData = null;

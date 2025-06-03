@@ -9,20 +9,27 @@ document.addEventListener("DOMContentLoaded", () => {
     let width = canvas.width = window.innerWidth;
     let height = canvas.height = window.innerHeight;
 
+    let gradientOffset = 0;
+
     console.log("Canvas set to full screen.");
 
     // 配置参数
-    const particles = [];
-    const PARTICLE_COUNT = 150; // 粒子数量
-    const MAX_DISTANCE = 150; // 连线最大距离
+    const particles = [];      // 音符粒子
+    const stars = [];          // 星光粒子
+    const meteors = [];
+    const METEOR_COUNT = 12;
+    const PARTICLE_COUNT = 150; // 音符粒子数量
+    const STAR_COUNT = 150;     // 星光粒子数量
+    const MAX_DISTANCE = 150;   // 连线最大距离
     const NOTE_TYPES = ['quarter', 'eighth', 'rest']; // 音符类型
 
-    // 增强风格配色方案 - 加深背景并提高亮度
+    // 增强风格配色方案
     const COLORS = {
-        background: ['#cbd5e1', '#94a3b8'], // 更深的背景渐变色调
-        particles: ['#4338ca', '#7c3aed', '#059669', '#2563eb'], // 更饱和的粒子颜色
-        lines: 'rgba(79, 70, 229, 0.3)', // 更明显的连线
-        staff: 'rgba(100, 116, 139, 0.3)' // 更深的五线谱颜色
+        background: ['#cbd5e1', '#94a3b8'], // 背景渐变
+        particles: ['#4338ca', '#7c3aed', '#059669', '#2563eb'], // 音符颜色
+        lines: 'rgba(79, 70, 229, 0.3)', // 连线颜色
+        staff: 'rgba(100, 116, 139, 0.3)', // 五线谱颜色
+        stars: ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 200, 0.7)', 'rgba(200, 220, 255, 0.7)'] // 星光颜色
     };
 
     // 发光效果配置
@@ -31,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
         intensity: 1.5 // 发光强度系数
     };
 
-    // 粒子类
+    // 音符粒子类
     class Particle {
         constructor() {
             this.x = Math.random() * width;
@@ -94,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 绘制四分音符
         drawQuarterNote() {
-            // 音符头 - 增大尺寸增强视觉效果
+            // 音符头
             ctx.fillStyle = this.color;
             ctx.beginPath();
             ctx.ellipse(0, 0, this.currentRadius * 1.8, this.currentRadius * 1.2, 0, 0, Math.PI * 2);
@@ -125,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ctx.lineTo(this.currentRadius * 1.8, -this.currentRadius * 7);
             ctx.stroke();
 
-            // 符尾 - 优化曲线
+            // 符尾
             ctx.beginPath();
             ctx.moveTo(this.currentRadius * 1.8, -this.currentRadius * 4.5);
             ctx.bezierCurveTo(
@@ -168,7 +175,71 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // 绘制五线谱 - 增强发光效果
+    // 星光粒子类
+    class Star {
+        constructor() {
+            this.reset();
+            this.opacity = Math.random() * 0.5 + 0.3; // 初始透明度
+            this.flickerSpeed = Math.random() * 0.03 + 0.01; // 闪烁速度
+            this.flickerPhase = Math.random() * Math.PI * 2; // 闪烁相位
+        }
+
+        reset() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * -height; // 从屏幕上方开始
+            this.size = Math.random() * 1.5 + 0.5; // 星光大小
+            this.speed = Math.random() * 0.5 + 0.2; // 下落速度
+            this.color = COLORS.stars[Math.floor(Math.random() * COLORS.stars.length)];
+            this.trailLength = Math.random() * 8 + 5; // 拖尾长度
+        }
+
+        move() {
+            this.y += this.speed;
+
+            // 更新闪烁效果
+            this.flickerPhase += this.flickerSpeed;
+            this.currentOpacity = this.opacity + Math.sin(this.flickerPhase) * 0.2;
+
+            // 如果超出屏幕，重置位置
+            if (this.y > height) {
+                this.reset();
+            }
+        }
+
+        draw() {
+            // 绘制星光主体
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+
+            // 创建径向渐变，模拟星光中心亮边缘暗的效果
+            const gradient = ctx.createRadialGradient(
+                this.x, this.y, 0,
+                this.x, this.y, this.size
+            );
+            gradient.addColorStop(0, `rgba(255, 255, 255, ${this.currentOpacity})`);
+            gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // 添加发光效果
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            ctx.shadowBlur = 3;
+
+            // 绘制拖尾效果（模拟移动痕迹）
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x, this.y - this.trailLength);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${this.currentOpacity * 0.5})`;
+            ctx.lineWidth = this.size * 0.8;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+    }
+
+    // 绘制五线谱
     function drawStaff() {
         // 绘制五线谱主体
         ctx.strokeStyle = COLORS.staff;
@@ -186,7 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ctx.lineTo(width, yOffset + j * 6);
                 ctx.stroke();
 
-                // 添加发光效果 - 使用多条线模拟光晕
+                // 添加发光效果
                 ctx.strokeStyle = `rgba(148, 163, 184, 0.15)`;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -206,7 +277,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // 绘制粒子间连线 - 增强视觉效果
+    function drawBackgroundGradient() {
+        gradientOffset += 0.002;
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, `hsl(${(gradientOffset * 360) % 360}, 60%, 80%)`);
+        gradient.addColorStop(1, `hsl(${(gradientOffset * 360 + 60) % 360}, 60%, 60%)`);
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+    }
+
+    // 绘制粒子间连线
     function drawConnections() {
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
@@ -240,21 +321,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 动画循环
     function animate() {
-        // 绘制背景 - 增强颜色深度
+        // 绘制背景
         const gradient = ctx.createLinearGradient(0, 0, 0, height);
         gradient.addColorStop(0, COLORS.background[0]);
         gradient.addColorStop(1, COLORS.background[1]);
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
 
+        drawBackgroundGradient(); // 背景动画
+
         // 绘制五线谱
         drawStaff();
 
-        // 更新并绘制所有粒子
+        // 更新并绘制所有星光粒子
+        stars.forEach(star => {
+            star.move();
+            star.draw();
+        });
+
+        // 更新并绘制所有音符粒子
         particles.forEach(particle => {
             particle.move();
             particle.draw();
         });
+
+        meteors.forEach(meteor => {
+            meteor.move();
+            meteor.draw();
+        });
+
 
         // 绘制连线
         drawConnections();
@@ -263,10 +358,59 @@ document.addEventListener("DOMContentLoaded", () => {
         requestAnimationFrame(animate);
     }
 
+    class Meteor {
+        constructor() {
+            this.reset();
+        }
+
+        reset() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * -height;
+            this.length = Math.random() * 80 + 60;
+            this.speed = Math.random() * 8 + 5;
+            this.angle = Math.PI / 4; // 45度方向
+            this.alpha = 1;
+            this.color = 'rgba(255, 255, 255, 0.8)';
+        }
+
+        move() {
+            this.x += this.speed * Math.cos(this.angle);
+            this.y += this.speed * Math.sin(this.angle);
+            this.alpha -= 0.01; // 慢慢消失
+
+            if (this.alpha <= 0) {
+                this.reset();
+            }
+        }
+
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 2;
+
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x - this.length * Math.cos(this.angle), this.y - this.length * Math.sin(this.angle));
+            ctx.stroke();
+
+            ctx.restore();
+        }
+    }
+
+
     // 初始化粒子
     function initParticles() {
         for (let i = 0; i < PARTICLE_COUNT; i++) {
             particles.push(new Particle());
+        }
+
+        for (let i = 0; i < STAR_COUNT; i++) {
+            stars.push(new Star());
+        }
+
+        for (let i = 0; i < METEOR_COUNT; i++) {
+            meteors.push(new Meteor());
         }
     }
 
@@ -280,11 +424,12 @@ document.addEventListener("DOMContentLoaded", () => {
     initParticles();
     animate();
 
-    // 设置Canvas样式 - 添加整体模糊效果增强发光感
+    // 设置Canvas样式
     canvas.style.position = "fixed";
     canvas.style.top = "0";
     canvas.style.left = "0";
     canvas.style.zIndex = "-1";
     canvas.style.pointerEvents = "none";
     canvas.style.filter = "blur(0.5px)";
-});    
+});
+

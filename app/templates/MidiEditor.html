@@ -24,24 +24,36 @@
 {% endblock %}
 
 {% block content %}
-    <h1 class="title-art">MIDI 可视化编辑器</h1>
+    <h1 class="title-art text-3xl font-bold text-gray-800 tracking-tight mb-4">
+      MIDI 可视化编辑器
+    </h1>
+
     <div class="controls">
-        <div class="custom-file-input">
-            <input type="file" id="midiFileInput" accept=".mid,.midi" />
-            <label for="midiFileInput">
-              <span class="file-icon">🎹</span>
-              <span class="file-name">请选择文件</span>
-            </label>
-        </div>
-        <button id="playBtn">播放</button>
-        <button id="resetBtn">重置</button>
-        <button id="exportBtn">导出MIDI</button>
-        <button id="togglePianoBtn">显示钢琴</button> 
+      <div class="custom-file-input relative overflow-hidden inline-block">
+        <input
+          type="file"
+          id="midiFileInput"
+          accept=".mid,.midi"
+          class="absolute left-0 top-0 opacity-0 w-full h-full cursor-pointer z-10"
+        />
+        <label
+          for="midiFileInput"
+          class="flex items-center gap-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-medium py-2 px-4 rounded-lg shadow transition duration-200 cursor-pointer"
+        >
+          <span class="file-icon text-lg">🎹</span>
+          <span class="file-name">请选择文件</span>
+        </label>
+      </div>
+    
+      <button id="playBtn" class="btn-primary">播放</button>
+      <button id="resetBtn" class="btn-secondary">重置</button>
+      <button id="exportBtn" class="btn-accent">导出MIDI</button>
+      <button id="togglePianoBtn" class="btn-secondary">显示钢琴</button>
     </div>
 
     <div id="historyManager" class="history-manager max-w-2xl mx-auto mt-8 bg-white rounded-xl shadow-card overflow-hidden border border-neutral-200 transition-all duration-300 hover:shadow-card-hover">
       <!-- 面板头部 -->
-      <div class="history-header bg-gradient-to-r from-primary to-blue-600 text-white p-4 flex justify-between items-center">
+      <div id="historyHeader" class="history-header bg-gradient-to-r from-primary to-blue-600 text-white p-4 flex justify-between items-center cursor-pointer">
         <h3 class="text-xl font-bold flex items-center">
           <i class="fa fa-history mr-2"></i> 
           <span>修改历史</span>
@@ -59,11 +71,12 @@
             <i class="fa fa-star"></i> 
             <span>保存点</span>
           </button>
+          <i id="toggleHistoryIcon" class="fa fa-chevron-down transition-transform duration-300"></i>
         </div>
       </div>
       
       <!-- 历史记录列表 -->
-      <div class="history-list" id="historyList" class="overflow-y-auto scrollbar-thin p-3 max-h-[400px]">
+      <div id="historyList" class="history-list overflow-y-auto scrollbar-thin px-3 max-h-0 transition-all duration-500 ease-in-out">
         <!-- 示例历史记录项（当前状态） -->
         <div class="history-item bg-neutral-50 hover:bg-neutral-100 history-item-current relative">
           <div class="flex items-center">
@@ -113,15 +126,15 @@
     <div id="trackControls"></div>
 
     <!-- 新增音轨控制面板 -->
-    <div id="canvasContainer">
-        <div id="sidebar"></div>
-        <div id="canvasWrapper">
-            <canvas id="pianoRoll"></canvas>
-        </div>
+    <div id="canvasContainer" class="flex h-full bg-white border rounded-lg shadow-inner overflow-hidden">
+      <div id="sidebar" class="w-1/4 bg-neutral-50 border-r border-neutral-200 p-3 overflow-y-auto scrollbar-thin"></div>
+      <div id="canvasWrapper" class="flex-1 bg-white p-2">
+        <canvas id="pianoRoll" class="w-full h-full rounded border border-neutral-300 shadow-sm"></canvas>
+      </div>
     </div>
 
-    <div id="addBtnContainer">
-        <button id="addOneNote">添加音符</button>
+    <div id="addBtnContainer" class="mt-4 flex justify-center">
+      <button id="addOneNote" class="btn-primary">添加音符</button>
     </div>
 
     <!-- 右键菜单 -->
@@ -220,6 +233,25 @@
                 pianoContainer.style.display = 'none';
                 pianoVisualized = false;
             }
+        });
+
+        const header = document.getElementById('historyHeader');
+        const list = document.getElementById('historyList');
+        const icon = document.getElementById('toggleHistoryIcon');
+      
+        let isExpanded = false;
+      
+        header.addEventListener('click', () => {
+          isExpanded = !isExpanded;
+          if (isExpanded) {
+            list.classList.remove('max-h-0');
+            list.classList.add('max-h-[400px]');
+            icon.classList.add('rotate-180'); // 箭头翻转
+          } else {
+            list.classList.remove('max-h-[400px]');
+            list.classList.add('max-h-0');
+            icon.classList.remove('rotate-180');
+          }
         });
     </script>
 

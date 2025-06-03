@@ -6,6 +6,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      maxHeight: {
+        '400px': '400px',
+      },
       colors: {
         primary: '#3B82F6', // 主色调：蓝色
         secondary: '#10B981', // 辅助色：绿色
