@@ -75,4 +75,12 @@
     .midi-action-move {
         @apply bg-yellow-100 text-yellow-800;
     }
+
+    .context-menu {
+        @apply absolute hidden flex flex-col bg-white border rounded-lg shadow-lg p-2 space-y-1 z-50;
+    }
+
+    .context-menu-item {
+        @apply px-3 py-1.5 text-sm text-gray-700 rounded-md transition-colors duration-150 text-left whitespace-nowrap;
+    }
 }

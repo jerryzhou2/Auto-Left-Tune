@@ -511,7 +511,7 @@ canvas.addEventListener('mouseup', (e) => {
         const track = currentMidi.tracks[draggedNote.trackIndex];
         const draggedNoteInNotes = track.notes.find(note => note === draggedNote.note);
 
-        const originalNote = draggedNoteInNotes.copy();
+        const originalNote = { ...draggedNoteInNotes };
 
         // 两个数组进行同步
         if (draggedNote && draggedNoteInNotes) {
@@ -863,15 +863,14 @@ function drawGrid() {
 
     const beatWidth = timeScale * beatsToSeconds(1);       // 每拍的宽度
 
-    offCtx.lineWidth = 1;
-
     // 1. 绘制音高横线（水平）
     for (let i = 0; i < visibleRange; i++) {
         const y = canvas.height - (i * noteHeight);
         offCtx.beginPath();
         offCtx.moveTo(0, y);
         offCtx.lineTo(canvas.width, y);
-        offCtx.strokeStyle = i % 12 === 0 ? '#bbb' : '#eee'; // 每个C音高加深
+        offCtx.lineWidth = i % 12 === 0 ? 1.8 : 1;       // C音高线更粗
+        offCtx.strokeStyle = i % 12 === 0 ? '#444' : '#ccc'; // C音高线颜色加深，其他也加深
         offCtx.stroke();
     }
 
@@ -884,24 +883,26 @@ function drawGrid() {
         const beatIndex = x / beatWidth;
         const isMeasureStart = beatIndex % 4 === 0;
 
-        ctx.strokeStyle = isMeasureStart ? '#999' : '#ddd'; // 小节线加深
-        ctx.stroke();
+        offCtx.lineWidth = isMeasureStart ? 2 : 1;                 // 小节线更粗
+        offCtx.strokeStyle = isMeasureStart ? '#666' : '#bbb';    // 小节线颜色加深，拍线也加深
+        offCtx.stroke();
 
         // 时间轴显示（每拍时间）
         const timeInSeconds = beatsToSeconds(beatIndex);
-        offCtx.fillStyle = '#007';
+        offCtx.fillStyle = '#003366';  // 深蓝色，突出时间刻度
         offCtx.font = '10px Arial';
         offCtx.fillText(`${timeInSeconds}s`, x + 2, 10);
 
         // 小节编号
         if (isMeasureStart) {
             const measureNumber = Math.floor(beatIndex / 4) + 1;
-            offCtx.fillStyle = '#333';
+            offCtx.fillStyle = '#222';  // 更深的文字颜色
             offCtx.font = '10px Arial';
-            offCtx.fillText(`M${measureNumber}`, x + 3, 22); // 往下移一点，避免与时间重叠
+            offCtx.fillText(`M${measureNumber}`, x + 3, 22);
         }
     }
 }
+
 
 function getCurrentBPM() {
     return Tone.Transport.bpm.value;
