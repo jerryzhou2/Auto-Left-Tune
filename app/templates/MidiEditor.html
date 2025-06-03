@@ -12,6 +12,15 @@
             opacity: 0.7; /* 半透明, 值越小越透明(0-1) */
         }
     </style>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/output.css') }}">
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -30,20 +39,74 @@
         <button id="togglePianoBtn">显示钢琴</button> 
     </div>
 
-    <!-- 新增历史记录管理面板 -->
-    <div id="historyManager" class="history-manager">
-        <div class="history-header">
-            <h3>修改历史</h3>
-            <div class="history-actions">
-                <button id="undoBtn" title="撤销 (Ctrl+Z)">↩ 撤销</button>
-                <button id="redoBtn" title="重做 (Ctrl+Y)">↪ 重做</button>
-                <button id="setSavePointBtn" title="设置保存点 (Ctrl+S)">★ 保存点</button>
-            </div>
+    <div id="historyManager" class="history-manager max-w-2xl mx-auto mt-8 bg-white rounded-xl shadow-card overflow-hidden border border-neutral-200 transition-all duration-300 hover:shadow-card-hover">
+      <!-- 面板头部 -->
+      <div class="history-header bg-gradient-to-r from-primary to-blue-600 text-white p-4 flex justify-between items-center">
+        <h3 class="text-xl font-bold flex items-center">
+          <i class="fa fa-history mr-2"></i> 
+          <span>修改历史</span>
+        </h3>
+        <div class="history-actions flex space-x-2">
+          <button id="undoBtn" title="撤销 (Ctrl+Z)" class="btn-secondary">
+            <i class="fa fa-undo"></i> 
+            <span>撤销</span>
+          </button>
+          <button id="redoBtn" title="重做 (Ctrl+Y)" class="btn-secondary">
+            <i class="fa fa-repeat"></i> 
+            <span>重做</span>
+          </button>
+          <button id="setSavePointBtn" title="设置保存点 (Ctrl+S)" class="btn-accent">
+            <i class="fa fa-star"></i> 
+            <span>保存点</span>
+          </button>
         </div>
-
-        <div class="history-list" id="historyList">
-            <!-- 历史记录项将通过JavaScript动态生成 -->
+      </div>
+      
+      <!-- 历史记录列表 -->
+      <div class="history-list" id="historyList" class="overflow-y-auto scrollbar-thin p-3 max-h-[400px]">
+        <!-- 示例历史记录项（当前状态） -->
+        <div class="history-item bg-neutral-50 hover:bg-neutral-100 history-item-current relative">
+          <div class="flex items-center">
+            <span class="midi-action midi-action-delete mr-2">删除</span>
+            <span class="text-neutral-700">音符 (轨道 1, 音符 5)</span>
+          </div>
+          <span class="text-xs text-neutral-500">刚刚</span>
         </div>
+        
+        <!-- 保存点历史记录项 -->
+        <div class="history-item bg-white hover:bg-neutral-50 history-item-savepoint relative">
+          <div class="flex items-center">
+            <span class="midi-action midi-action-add mr-2">添加</span>
+            <span class="text-neutral-700">音符 (轨道 2)</span>
+          </div>
+          <span class="text-xs text-neutral-500">2分钟前</span>
+        </div>
+        
+        <!-- 普通历史记录项 -->
+        <div class="history-item bg-white hover:bg-neutral-50">
+          <div class="flex items-center">
+            <span class="midi-action midi-action-modify mr-2">修改</span>
+            <span class="text-neutral-700">音符时间 (轨道 1, 音符 3)</span>
+          </div>
+          <span class="text-xs text-neutral-500">5分钟前</span>
+        </div>
+        
+        <div class="history-item bg-white hover:bg-neutral-50">
+          <div class="flex items-center">
+            <span class="midi-action midi-action-move mr-2">拖拽</span>
+            <span class="text-neutral-700">音符 (轨道 3, 音符 2)</span>
+          </div>
+          <span class="text-xs text-neutral-500">10分钟前</span>
+        </div>
+        
+        <div class="history-item bg-white hover:bg-neutral-50">
+          <div class="flex items-center">
+            <span class="midi-action midi-action-modify mr-2">修改</span>
+            <span class="text-neutral-700">音符属性 (轨道 2, 音符 7)</span>
+          </div>
+          <span class="text-xs text-neutral-500">15分钟前</span>
+        </div>
+      </div>
     </div>
 
     <!-- 新增轨道控制面板 -->

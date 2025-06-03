@@ -1,10 +1,18 @@
 /**
  * MIDI 历史管理器 - 提供类似 VSCode 的撤销/重做功能
  */
+const canvas = document.getElementById("pianoRoll");
+const ctx = canvas.getContext("2d");
+const noteHeight = 18;
+const timeScale = 150;
+const pitchBase = 21; // A0
+const visibleRange = 88;
+
 export class MidiHistoryManager {
-    constructor(midi, options = {}) {
+    constructor(midi, allNotes, options = {}) {
         // 原始 MIDI 对象
         this.originalMidi = this._cloneMidi(midi || { tracks: [] });
+        // 用于动态变化的当前midi对象
         this.currentMidi = this._cloneMidi(this.originalMidi);
 
         // 历史记录相关
@@ -27,10 +35,10 @@ export class MidiHistoryManager {
 
         this.listeners = {
             [this.EVENTS.CHANGE]: [],
-            [this.EVENTS.UNDO]: [],
+            [this.EVENTS.UNDO]: [],     // 可以高亮显示，触发提示，重绘画布等
             [this.EVENTS.REDO]: [],
             [this.EVENTS.BATCH_START]: [],
-            [this.EVENTS.BATCH_END]: []
+            [this.EVENTS.BATCH_END]: []         // 可以统计修改数量等
         };
 
         // 保存点管理
@@ -48,25 +56,31 @@ export class MidiHistoryManager {
 
     // 触发事件
     _trigger(event, data = {}) {
-        const listeners = this.listeners[event] || [];
+        const listeners = this.listeners[event];
+        console.log("_trigger function invoked");
+        console.log(event, listeners.length);
         listeners.forEach(listener => {
             if (typeof listener === 'function') {
-                listener(data);
+                listener(this.currentMidi);
             }
         });
     }
 
     // 注册事件监听器
     on(event, listener) {
-        if (!this.EVENTS[event] || typeof listener !== 'function') return;
-
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
+        if (!this.EVENTS[event] || typeof listener !== 'function') {
+            return;
         }
 
-        this.listeners[event].push(listener);
+        const _event = this.EVENTS[event];       // 小写的事件名
+
+        if (!this.listeners[_event]) {
+            this.listeners[_event] = [];
+        }
+
+        this.listeners[_event].push(listener);
         return () => {
-            this.listeners[event] = this.listeners[event].filter(l => l !== listener);
+            this.listeners[_event] = this.listeners[_event].filter(l => l !== listener);
         };
     }
 
@@ -110,8 +124,10 @@ export class MidiHistoryManager {
         this._trigger(this.EVENTS.BATCH_END, { label: this.batchGroup?.label });
     }
 
-    // 添加历史记录
+    // 添加历史记录 --> pointer用于指向当前所在的历史位置
     _addHistoryEntry(entry) {
+        console.log("_addHistoryEntry triggered");
+
         // 防御性拷贝
         const safeEntry = this._cloneMidi(entry);
 
@@ -131,6 +147,8 @@ export class MidiHistoryManager {
         this.history.push(safeEntry);
         this.pointer = this.history.length - 1;
 
+        print(`In _addHistoryEntry, pointer = ${this.pointer}`);
+
         while (this.history.length > this.maxHistorySize) {
             this.savePoints.delete(0); // 删除最早保存点
             this.history.shift();
@@ -140,7 +158,7 @@ export class MidiHistoryManager {
         this._trigger(this.EVENTS.CHANGE, this.getStatus());
     }
 
-    // 检查是否可以合并操作
+    // 检查是否可以合并操作 --> 连续修改同一个音符时，直接合并
     _canMerge(newEntry) {
         if (this.history.length === 0) return false;
 
@@ -155,6 +173,8 @@ export class MidiHistoryManager {
 
     // 合并最后一条记录
     _mergeLastEntry(newEntry) {
+        console.log("_mergeLastEntry triggered");
+
         const lastEntry = this.history[this.pointer];
 
         // 合并逻辑示例（以修改操作为例）
@@ -235,13 +255,19 @@ export class MidiHistoryManager {
 
     // 撤销操作
     undo() {
-        if (this.pointer < 0 || this.history.length === 0) return false;
+        if (this.pointer < 0 || this.history.length === 0) {
+            console.warn(`undo操作异常, pointer = ${this.pointer}, history.length = ${this.history.length}`);
+            return false;
+        }
 
         try {
+            console.log("Undo triggered!");
             const entry = this.history[this.pointer];
-            this._applyChanges(entry.changes.reverse(), 'undo');
+            this._applyChanges(entry.changes.reverse(), 'undo');        // reverse确保撤销按照正确顺序回滚
             this.pointer--;
-            this._trigger(this.EVENTS.UNDO, entry);
+
+            // 需要传输midi文件来重绘画布
+            this._trigger(this.EVENTS.UNDO, this.currentMidi);
             return true;
         } catch (error) {
             console.error('撤销操作失败:', error);
@@ -249,7 +275,7 @@ export class MidiHistoryManager {
         }
     }
 
-    // 应用变更通用方法
+    // 应用变更通用方法，direction为调用这个函数的位置对应的标志？
     _applyChanges(changes, direction) {
         changes.forEach(change => {
             switch (change.type) {
@@ -257,10 +283,22 @@ export class MidiHistoryManager {
                     this._applyModify(change, direction);
                     break;
                 case 'add':
-                    this._applyAdd(change, direction);
+                    if (direction === 'undo') {
+                        this._applyDelete(change, direction);
+                    }
+                    else if (direction === 'redo') {
+                        this._applyAdd(change, direction);
+                    }
                     break;
                 case 'delete':
-                    this._applyDelete(change, direction);
+                    // undo撤销操作
+                    if (direction === 'undo') {
+                        this._applyAdd(change, direction);
+                    }
+                    // redo重新执行被撤销的操作
+                    else if (direction === 'redo') {
+                        this._applyDelete(change, direction);
+                    }
                     break;
                 case 'modifyTime':
                     this._applyModifyTime(change, direction);
@@ -282,7 +320,7 @@ export class MidiHistoryManager {
         const track = this.currentMidi.tracks[change.trackIndex];
         if (!track || !track.notes[change.noteIndex]) return;
 
-        track.notes[change.noteIndex] = direction === 'undo'
+        track.notes[change.noteIndex] = (direction === 'undo')
             ? change.originalValue
             : change.newValue;
     }
@@ -292,11 +330,10 @@ export class MidiHistoryManager {
         const track = this.currentMidi.tracks[change.trackIndex];
         if (!track) return;
 
-        if (direction === 'undo') {
-            track.notes.splice(change.noteIndex, 1);
-        } else {
-            track.notes.splice(change.noteIndex, 0, change.note);
-        }
+        console.log("Apply add invoked.");
+
+        track.notes.splice(0, 0, change.note);
+        track.notes.sort((a, b) => a.time - b.time);
     }
 
     // 应用删除操作
@@ -304,11 +341,7 @@ export class MidiHistoryManager {
         const track = this.currentMidi.tracks[change.trackIndex];
         if (!track) return;
 
-        if (direction === 'undo') {
-            track.notes.splice(change.noteIndex, 0, change.note);
-        } else {
-            track.notes.splice(change.noteIndex, 1);
-        }
+        track.notes.splice(change.noteIndex, 1);
     }
 
     // 应用修改时间操作
@@ -335,7 +368,7 @@ export class MidiHistoryManager {
         if (noteIndex === -1) return;
 
         // 恢复或应用新值
-        track.notes[noteIndex] = direction === 'undo'
+        track.notes[noteIndex] = (direction === 'undo')
             ? change.originalValue
             : change.newValue;
     }
@@ -425,10 +458,16 @@ export class MidiHistoryManager {
 
     // 删除音符
     deleteNote(trackIndex, noteIndex) {
-        if (!this.currentMidi.tracks[trackIndex] || !this.currentMidi.tracks[trackIndex].notes[noteIndex]) return false;
+        if (!this.currentMidi.tracks[trackIndex]) {
+            console.warn("Track index not exists, or deleted note is undefined!");
+            console.warn(`Track index = ${trackIndex}`);
+            return false;
+        }
+
+        console.log("deleteNote triggered.");
 
         const track = this.currentMidi.tracks[trackIndex];
-        const deletedNote = this._cloneMidi(track.notes[noteIndex]);
+        const deletedNote = track.notes[noteIndex];
 
         // 删除音符
         track.notes.splice(noteIndex, 1);
@@ -437,7 +476,6 @@ export class MidiHistoryManager {
         const change = {
             type: 'delete',
             trackIndex,
-            noteIndex,
             note: deletedNote,
             timestamp: new Date()
         };
@@ -509,6 +547,8 @@ export class MidiHistoryManager {
         // 添加到历史记录
         if (this.batchGroup) {
             this.batchGroup.changes.push(change);
+            // 如何修改currentMidi？
+            this._applyDragNote();
         } else {
             this._addHistoryEntry({
                 type: 'dragNote',

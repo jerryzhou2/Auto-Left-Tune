@@ -6,6 +6,15 @@ const piano = new Piano();
 // 页面加载完成后初始化钢琴
 document.addEventListener('DOMContentLoaded', () => {
     piano.init('#piano-container');
+
+    // // ✅ 绑定快捷键处理函数
+    // document.addEventListener('keydown', (event) => {
+    //     // 仅在非输入框/文本区域时处理快捷键
+    //     const target = event.target;
+    //     if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+    //         historyManager.handleShortcut(event);
+    //     }
+    // });
 });
 
 let midiData = null;
@@ -87,6 +96,9 @@ const valueDisplay_add = document.getElementById('valueDisplay-add');
 const confirmBtn = document.getElementById('confirm-add');
 const resetBtn = document.getElementById('reset-add');
 
+const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+
 addBtn.addEventListener('click', (e) => {
     if (!currentMidi) return;
 
@@ -146,7 +158,6 @@ function updatePreview() {
         allNotes_copy.push(noteObj); // 添加到全局音符数组
     }
     else {
-        console.log("1");
         alert("请确保输入的时间、持续时间和音符名称有效！");
         isValid = false;
     }
@@ -161,7 +172,6 @@ function updatePreview() {
     if (!trackVisibility[trackIndex]) return;
     track_notes_copy.forEach(note => {
         const thisNote = allNotes_copy.find(n => n.note === note);
-        console.log("name = ", thisNote.note.name);
         ctx.fillStyle = getColor(trackIndex);
         ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
     });
@@ -201,10 +211,12 @@ confirmBtn.addEventListener('click', () => {
     const newDuration = parseFloat(slider_add.value);
     const newName = nameInput_add.value.trim();
     const newMidi = noteNameToMidi(newName);
+
+    let newNote = null;
     let isValid = true;
     if (!isNaN(newTime) && newTime !== '' && !isNaN(newDuration) && newDuration > 0 && newName !== '' && trackIndex !== '') {
         const track = currentMidi.tracks[trackIndex];
-        const newNote = {
+        newNote = {
             time: newTime,
             duration: newDuration,
             name: newName,
@@ -228,7 +240,6 @@ confirmBtn.addEventListener('click', () => {
         };
 
         allNotes.push(noteObj); // 添加到全局音符数组
-        console.log("push ", noteObj);
     }
     else {
         alert("请确保输入的时间、持续时间和音符名称有效！");
@@ -242,6 +253,10 @@ confirmBtn.addEventListener('click', () => {
     }
 
     redrawCanvas(currentMidi); // 重新绘制画布
+
+    // historyManager.toggleTrackVisibility(trackIndex, trackToggle.checked);
+    // // ✅ 添加历史记录：添加音符
+    // historyManager.addNote(trackIndex, newNote); // 自动处理轨道和位置
 
     hasModified = true; // 标记为已修改
 });
@@ -272,10 +287,13 @@ function redrawCanvas(midi) {
     midi.tracks.forEach((track, trackIndex) => {
         if (!trackVisibility[trackIndex]) return;
         track.notes.forEach(note => {
-            const thisNote = allNotes.find(n => n.note === note);
-            console.log("name = ", thisNote.note.name);
+            const x = note.time * timeScale;
+            const y = canvas.height - ((note.midi - pitchBase + 1) * noteHeight);
+            const width = note.duration * timeScale;
+            const height = noteHeight - 1;
             ctx.fillStyle = getColor(trackIndex);
-            ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+            ctx.fillRect(x, y, width, height);
+            console.log(`Draw ${note.name}`);
         });
     });
 }
@@ -309,7 +327,6 @@ canvas.addEventListener('contextmenu', (e) => {
     menu.style.display = 'block';
 
     initDurationValue = String(choosedNote.note.duration);
-    console.log("initDurationValue:", initDurationValue);
     durationInput = parseFloat(initDurationValue);
 
     slider.value = initDurationValue; // 设置滑块初始值
@@ -338,6 +355,10 @@ confirmTime.addEventListener('click', () => {
     if (!isNaN(newTime)) {
         const track = currentMidi.tracks[choosedNote.trackIndex];
         const noteInTrack = track.notes.find(note => note === choosedNote.note);
+
+        // // ✅ 添加历史记录：修改音符时间
+        // historyManager.modifyNoteTime(trackIndex, noteIndex, newTime);
+
         if (noteInTrack) {
             noteInTrack.time = newTime;
             choosedNote.note.time = newTime;
@@ -349,7 +370,14 @@ confirmTime.addEventListener('click', () => {
     timeInputBox.style.display = 'none';
 });
 
-document.getElementById('delete').addEventListener('click', () => {
+const deleteBtn = document.getElementById('delete');
+
+deleteBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    e.key = '';
+
     if (!choosedNote) return; // 没有选中音符
 
     const x = choosedNote.x;
@@ -357,7 +385,7 @@ document.getElementById('delete').addEventListener('click', () => {
 
     ctx.clearRect(x, y, choosedNote.width, choosedNote.height); // 清除选中的音符
 
-    choosedIndex = allNotes.findIndex(note => note === choosedNote.note);
+    const choosedIndex = allNotes.findIndex(note => note === choosedNote.note);
 
     allNotes.splice(choosedIndex, 1); // 删除选中的音符
 
@@ -367,11 +395,13 @@ document.getElementById('delete').addEventListener('click', () => {
         track.notes.splice(noteIndex, 1); // 删除选中的音符
     }
 
-    console.log("delete note");
+    // ✅ 添加历史记录：删除音符
+    historyManager.deleteNote(choosedNote.trackIndex, noteIndex);
+
+    menu.style.display = 'none';
 });
 
 showSliderBtn.addEventListener('click', (e) => {
-    console.log("showSliderBtn");
     sliderContainer.style.top = `${e.clientY}px`;
     sliderContainer.style.left = `${e.clientX}px`;
     sliderContainer.style.display = 'block';
@@ -397,6 +427,10 @@ slider.addEventListener('input', () => {
 });
 
 setSliderValue.addEventListener('click', () => {
+    // ✅ 添加历史记录：修改音符持续时间
+    const newDuration = parseFloat(slider.value);
+    // historyManager.modifyNote(trackIndex, noteIndex, { duration: newDuration });        // newDuration重新定义
+
     hasModified = true; // 标记为已修改
 });
 
@@ -416,7 +450,11 @@ canvas.addEventListener('mousedown', (e) => {
     }
     if (e.button !== 0) return; // 只处理左键点击
 
-    addBtn.style.display = 'none';      // 点击任意地方鼠标隐藏
+    // historyManager.beginBatch("拖拽音符"); // 开始批量操作
+
+    // 点击任意地方鼠标隐藏
+    addBtn.style.display = 'none';
+    menu.style.display = 'none';
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
@@ -472,6 +510,9 @@ canvas.addEventListener('mouseup', (e) => {
 
         const track = currentMidi.tracks[draggedNote.trackIndex];
         const draggedNoteInNotes = track.notes.find(note => note === draggedNote.note);
+
+        const originalNote = draggedNoteInNotes.copy();
+
         // 两个数组进行同步
         if (draggedNote && draggedNoteInNotes) {
             draggedNoteInNotes.time = draggedNote.x / timeScale;        // 时间更新，其在notes数组中的位置也可能更新
@@ -494,6 +535,15 @@ canvas.addEventListener('mouseup', (e) => {
 
         track.notes.sort((a, b) => a.time - b.time); // 不需要allNotes和其顺序一致
 
+        // // ✅ 添加历史记录：记录拖拽前后的音符状态
+        // historyManager.recordNoteDrag(
+        //     trackIndex,
+        //     noteIndex,
+        //     // 浅拷贝
+        //     { ...originalNote }, // 原始值（拖拽前）
+        //     { ...draggedNoteInNotes } // 新值（拖拽后）
+        // );
+
         // 重新绘制自动挪移的音符
         ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
         ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
@@ -506,6 +556,8 @@ canvas.addEventListener('mouseup', (e) => {
                 ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
             });
         });
+
+        // historyManager.endBatch(); // 结束批量操作
 
         hasModified = true; // 标记为已修改
         draggedNote = null; // 清除拖动的音符
@@ -532,8 +584,30 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
 
     currentMidi = midiData;
 
+    // 初始化历史管理器
     historyManager = new MidiHistoryManager(currentMidi);
+    initHistoryUI();
 });
+
+// 新增：初始化历史记录UI的函数
+function initHistoryUI() {
+    // 绑定撤销/重做按钮
+    undoBtn.addEventListener('click', () => historyManager.undo());
+    redoBtn.addEventListener('click', () => historyManager.redo());
+
+    // 监听历史变更，刷新视图
+    console.log("Redraw listener in change added");
+    historyManager.on('CHANGE', (data) => {
+        redrawCanvas(data); // 历史变更时重绘画布
+        updateTrackControls(data); // 更新轨道可见性
+    });
+
+    console.log("Redraw listener in undo added");
+    historyManager.on('UNDO', (data) => {
+        redrawCanvas(data);
+        updateTrackControls(data);
+    });
+}
 
 // 新增：轨道控制函数
 function updateTrackControls(midi) {
@@ -697,6 +771,9 @@ document.getElementById("exportBtn").addEventListener("click", () => {
     a.download = "NewMidi.mid";
     a.click();
     URL.revokeObjectURL(url);
+
+    // 提供粗粒度的回溯功能
+    historyManager.setSavePoint();
 });
 
 function drawPianoRoll(midi) {
