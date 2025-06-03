@@ -149,6 +149,112 @@
           "表达出神秘和浪漫的感觉"
         ]
       }
+    },
+    "song11": {
+      "id": "song11",
+      "name": "因为爱情",
+      "level": "中级",
+      "description": "王菲经典歌曲，情感丰富",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "OPSSPSDFD SPFDPFDSP PASSPFD FDD DFF\nOPSSPSDFD SPFDPFDSP PASSPFD SPSFHD\nDFHF HHF DHH JKLLLKLKKHF\nHFHJ HJHHS PSFDPFDPJH\nDFHF HHF DHH JKLLLKLKKHF\nHFHJ HJHHS PSFDPFDPFD FDFS",
+        "tips": [
+          "注意情感的表达",
+          "高音部分要控制力度",
+          "保持节奏的稳定性"
+        ]
+      }
+    },
+    "song12": {
+      "id": "song12",
+      "name": "约定",
+      "level": "中级",
+      "description": "经典粤语歌曲，旋律优美",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "OSDFDSFDOO UPASAPSAUO POOIISUUDS\nDFGFFDSPD OSDFDSFDAO FPASAPSAUO\nPOOIISDFS PASPSJHH DSHF FDSASPUP\nSDSJG GFGPASD FGH HHJSS\nHADS DFPSGFGHD DSHF FDSASPUP\nSDSJG GFGPASD FGH HHJSS\nHADS DFGPGFSDS",
+        "tips": [
+          "注意粤语歌曲的韵味",
+          "表达出对约定的坚持",
+          "保持流畅的连贯性"
+        ]
+      }
+    },
+    "song13": {
+      "id": "song13",
+      "name": "卡农",
+      "level": "高级",
+      "description": "古典音乐经典，技巧要求很高",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏，括号表示同时按下",
+        "sequence": "T-UOS W-YOA E-TUP 0-RYO\nQ-ETI 8-WTU Q-ETI W-RYO\n(TF)-UOS (WD)-RYO (SE)-TUP (A0)-RUO\n(PQ)-ETI (O8)-0WT (PQ)-ETI (AW)-RYO\nSAST (R 9 )OYU (0T)SAP (0A)FHJ\n(QG)FDG (F8)DSA (QP)OIU (WY)IUY\n(WT)YUI (WR)YOI (EU)POI (OO)IUY\n(QT)EPA (8S)APO (QI)UYP OPO\n(HU)FGH-FG(HW)OPASDFG\n(EF)SDF-UI(RO)POIOUIO\n(EI)POI-UY(UW)YTYUIOP\n(EI)POP-AS(RO)PASDFGH\n(HY)FGH-FG(HW)OPASDFG\n(EF)SDF-UI(RO)POIOUIO\n(EI)POI-UY(WU)YTYUIOP\n(EI)POP-AS(RO)PASDFGH\n(TF)-UOS (WD)-RYO (SE)-TUP (A0)-RUO\n(PQ)-ETI (O8)-0WT (PQ)-ETI (AW)-",
+        "tips": [
+          "这是最高难度的作品",
+          "需要双手协调能力",
+          "注意和声的层次感",
+          "需要大量练习才能掌握"
+        ]
+      }
+    },
+    "song14": {
+      "id": "song14",
+      "name": "哆啦A梦主题曲",
+      "level": "初级",
+      "description": "经典动画主题曲，充满童趣",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "WTTUPUO\nOPOUIUY\nEYYIAAPOIIUERTY\nWTTUPUO\nOPOUIUY\nEYYIAAPOIIUERYT\nPPOIOPO\nYUIYO\nPOIYAPOPOI\nOPUYT",
+        "tips": [
+          "表达出童年的快乐",
+          "节奏要轻快活泼",
+          "适合初学者练习"
+        ]
+      }
+    },
+    "song15": {
+      "id": "song15",
+      "name": "北京欢迎你",
+      "level": "中级",
+      "description": "奥运主题歌，气势磅礴",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "FHDFDFFDPS FD\nDSPSDFHDFJHHDS\nDSPSDFHDFJHHF\nDFDSHJFPFDDS\nFHLHJJH FF HH FH JL ZL HF D H F F\nFH LH JL ZL HF HLJ FD FH XZ LL",
+        "tips": [
+          "表达出欢迎的热情",
+          "注意气势的表现",
+          "高音部分要有力度"
+        ]
+      }
+    },
+    "song16": {
+      "id": "song16",
+      "name": "千千阙歌",
+      "level": "中级",
+      "description": "陈慧娴经典作品，情感深刻",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "TTYU OPSAAAAOU YYYYUI PSFDDAOTTYU OPSAAAOU YYYYUI\nPSFDDAOPOPOPAAPA DDDDASDFFFDDSF AOPOPSDFFDF FDSD\nSPP OPSD FFDF FHJHFFFFDDSDSP FFGFDSD FF F DDSD SPSS",
+        "tips": [
+          "表达出离别的不舍",
+          "注意情感的层次变化",
+          "速度要适中有感情"
+        ]
+      }
+    },
+    "song17": {
+      "id": "song17",
+      "name": "蜗牛",
+      "level": "初级",
+      "description": "励志歌曲，传递坚持的力量",
+      "tutorial": {
+        "instruction": "在键盘上依次按下以下键进行演奏，注意控制节奏",
+        "sequence": "U UUIUYUYTT TTI IYTTYU TTO OPOIUI RT WWU UIUYUT WWT TWTYUIO\nTSAA ASAPPAOTIOP PASDFO WEOI IOIUYTY WWT TWTYUIO TSAA\nASAPPAO TIOP PASDFO WEOI IUYTTRT",
+        "tips": [
+          "表达出坚持不懈的精神",
+          "节奏要平稳有力",
+          "适合初学者励志练习"
+        ]
+      }
     }
   }
 } 
