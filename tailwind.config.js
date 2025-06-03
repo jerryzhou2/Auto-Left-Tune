@@ -1,8 +1,8 @@
 module.exports = {
   content: [
-    "./templates/**/*.html",
-    "./static/src/**/*.{js,jsx,ts,tsx}",  // 如果有前端 JS/TS 脚本也写这里
-    "./static/**/*.js",      // 包含类名的JS文件
+    "./app/templates/**/*.html",
+    "./app/static/src/**/*.{js,jsx,ts,tsx}",  // 如果有前端 JS/TS 脚本也写这里
+    "./app/static/**/*.js",      // 包含类名的JS文件
   ],
   theme: {
     extend: {
