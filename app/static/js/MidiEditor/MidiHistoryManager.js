@@ -60,10 +60,6 @@ export class MidiHistoryManager {
     // 触发事件
     _trigger(event, data = {}) {
         const listeners = this.listeners[event];
-        console.log("before redraw--------------------------------------------------");
-        console.log(`_trigger function invoked, trigger ${event}`);
-        console.log(this.currentMidi);
-        console.log(this.allNotes);
         listeners.forEach(listener => {
             if (typeof listener === 'function') {
                 listener(this.currentMidi);
@@ -158,6 +154,7 @@ export class MidiHistoryManager {
             this.pointer--;
         }
 
+        // 更新历史记录表
         this._trigger(this.EVENTS.CHANGE, this.getStatus());
     }
 
@@ -273,7 +270,7 @@ export class MidiHistoryManager {
             // 需要传输midi文件来重绘画布
             this._trigger(this.EVENTS.UNDO, this.currentMidi);
 
-            showMidi(this.currentMidi);
+            // showMidi(this.currentMidi);
 
             return true;
         } catch (error) {
@@ -284,6 +281,7 @@ export class MidiHistoryManager {
 
     // 应用变更通用方法，direction为调用这个函数的位置对应的标志？
     _applyChanges(changes, direction) {
+        // 取出了change对象，处理的不是数组
         changes.forEach(change => {
             switch (change.type) {
                 case 'modify':
@@ -366,19 +364,42 @@ export class MidiHistoryManager {
 
     // 应用修改时间操作
     _applyModifyTime(change, direction) {
+        if (!change) {
+            console.warn("change为空, 异常退出_applyModifyTime");
+            return;
+        }
+
         const track = this.currentMidi.tracks[change.trackIndex];
-        if (!track || !track.notes[change.noteIndex]) return;
+        if (!track) {
+            console.warn("不存在该track, 异常退出_applyModifyTime");
+            return;
+        }
 
-        const timeModifiedNote = track.notes.find(note => note === change.originalNote.note);
+        console.log("_applyModifyTime triggered");
 
-        timeModifiedNote.time = (direction === 'undo')
-            ? change.originalNote.x / timeScale
-            : change.newValue.x / timeScale;
+        // change.originalNote.note是未经更新的，而this.currentMidi是已经通过引用更新的
+        const timeModifiedNote = track.notes.find(note => note.midi === change.newValue.note.midi);
+
+        if (!timeModifiedNote) {
+            console.warn("Cannot find corresponding note in track.notes");
+            return;
+        }
+
+        if (direction === 'undo') {
+            timeModifiedNote.time = change.originalNote.x / timeScale;
+        }
 
         // originNote最初来自allNotes
-        this.allNotes.find(note => note === change.originalNote) = (direction === 'undo')
-            ? change.originalNote.x
-            : change.newValue.x;
+        const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.originalNote.note.midi);
+
+        if (!note2) {
+            console.warn("Cannot find the note in allNotes");
+            return;
+        }
+
+        if (direction === 'undo') {
+            note2.x = change.originalNote.x;
+        }
 
         console.log("After modified----------------------------------------------");
         console.log(this.currentMidi);
@@ -528,6 +549,8 @@ export class MidiHistoryManager {
         }
 
         const newValue = { ...originalNote, time: newTime };
+
+        console.log("modifyNoteTime triggered");
 
         // 记录变更
         const change = {

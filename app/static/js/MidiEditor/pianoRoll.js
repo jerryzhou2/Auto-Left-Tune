@@ -294,7 +294,7 @@ function redrawCanvas(midi) {
             const height = noteHeight - 1;
             ctx.fillStyle = getColor(trackIndex);
             ctx.fillRect(x, y, width, height);
-            console.log(`Draw ${note.name}`);
+            console.log(`In redraw, draw ${note.name}`);
         });
     });
 }
@@ -368,10 +368,10 @@ confirmTime.addEventListener('click', () => {
     if (!isNaN(newTime)) {
         const track = currentMidi.tracks[choosedNote.trackIndex];
         const noteInTrack = track.notes.find(note => note === choosedNote.note);
-        const backupNote = { ...choosedNote };
+        const oldNote = { ...choosedNote };
 
         // ✅ 添加历史记录：修改音符时间
-        historyManager.modifyNoteTime(choosedNote.trackIndex, backupNote, newTime); // 在修改前记录下来
+        historyManager.modifyNoteTime(choosedNote.trackIndex, oldNote, newTime); // 在修改前记录下来
 
         if (noteInTrack) {
             noteInTrack.time = newTime;
