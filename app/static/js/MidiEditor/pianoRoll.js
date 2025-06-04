@@ -60,6 +60,7 @@ let choosedNote = null;      // 被选中的音符下标
 let initDurationValue = -1; // 初始化值为选中音符的持续时间
 let durationInput = -1;
 let initWidth = -1;
+const tolerance = 2;
 
 const menu = document.getElementById('context-menu');
 
@@ -306,11 +307,23 @@ canvas.addEventListener('contextmenu', (e) => {
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
     choosedNote = allNotes.find(note => {
-        return x >= note.x && x < note.x + note.width && y >= note.y && y < note.y + note.height;       // 定位选中的音符
+        return x >= note.x - tolerance && x < note.x + note.width + tolerance && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
     });
+
+    console.log(`chooseNote = ${choosedNote.note.name}`);
+
+    const track = currentMidi.tracks[0];
+    track.notes.forEach(note => {
+        console.log(`track.notes has ${note.name}`);
+    })
 
     if (!choosedNote) {
         console.warn("contextmenu没有选中音符");
+        console.warn(`x = ${x}, y = ${y}`);
+        console.warn(`scrollLeft = ${canvas.scrollLeft}, scrollTop = ${canvas.scrollTop}`);
+        allNotes.forEach(note => {
+            console.log(`note.x = (${note.x}, ${note.x + note.width}), note.y = (${note.y}, ${note.y + note.height})`);
+        });
         // 单独显示添加音符按钮
         addBtnContainer.style.top = `${e.clientY}px`;   // 在鼠标点下方偏移一点
         addBtnContainer.style.left = `${e.clientX}px`; // 在鼠标点右侧偏移一点
@@ -355,9 +368,10 @@ confirmTime.addEventListener('click', () => {
     if (!isNaN(newTime)) {
         const track = currentMidi.tracks[choosedNote.trackIndex];
         const noteInTrack = track.notes.find(note => note === choosedNote.note);
+        const backupNote = { ...choosedNote };
 
-        // // ✅ 添加历史记录：修改音符时间
-        // historyManager.modifyNoteTime(trackIndex, noteIndex, newTime);
+        // ✅ 添加历史记录：修改音符时间
+        historyManager.modifyNoteTime(choosedNote.trackIndex, backupNote, newTime); // 在修改前记录下来
 
         if (noteInTrack) {
             noteInTrack.time = newTime;
@@ -373,33 +387,43 @@ confirmTime.addEventListener('click', () => {
 const deleteBtn = document.getElementById('delete');
 
 deleteBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    e.key = '';
-
     if (!choosedNote) return; // 没有选中音符
+
+    const backupNote = { ...choosedNote };
 
     const x = choosedNote.x;
     const y = choosedNote.y;
 
     ctx.clearRect(x, y, choosedNote.width, choosedNote.height); // 清除选中的音符
 
-    const choosedIndex = allNotes.findIndex(note => note === choosedNote.note);
-
-    allNotes.splice(choosedIndex, 1); // 删除选中的音符
-
     const track = currentMidi.tracks[choosedNote.trackIndex];
     const noteIndex = track.notes.findIndex(n => n === choosedNote.note);
+    console.log(`delete ${choosedNote.note.name}`);
+
     if (noteIndex > -1) {
         track.notes.splice(noteIndex, 1); // 删除选中的音符
     }
 
+    const choosedIndex = allNotes.findIndex(note => note === choosedNote.note);
+
+    allNotes.splice(choosedIndex, 1); // 删除选中的音符
+
+    redrawCanvas(currentMidi);
+
     // ✅ 添加历史记录：删除音符
-    historyManager.deleteNote(choosedNote.trackIndex, noteIndex);
+    historyManager.deleteNote(choosedNote.trackIndex, backupNote);
+
+    showMidi(currentMidi);
 
     menu.style.display = 'none';
 });
+
+export function showMidi(midi) {
+    const track = midi.tracks[0];
+    track.notes.forEach(note => {
+        console.log(`Piano Roll midi has note ${note.name}`);
+    })
+}
 
 showSliderBtn.addEventListener('click', (e) => {
     sliderContainer.style.top = `${e.clientY}px`;
@@ -585,7 +609,7 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
     currentMidi = midiData;
 
     // 初始化历史管理器
-    historyManager = new MidiHistoryManager(currentMidi);
+    historyManager = new MidiHistoryManager(currentMidi, allNotes);
     initHistoryUI();
 });
 
@@ -595,17 +619,20 @@ function initHistoryUI() {
     undoBtn.addEventListener('click', () => historyManager.undo());
     redoBtn.addEventListener('click', () => historyManager.redo());
 
-    // 监听历史变更，刷新视图
-    console.log("Redraw listener in change added");
-    historyManager.on('CHANGE', (data) => {
-        redrawCanvas(data); // 历史变更时重绘画布
-        updateTrackControls(data); // 更新轨道可见性
+    // // 监听历史变更，刷新视图
+    // historyManager.on('CHANGE', (data) => {
+    //     redrawCanvas(data); // 历史变更时重绘画布
+    //     updateTrackControls(data); // 更新轨道可见性
+    // });
+
+    historyManager.on('UNDO', (data) => {
+        updateTrackControls(data);
+        redrawCanvas(data);
     });
 
-    console.log("Redraw listener in undo added");
-    historyManager.on('UNDO', (data) => {
-        redrawCanvas(data);
-        updateTrackControls(data);
+    // 初始化历史管理器后，立即绑定监听
+    historyManager.on('CHANGE', (data) => {
+        updateHistoryList(historyManager);
     });
 }
 
@@ -726,6 +753,10 @@ function animatePlayhead() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 先清空画布
     ctx.drawImage(offscreenCanvas, 0, 0); // 重绘音符网格背景
     drawPlayheadLine(currentTime, canvas.height);
+
+    console.log("AllNotes is:");
+    console.log(allNotes);
+
     currentMidi.tracks.forEach((track, trackIndex) => {
         if (!trackVisibility[trackIndex]) return;
         track.notes.forEach(note => {
@@ -753,7 +784,7 @@ function drawPlayheadLine(currentTime, canvasHeight) {
 
     ctx.save();
     ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, canvasHeight);
@@ -851,8 +882,10 @@ function drawSidebarNoteNames() {
         div.style.display = 'flex';
         div.style.alignItems = 'center';      // 垂直居中
         div.style.justifyContent = 'flex-end';// 水平右对齐
-        div.style.fontSize = `${Math.floor(noteHeight * 0.5)}px`; // 比如 noteHeight=20 → 14px 字号
+        div.style.fontSize = `${Math.floor(noteHeight * 0.6)}px`; // 比如 noteHeight=20 → 14px 字号
         div.style.paddingRight = '5px';
+        // 添加边框样式
+        div.style.borderBottom = '1px solid #333'; // 浅灰色边框
 
         sidebar.prepend(div); // 从高音往低音画，和 canvas 对齐
     }
@@ -865,11 +898,12 @@ function drawGrid() {
 
     // 1. 绘制音高横线（水平）
     for (let i = 0; i < visibleRange; i++) {
+        // 从底部开始画
         const y = canvas.height - (i * noteHeight);
         offCtx.beginPath();
         offCtx.moveTo(0, y);
         offCtx.lineTo(canvas.width, y);
-        offCtx.lineWidth = i % 12 === 0 ? 1.8 : 1;       // C音高线更粗
+        offCtx.lineWidth = 1;
         offCtx.strokeStyle = i % 12 === 0 ? '#444' : '#ccc'; // C音高线颜色加深，其他也加深
         offCtx.stroke();
     }
@@ -883,7 +917,7 @@ function drawGrid() {
         const beatIndex = x / beatWidth;
         const isMeasureStart = beatIndex % 4 === 0;
 
-        offCtx.lineWidth = isMeasureStart ? 2 : 1;                 // 小节线更粗
+        offCtx.lineWidth = isMeasureStart ? 1.5 : 1;                 // 小节线更粗
         offCtx.strokeStyle = isMeasureStart ? '#666' : '#bbb';    // 小节线颜色加深，拍线也加深
         offCtx.stroke();
 
@@ -911,4 +945,84 @@ function getCurrentBPM() {
 function beatsToSeconds(num_beats) {
     const bpm = getCurrentBPM();
     return (num_beats * 60) / bpm;
+}
+
+// 核心函数：更新页面历史记录列表
+function updateHistoryList(manager) {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+
+    // 从历史管理器中获取最近的操作（最多保留 3 条 + 新操作）
+    const recentEntries = manager.history
+        .map((entry, index) => ({
+            ...entry,
+            index,
+            timeAgo: formatTimeAgo(entry.timestamp)
+        }))
+        .reverse() // 反转，让最新的在最前
+        .slice(0, 3); // 只保留最近 3 条（新操作会插入到最前，所以实际最多 4 条，再裁剪）
+
+    // 构建新的列表 HTML
+    const newItems = recentEntries.map((entry) => {
+        let actionText, detailText;
+
+        console.log(`When update history list, get:`);
+        console.log(entry);
+
+        // 根据操作类型，生成不同的文案
+        switch (entry.type) {
+            case 'add':
+                actionText = '添加';
+                detailText = entry.label;
+                break;
+            case 'delete':
+                actionText = '删除';
+                detailText = entry.label;
+                break;
+            case 'modify':
+                actionText = '修改';
+                detailText = entry.label;
+                break;
+            case 'modifyTime':
+                actionText = '修改';
+                detailText = entry.label;
+                break;
+            case 'dragNote':
+                actionText = '拖拽';
+                detailText = entry.label;
+            default:
+                actionText = '操作';
+                detailText = entry.label || '未知';
+        }
+
+        // 判断是否是当前步骤（用于高亮）
+        const isCurrent = entry.index === manager.pointer;
+
+        return `
+        <div class="history-item ${isCurrent ? 'history-item-current' : ''} bg-white hover:bg-neutral-50">
+          <div class="flex items-center">
+            <span class="midi-action midi-action-${entry.type} mr-2">${actionText}</span>
+            <span class="text-neutral-700">${detailText}</span>
+          </div>
+          <span class="text-xs text-neutral-500">${entry.timeAgo}</span>
+        </div>
+      `;
+    });
+
+    // 插入新操作到最前，并保留最多 3 条（超出自动淘汰）
+    historyList.innerHTML = newItems.join('');
+}
+
+// 辅助函数：格式化时间（刚刚、X分钟前等）
+function formatTimeAgo(timestamp) {
+    const now = new Date();
+    const diff = now - new Date(timestamp);
+
+    if (diff < 60 * 1000) {
+        return '刚刚';
+    } else if (diff < 60 * 60 * 1000) {
+        return `${Math.floor(diff / (60 * 1000))}分钟前`;
+    } else {
+        return `${Math.floor(diff / (60 * 60 * 1000))}小时前`;
+    }
 }

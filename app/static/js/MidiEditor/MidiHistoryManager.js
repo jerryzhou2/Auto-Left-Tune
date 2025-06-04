@@ -1,6 +1,9 @@
 /**
  * MIDI 历史管理器 - 提供类似 VSCode 的撤销/重做功能
  */
+
+import { showMidi } from "./pianoRoll.js";
+
 const canvas = document.getElementById("pianoRoll");
 const ctx = canvas.getContext("2d");
 const noteHeight = 18;
@@ -10,10 +13,10 @@ const visibleRange = 88;
 
 export class MidiHistoryManager {
     constructor(midi, allNotes, options = {}) {
-        // 原始 MIDI 对象
-        this.originalMidi = this._cloneMidi(midi || { tracks: [] });
-        // 用于动态变化的当前midi对象
-        this.currentMidi = this._cloneMidi(this.originalMidi);
+        // 直接获得piano roll中currentMidi的引用
+        this.currentMidi = midi;
+        // 先放着，可能有用
+        this.allNotes = allNotes;
 
         // 历史记录相关
         this.history = [];
@@ -57,8 +60,10 @@ export class MidiHistoryManager {
     // 触发事件
     _trigger(event, data = {}) {
         const listeners = this.listeners[event];
-        console.log("_trigger function invoked");
-        console.log(event, listeners.length);
+        console.log("before redraw--------------------------------------------------");
+        console.log(`_trigger function invoked, trigger ${event}`);
+        console.log(this.currentMidi);
+        console.log(this.allNotes);
         listeners.forEach(listener => {
             if (typeof listener === 'function') {
                 listener(this.currentMidi);
@@ -146,8 +151,6 @@ export class MidiHistoryManager {
         // 添加新记录
         this.history.push(safeEntry);
         this.pointer = this.history.length - 1;
-
-        print(`In _addHistoryEntry, pointer = ${this.pointer}`);
 
         while (this.history.length > this.maxHistorySize) {
             this.savePoints.delete(0); // 删除最早保存点
@@ -263,11 +266,15 @@ export class MidiHistoryManager {
         try {
             console.log("Undo triggered!");
             const entry = this.history[this.pointer];
+
             this._applyChanges(entry.changes.reverse(), 'undo');        // reverse确保撤销按照正确顺序回滚
             this.pointer--;
 
             // 需要传输midi文件来重绘画布
             this._trigger(this.EVENTS.UNDO, this.currentMidi);
+
+            showMidi(this.currentMidi);
+
             return true;
         } catch (error) {
             console.error('撤销操作失败:', error);
@@ -332,8 +339,17 @@ export class MidiHistoryManager {
 
         console.log("Apply add invoked.");
 
-        track.notes.splice(0, 0, change.note);
+        if (!change) {
+            console.log("change obj undefined");
+            return;
+        }
+
+        console.log(`${change.changedNote.note.name} added!!!`);
+
+        track.notes.splice(0, 0, change.changedNote.note);
         track.notes.sort((a, b) => a.time - b.time);
+
+        this.allNotes.push(change.changedNote);
     }
 
     // 应用删除操作
@@ -341,7 +357,11 @@ export class MidiHistoryManager {
         const track = this.currentMidi.tracks[change.trackIndex];
         if (!track) return;
 
-        track.notes.splice(change.noteIndex, 1);
+        const index1 = track.notes.findIndex(note => note === change.changedNote);
+        track.notes.splice(index1, 1);
+
+        const index2 = this.allNotes.findIndex(note => note === change.changedNote);
+        this.allNotes.splice(index2, 1);
     }
 
     // 应用修改时间操作
@@ -349,9 +369,20 @@ export class MidiHistoryManager {
         const track = this.currentMidi.tracks[change.trackIndex];
         if (!track || !track.notes[change.noteIndex]) return;
 
-        track.notes[change.noteIndex].time = direction === 'undo'
-            ? change.originalValue.time
-            : change.newValue.time;
+        const timeModifiedNote = track.notes.find(note => note === change.originalNote.note);
+
+        timeModifiedNote.time = (direction === 'undo')
+            ? change.originalNote.x / timeScale
+            : change.newValue.x / timeScale;
+
+        // originNote最初来自allNotes
+        this.allNotes.find(note => note === change.originalNote) = (direction === 'undo')
+            ? change.originalNote.x
+            : change.newValue.x;
+
+        console.log("After modified----------------------------------------------");
+        console.log(this.currentMidi);
+        console.log(this.allNotes);
     }
 
     // 应用拖拽音符操作
@@ -457,8 +488,8 @@ export class MidiHistoryManager {
     }
 
     // 删除音符
-    deleteNote(trackIndex, noteIndex) {
-        if (!this.currentMidi.tracks[trackIndex]) {
+    deleteNote(trackIndex, backupNote) {
+        if (!this.currentMidi.tracks[trackIndex] || !backupNote) {
             console.warn("Track index not exists, or deleted note is undefined!");
             console.warn(`Track index = ${trackIndex}`);
             return false;
@@ -466,17 +497,11 @@ export class MidiHistoryManager {
 
         console.log("deleteNote triggered.");
 
-        const track = this.currentMidi.tracks[trackIndex];
-        const deletedNote = track.notes[noteIndex];
-
-        // 删除音符
-        track.notes.splice(noteIndex, 1);
-
         // 记录变更
         const change = {
             type: 'delete',
             trackIndex,
-            note: deletedNote,
+            changedNote: { ...backupNote },
             timestamp: new Date()
         };
 
@@ -486,7 +511,7 @@ export class MidiHistoryManager {
         } else {
             this._addHistoryEntry({
                 type: 'delete',
-                label: `删除音符 (轨道 ${trackIndex + 1}, 音符 ${noteIndex + 1})`,
+                label: `删除音符 (轨道 ${trackIndex + 1}, 音符 ${backupNote.note.name})`,
                 changes: [change],
                 timestamp: new Date()
             });
@@ -496,21 +521,19 @@ export class MidiHistoryManager {
     }
 
     // 修改音符时间
-    modifyNoteTime(trackIndex, noteIndex, newTime) {
-        if (!this.currentMidi.tracks[trackIndex] || !this.currentMidi.tracks[trackIndex].notes[noteIndex]) return false;
+    modifyNoteTime(trackIndex, originalNote, newTime) {
+        if (!this.currentMidi.tracks[trackIndex] || !originalNote) {
+            console.warn("Argument invalid!!!");
+            return false;
+        }
 
-        const originalValue = this._cloneMidi(this.currentMidi.tracks[trackIndex].notes[noteIndex]);
-        const newValue = { ...originalValue, time: newTime };
-
-        // 更新音符时间
-        this.currentMidi.tracks[trackIndex].notes[noteIndex].time = newTime;
+        const newValue = { ...originalNote, time: newTime };
 
         // 记录变更
         const change = {
             type: 'modifyTime',
             trackIndex,
-            noteIndex,
-            originalValue,
+            originalNote,
             newValue,
             timestamp: new Date()
         };
@@ -521,7 +544,7 @@ export class MidiHistoryManager {
         } else {
             this._addHistoryEntry({
                 type: 'modifyTime',
-                label: `修改音符时间 (轨道 ${trackIndex + 1}, 音符 ${noteIndex + 1})`,
+                label: `修改音符时间 (轨道 ${trackIndex + 1}, 音符 ${originalNote.note.name})`,
                 changes: [change],
                 timestamp: new Date()
             });
