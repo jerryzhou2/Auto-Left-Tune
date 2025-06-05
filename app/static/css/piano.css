@@ -436,8 +436,71 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-/* 白键对应的短矩形条 */
-.piano-roll-strip.white-key {
+/* 左手矩形条样式 - 红色系 */
+.piano-roll-strip.left-hand.white-key {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 99, 99, 1) 0%,        /* 亮红色顶部 */
+    rgba(255, 107, 107, 0.95) 30%,  /* 暖红色 */
+    rgba(255, 82, 82, 0.9) 60%,     /* 深红色 */
+    rgba(220, 38, 127, 0.85) 100%   /* 玫瑰红底部 */
+  );
+  border: 3px solid rgba(255, 99, 99, 0.8);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(255, 107, 107, 0.8),
+    0 0 40px rgba(220, 38, 127, 0.5);
+}
+
+.piano-roll-strip.left-hand.black-key {
+  background: linear-gradient(
+    to bottom,
+    rgba(220, 38, 127, 1) 0%,       /* 深玫瑰红顶部 */
+    rgba(199, 0, 57, 0.95) 30%,     /* 深红色 */
+    rgba(168, 50, 121, 0.9) 60%,    /* 暗红紫色 */
+    rgba(136, 14, 79, 0.85) 100%    /* 深紫红色底部 */
+  );
+  border: 3px solid rgba(220, 38, 127, 0.8);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(199, 0, 57, 0.8),
+    0 0 40px rgba(136, 14, 79, 0.5);
+}
+
+/* 右手矩形条样式 - 蓝色系 */
+.piano-roll-strip.right-hand.white-key {
+  background: linear-gradient(
+    to bottom,
+    rgba(76, 175, 80, 1) 0%,        /* 清新绿色顶部 */
+    rgba(102, 187, 106, 0.95) 30%,  /* 浅绿色 */
+    rgba(67, 160, 71, 0.9) 60%,     /* 深绿色 */
+    rgba(46, 125, 50, 0.85) 100%    /* 森林绿底部 */
+  );
+  border: 3px solid rgba(76, 175, 80, 0.8);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(102, 187, 106, 0.8),
+    0 0 40px rgba(46, 125, 50, 0.5);
+}
+
+.piano-roll-strip.right-hand.black-key {
+  background: linear-gradient(
+    to bottom,
+    rgba(46, 125, 50, 1) 0%,        /* 深森林绿顶部 */
+    rgba(27, 94, 32, 0.95) 30%,     /* 墨绿色 */
+    rgba(56, 142, 60, 0.9) 60%,     /* 中绿色 */
+    rgba(33, 105, 37, 0.85) 100%    /* 深绿色底部 */
+  );
+  border: 3px solid rgba(46, 125, 50, 0.8);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(27, 94, 32, 0.8),
+    0 0 40px rgba(33, 105, 37, 0.5);
+}
+
+/* 未知手部矩形条样式 - 保持原有的金色/蓝色 */
+.piano-roll-strip.unknown-hand.white-key,
+.piano-roll-strip.white-key:not(.left-hand):not(.right-hand) {
   background: linear-gradient(
     to bottom,
     rgba(255, 215, 0, 1) 0%,      /* 金色顶部 */
@@ -452,8 +515,8 @@
     0 0 40px rgba(255, 69, 0, 0.4);
 }
 
-/* 黑键对应的短矩形条 */
-.piano-roll-strip.black-key {
+.piano-roll-strip.unknown-hand.black-key,
+.piano-roll-strip.black-key:not(.left-hand):not(.right-hand) {
   background: linear-gradient(
     to bottom,
     rgba(0, 191, 255, 1) 0%,      /* 亮蓝色顶部 */
@@ -466,6 +529,37 @@
     inset 0 0 15px rgba(255, 255, 255, 0.4),
     0 0 25px rgba(30, 144, 255, 0.6),
     0 0 40px rgba(65, 105, 225, 0.4);
+}
+
+/* 手动按键矩形条样式 - 紫色系 */
+.piano-roll-strip.manual.white-key {
+  background: linear-gradient(
+    to bottom,
+    rgba(156, 39, 176, 1) 0%,       /* 紫色顶部 */
+    rgba(171, 71, 188, 0.95) 30%,   /* 浅紫色 */
+    rgba(142, 36, 170, 0.9) 60%,    /* 深紫色 */
+    rgba(123, 31, 162, 0.85) 100%   /* 深紫色底部 */
+  );
+  border: 3px solid rgba(156, 39, 176, 0.8);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(171, 71, 188, 0.8),
+    0 0 40px rgba(123, 31, 162, 0.5);
+}
+
+.piano-roll-strip.manual.black-key {
+  background: linear-gradient(
+    to bottom,
+    rgba(123, 31, 162, 1) 0%,       /* 深紫色顶部 */
+    rgba(106, 27, 154, 0.95) 30%,   /* 更深紫色 */
+    rgba(81, 45, 168, 0.9) 60%,     /* 紫蓝色 */
+    rgba(69, 39, 160, 0.85) 100%    /* 深紫蓝色底部 */
+  );
+  border: 3px solid rgba(123, 31, 162, 0.8);
+  box-shadow: 
+    inset 0 0 15px rgba(255, 255, 255, 0.4),
+    0 0 25px rgba(106, 27, 154, 0.8),
+    0 0 40px rgba(69, 39, 160, 0.5);
 }
 
 /* 激活动画 - 从琴键位置向上移动，速度更慢 */

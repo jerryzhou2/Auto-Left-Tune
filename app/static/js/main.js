@@ -64,6 +64,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 存储拖放的文件
     let droppedFile = null;
+    
+    // 存储自动处理后的MIDI数据
+    let processedMidiBlob = null;
 
     // 音频上下文是否已经启动
     let audioContextStarted = false;
@@ -177,6 +180,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function calculateTotalDuration() {
         if (!midiPlayer.midiNotes || midiPlayer.midiNotes.length === 0) return 0;
         
+        // 优化：添加缓存机制，避免重复计算
+        if (midiTotalDuration && midiPlayer.currentMidiData) {
+            return midiTotalDuration;
+        }
+        
         const lastNote = midiPlayer.midiNotes.reduce((prev, current) => {
             return (prev.time + prev.duration > current.time + current.duration) ? prev : current;
         });
@@ -185,10 +193,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // 保存总时长供其他地方使用
         midiTotalDuration = totalDuration;
         
-        // 确保总时长显示更新
-        const totalMinutes = Math.floor(totalDuration / 60000);
-        const totalSeconds = Math.floor((totalDuration % 60000) / 1000);
-        totalTimeDisplay.textContent = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+        // 优化：减少DOM操作频率
+        if (totalTimeDisplay) {
+            const totalMinutes = Math.floor(totalDuration / 60000);
+            const totalSeconds = Math.floor((totalDuration % 60000) / 1000);
+            totalTimeDisplay.textContent = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
         
         return totalDuration;
     }
@@ -443,10 +453,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     stopMidiBtn.disabled = true;
                 }
 
+                // 自动处理MIDI文件进行左右手拆分
+                autoProcessMidiFile(file);
+
                 midiStatus.textContent = '';
                 midiStatus.className = 'status';
             } else {
                 droppedFile = null;
+                processedMidiBlob = null; // 清空处理后的数据
                 selectedFileText.textContent = `错误: 只支持MIDI文件`;
                 uploadBtn.disabled = true;
                 resultContainer.style.display = 'none';
@@ -485,11 +499,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 midiStatus.textContent = '';
                 midiStatus.className = 'status';
 
+                // 自动处理MIDI文件进行左右手拆分
+                autoProcessMidiFile(file);
+
                 // 隐藏PDF按钮，因为还没有上传和处理
                 if (viewOriginalPdfBtn) viewOriginalPdfBtn.style.display = 'none';
                 if (downloadOriginalPdfBtn) downloadOriginalPdfBtn.style.display = 'none';
             } else {
                 droppedFile = null;
+                processedMidiBlob = null; // 清空处理后的数据
                 selectedFileText.textContent = `错误: 只支持MIDI文件`;
                 uploadBtn.disabled = true;
                 resultContainer.style.display = 'none';
@@ -504,6 +522,50 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         }
+    }
+
+    // 自动处理MIDI文件函数
+    function autoProcessMidiFile(file) {
+        if (!file || !file.name.toLowerCase().endsWith('.mid')) {
+            return;
+        }
+
+        midiStatus.textContent = '正在自动处理MIDI文件...';
+        midiStatus.className = 'status';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/auto-process-midi', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                return response.json().then(data => {
+                    throw new Error(data.error || '处理失败');
+                });
+            }
+        })
+        .then(blob => {
+            // 存储处理后的MIDI数据
+            processedMidiBlob = blob;
+            
+            midiStatus.textContent = '文件已处理完成，可以播放';
+            midiStatus.className = 'status status-success';
+            
+            console.log('MIDI文件自动处理完成，已准备播放');
+        })
+        .catch(error => {
+            console.error('自动处理MIDI文件失败:', error);
+            midiStatus.textContent = `自动处理失败: ${error.message}`;
+            midiStatus.className = 'status status-error';
+            
+            // 处理失败时清空处理后的数据
+            processedMidiBlob = null;
+        });
     }
 
     // 播放/暂停逻辑
@@ -523,7 +585,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         // 当前状态是"播放"，应切换为"暂停"
                         if (!midiPlayer.currentMidiData) {
                             // 如果还没有当前MIDI数据，则从文件加载
-                            if (droppedFile) {
+                            if (processedMidiBlob) {
+                                // 优先使用处理后的MIDI数据
+                                midiPlayer.loadMidiBlobAndPlay(processedMidiBlob, true); // 标记为已转换
+                                midiStatus.textContent = '播放处理后的MIDI...';
+                                updateUIForPlayback(true);
+                                // 在加载完成后显示总时长
+                                setTimeout(displayMidiTotalDuration, 500);
+                                // 更新文件名显示
+                                setTimeout(updateCurrentFilename, 500);
+                            } else if (droppedFile) {
+                                // 如果没有处理后的数据，使用原始文件
                                 midiPlayer.loadMidiFileAndPlay(droppedFile);
                                 midiStatus.textContent = '播放中...';
                                 updateUIForPlayback(true);
@@ -540,7 +612,17 @@ document.addEventListener('DOMContentLoaded', function () {
                         } else {
                             // 重新开始播放当前MIDI
                             midiPlayer.resetPlayStatus();
-                            if (droppedFile) {
+                            if (processedMidiBlob) {
+                                // 优先使用处理后的MIDI数据
+                                midiPlayer.loadMidiBlobAndPlay(processedMidiBlob, true); // 标记为已转换
+                                midiStatus.textContent = '重新播放处理后的MIDI...';
+                                updateUIForPlayback(true);
+                                // 在加载完成后显示总时长
+                                setTimeout(displayMidiTotalDuration, 500);
+                                // 更新文件名显示
+                                setTimeout(updateCurrentFilename, 500);
+                            } else if (droppedFile) {
+                                // 如果没有处理后的数据，使用原始文件
                                 midiPlayer.loadMidiFileAndPlay(droppedFile);
                                 midiStatus.textContent = '重新播放...';
                                 updateUIForPlayback(true);

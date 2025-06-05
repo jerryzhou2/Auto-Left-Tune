@@ -84,6 +84,73 @@ def upload_file():
     
     return jsonify({'error': '只支持MIDI文件格式'}), 400
 
+@main.route('/auto-process-midi', methods=['POST'])
+def auto_process_midi():
+    """
+    自动处理拖拽的MIDI文件，不保存到会话，直接返回处理后的MIDI文件流
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': '没有文件部分'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': '没有选择文件'}), 400
+    
+    # 检查文件名是否包含中文
+    if contains_chinese(file.filename):
+        return jsonify({'error': '文件名不能包含中文'}), 400
+    
+    if file and file.filename.endswith('.mid'):
+        # 生成临时ID和文件路径
+        temp_id = str(uuid.uuid4())
+        filename = secure_filename(file.filename)
+        temp_input_path = os.path.join(Config.UPLOAD_FOLDER, f"temp_{temp_id}_{filename}")
+        temp_output_path = os.path.join(Config.OUTPUT_FOLDER, f"temp_{temp_id}_processed.mid")
+        
+        try:
+            # 保存临时文件
+            file.save(temp_input_path)
+            
+            # 处理MIDI文件
+            if not transform.split_midi(temp_input_path, temp_output_path):
+                return jsonify({'error': 'MIDI处理失败'}), 500
+            
+            # 检查处理后的文件是否存在
+            if not os.path.exists(temp_output_path):
+                return jsonify({'error': '处理后的MIDI文件不存在'}), 500
+            
+            # 读取处理后的文件内容到内存中
+            with open(temp_output_path, 'rb') as f:
+                midi_content = f.read()
+            
+            # 创建一个BytesIO对象
+            from io import BytesIO
+            midi_buffer = BytesIO(midi_content)
+            midi_buffer.seek(0)
+                
+            # 返回处理后的MIDI文件
+            response = send_file(midi_buffer, 
+                               mimetype='audio/midi',
+                               as_attachment=False,
+                               download_name=f"processed_{filename}")
+            
+            return response
+                           
+        except Exception as e:
+            print(f"自动处理MIDI文件时发生错误: {str(e)}")
+            return jsonify({'error': f'处理失败: {str(e)}'}), 500
+        finally:
+            # 清理临时文件
+            try:
+                if os.path.exists(temp_input_path):
+                    os.remove(temp_input_path)
+                if os.path.exists(temp_output_path):
+                    os.remove(temp_output_path)
+            except:
+                pass  # 忽略清理错误
+    
+    return jsonify({'error': '只支持MIDI文件格式'}), 400
+
 @main.route('/convert-to-pdf/<session_id>', methods=['GET'])
 def convert_to_pdf(session_id):
     session = session_manager.get_session(session_id)
