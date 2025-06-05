@@ -12,11 +12,12 @@ const pitchBase = 21; // A0
 const visibleRange = 88;
 
 export class MidiHistoryManager {
-    constructor(midi, allNotes, options = {}) {
+    constructor(midi, allNotes, trackVisibility, options = {}) {
         // 直接获得piano roll中currentMidi和allNotes的引用
         // allNotes.note和track.notes中的note引用同一个对象
         this.currentMidi = midi;
         this.allNotes = allNotes;
+        this.trackVisibility = trackVisibility;
 
         // 历史记录相关
         this.history = [];
@@ -87,9 +88,11 @@ export class MidiHistoryManager {
 
     // 批量操作优化
     beginBatch(label = "批量操作") {
+        console.log("beginBatch triggered");
+
         if (this.batchGroup) {
             this.batchGroup = {
-                ...this.batchGroup,     // 将对象展开并合成新的对象
+                // 类似链表，存储父批量组
                 parent: this.batchGroup,
                 label,
                 changes: [],
@@ -97,6 +100,7 @@ export class MidiHistoryManager {
             };
         } else {
             this.batchGroup = {
+                parent: null,
                 label,
                 changes: [],
                 timestamp: new Date()
@@ -108,9 +112,15 @@ export class MidiHistoryManager {
 
     // 结束批量操作
     endBatch() {
-        if (!this.batchGroup) return;
+        if (!this.batchGroup) {
+            console.warn("In endBatch, batchGroup not found");
+            return;
+        }
+
+        console.log("endBatch triggered");
 
         const batchChanges = this.batchGroup.changes;
+
         if (batchChanges.length > 0) {
             this._addHistoryEntry({
                 type: "batch",
@@ -119,9 +129,12 @@ export class MidiHistoryManager {
                 timestamp: new Date()
             });
         }
+        else {
+            console.warn("There is nothing in batchGroup!");
+        }
 
         // 恢复上层批量操作或清空
-        this.batchGroup = this.batchGroup.parent;
+        this.batchGroup = this.batchGroup.parent; // ???初始为null，会不断恢复成null
         this._trigger(this.EVENTS.BATCH_END, { label: this.batchGroup?.label });
     }
 
@@ -268,6 +281,7 @@ export class MidiHistoryManager {
             this.pointer--;
 
             console.log("After changes applied, redraw");
+            showMidi(this.currentMidi);
             // 需要传输midi文件来重绘画布
             this._trigger(this.EVENTS.UNDO, this.currentMidi);
 
@@ -378,11 +392,13 @@ export class MidiHistoryManager {
         const track = this.currentMidi.tracks[change.trackIndex];
         if (!track) return;
 
-        const index1 = track.notes.findIndex(note => note === change.changedNote);
-        track.notes.splice(index1, 1);
+        if (direction === 'undo') {
+            const index1 = track.notes.findIndex(note => note === change.noteObj.note);
+            track.notes.splice(index1, 1);
 
-        const index2 = this.allNotes.findIndex(note => note === change.changedNote);
-        this.allNotes.splice(index2, 1);
+            const index2 = this.allNotes.findIndex(note => note === change.noteObj.note);
+            this.allNotes.splice(index2, 1);
+        }
     }
 
     // 应用修改时间操作
@@ -427,21 +443,59 @@ export class MidiHistoryManager {
 
     // 应用拖拽音符操作
     _applyDragNote(change, direction) {
+        if (!change) {
+            console.warn("Change is undefined");
+            return;
+        }
+
+        console.log("_applyDragNote triggered");
+
         const track = this.currentMidi.tracks[change.trackIndex];
-        if (!track) return;
+        if (!track) {
+            alert("Track does not exist!");
+            return;
+        }
 
-        // 找到对应的音符
-        const noteIndex = track.notes.findIndex(n =>
-            n.time === change.originalValue.time &&
-            n.midi === change.originalValue.midi
-        );
+        if (direction === 'undo') {
+            const draggedNoteInTrackIndex = track.notes.findIndex(note => note.midi === change.newNote.note.midi && note.duration === change.newNote.note.duration);
 
-        if (noteIndex === -1) return;
+            if (draggedNoteInTrackIndex < 0) {
+                console.warn("Cannot find in track.notes");
+                return;
+            }
 
-        // 恢复或应用新值
-        track.notes[noteIndex] = (direction === 'undo')
-            ? change.originalValue
-            : change.newValue;
+            track.notes.splice(draggedNoteInTrackIndex, 1);
+            track.notes.push(change.originalNote.note);
+            track.notes.sort((a, b) => a.time - b.time);
+
+            showMidi(this.currentMidi);
+
+            console.log("-------------------------------------------");
+
+            console.log(`draggedNoteInTrack restore to ${change.originalNote.note.name}`);
+
+            const draggedNoteInAllIndex = this.allNotes.findIndex(thisNote => thisNote.note.midi === change.newNote.note.midi && thisNote.note.duration === change.newNote.note.duration)
+
+            if (draggedNoteInAllIndex < 0) {
+                console.warn("Cannot find in allNotes");
+                return;
+            }
+
+            // note已经跟着track.notes的一起修改了
+            let draggedNoteInAll = {};
+            draggedNoteInAll.x = change.originalNote.x;
+            draggedNoteInAll.y = change.originalNote.y;
+            draggedNoteInAll.width = change.originalNote.width;
+            draggedNoteInAll.height = change.originalNote.height;
+            draggedNoteInAll.trackIndex = change.originalNote.trackIndex;
+
+            draggedNoteInAll.note = change.originalNote.note;
+            this.allNotes.push(draggedNoteInAll);
+
+            console.log(`draggedNoteInAll restore to ${draggedNoteInAll.note.name}`);
+            console.log("-----------------------------------------------");
+        }
+        // else
     }
 
     // 应用轨道可见性变更
@@ -487,25 +541,16 @@ export class MidiHistoryManager {
     }
 
     // 添加音符
-    addNote(trackIndex, note, position = -1) {
+    addNote(trackIndex, noteObj) {
         if (!this.currentMidi.tracks[trackIndex]) return false;
 
         const track = this.currentMidi.tracks[trackIndex];
-
-        // 如果未指定位置，则添加到末尾
-        if (position === -1) {
-            position = track.notes.length;
-        }
-
-        // 添加音符
-        track.notes.splice(position, 0, note);
 
         // 记录变更
         const change = {
             type: 'add',
             trackIndex,
-            noteIndex: position,
-            note: this._cloneMidi(note),
+            noteObj,
             timestamp: new Date()
         };
 
@@ -593,25 +638,30 @@ export class MidiHistoryManager {
     }
 
     // 记录音符拖拽操作
-    recordNoteDrag(trackIndex, noteIndex, originalValue, newValue) {
-        if (!this.currentMidi.tracks[trackIndex] || !this.currentMidi.tracks[trackIndex].notes[noteIndex]) return false;
+    recordNoteDrag(trackIndex, originalNote, newNote) {
+        if (!this.currentMidi.tracks[trackIndex] || !originalNote || !newNote) {
+            console.log("Invalid input");
+            return;
+        }
 
         // 记录变更
         const change = {
             type: 'dragNote',
             trackIndex,
-            noteIndex,
-            originalValue,
-            newValue,
+            // 引用不属于track.notes的旧信息，经过了深拷贝
+            originalNote,
+            // 引用track.notes中的新信息
+            newNote,
             timestamp: new Date()
         };
 
-        // 添加到历史记录
+        // 在进行批量操作时，先不添加到历史记录
         if (this.batchGroup) {
             this.batchGroup.changes.push(change);
-            // 如何修改currentMidi？
-            this._applyDragNote();
+            // 这里的direction输入还有待商榷
+            this._applyDragNote(change, 'dragNote');
         } else {
+            // 添加到历史记录
             this._addHistoryEntry({
                 type: 'dragNote',
                 label: `拖拽音符 (轨道 ${trackIndex + 1}, 音符 ${noteIndex + 1})`,
@@ -619,8 +669,6 @@ export class MidiHistoryManager {
                 timestamp: new Date()
             });
         }
-
-        return true;
     }
 
     // 切换轨道可见性

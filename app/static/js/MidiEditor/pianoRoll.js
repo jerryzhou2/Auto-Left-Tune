@@ -263,9 +263,8 @@ confirmBtn.addEventListener('click', () => {
     // redrawCanvas(currentMidi); // 重新绘制画布
     ctx.fillRect(noteObj.x, noteObj.y, noteObj.width, noteObj.height);
 
-    // historyManager.toggleTrackVisibility(trackIndex, trackToggle.checked);
     // // ✅ 添加历史记录：添加音符
-    // historyManager.addNote(trackIndex, newNote); // 自动处理轨道和位置
+    historyManager.addNote(trackIndex, noteObj); // 自动处理轨道和位置
 
     hasModified = true; // 标记为已修改
 });
@@ -496,13 +495,14 @@ resetSliderValue.addEventListener('click', () => {
     }
 });
 
+let dragCount = 0;
+let noteBeforeDrag = null;
+let begun = false;
 canvas.addEventListener('mousedown', (e) => {
     if (menu.contains(e.target) || sliderContainer.contains(e.target)) {
         return;
     }
     if (e.button !== 0) return; // 只处理左键点击
-
-    // historyManager.beginBatch("拖拽音符"); // 开始批量操作
 
     // 点击任意地方鼠标隐藏
     addBtn.style.display = 'none';
@@ -512,12 +512,29 @@ canvas.addEventListener('mousedown', (e) => {
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
     draggedNote = allNotes.find(note => {
-        return x >= note.x && x < note.x + note.width && y >= note.y && y < note.y + note.height;       // 定位选中的音符
+        return x >= note.x - tolerance && x < note.x + note.width + tolerance
+            && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
     });
     if (draggedNote) {
         isDragging = true;
         startX = x;
         startY = y;
+
+        dragCount++;
+        noteBeforeDrag =
+        {
+            ...draggedNote,
+            note: JSON.parse(JSON.stringify(draggedNote.note))   // 单独复制 note 对象，断开引用关系 ！！！
+        };
+
+        if (!noteBeforeDrag) {
+            console.warn("noteBeforeDrag is null");
+        }
+
+        if (!begun) {
+            historyManager.beginBatch("拖拽音符*2"); // 开始批量操作
+            begun = true;
+        }
     }
 });
 
@@ -563,8 +580,6 @@ canvas.addEventListener('mouseup', (e) => {
         const track = currentMidi.tracks[draggedNote.trackIndex];
         const draggedNoteInNotes = track.notes.find(note => note === draggedNote.note);
 
-        const originalNote = { ...draggedNoteInNotes };
-
         // 两个数组进行同步
         if (draggedNote && draggedNoteInNotes) {
             draggedNoteInNotes.time = draggedNote.x / timeScale;        // 时间更新，其在notes数组中的位置也可能更新
@@ -587,15 +602,18 @@ canvas.addEventListener('mouseup', (e) => {
 
         track.notes.sort((a, b) => a.time - b.time); // 不需要allNotes和其顺序一致
 
-        // // ✅ 添加历史记录：记录拖拽前后的音符状态
-        // historyManager.recordNoteDrag(
-        //     trackIndex,
-        //     noteIndex,
-        //     // 浅拷贝
-        //     { ...originalNote }, // 原始值（拖拽前）
-        //     { ...draggedNoteInNotes } // 新值（拖拽后）
-        // );
+        // ✅ 添加历史记录：记录拖拽前后的音符状态
+        historyManager.recordNoteDrag(
+            draggedNote.trackIndex,
+            // 浅拷贝
+            noteBeforeDrag, // 原始值（拖拽前）
+            draggedNote // 新值（拖拽后）
+        );
 
+        console.log(noteBeforeDrag.note);
+        console.log(`Drag note from ${noteBeforeDrag.note.name} to ${draggedNote.note.name}`);
+
+        // 性能还能提高
         // 重新绘制自动挪移的音符
         ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
         ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
@@ -609,7 +627,10 @@ canvas.addEventListener('mouseup', (e) => {
             });
         });
 
-        // historyManager.endBatch(); // 结束批量操作
+        if (dragCount === 2) {
+            historyManager.endBatch(); // 结束批量操作
+            begun = false;
+        }
 
         hasModified = true; // 标记为已修改
         draggedNote = null; // 清除拖动的音符
@@ -618,7 +639,10 @@ canvas.addEventListener('mouseup', (e) => {
 
 document.getElementById("midiFileInput").addEventListener("change", async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file) {
+        alert("File not exists!");
+        return;
+    }
 
     const arrayBuffer = await file.arrayBuffer();
     midiData = new Midi(arrayBuffer);
@@ -637,7 +661,7 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
     currentMidi = midiData;
 
     // 初始化历史管理器
-    historyManager = new MidiHistoryManager(currentMidi, allNotes);
+    historyManager = new MidiHistoryManager(currentMidi, allNotes, trackVisibility);
     initHistoryUI();
 });
 
@@ -646,12 +670,6 @@ function initHistoryUI() {
     // 绑定撤销/重做按钮
     undoBtn.addEventListener('click', () => historyManager.undo());
     redoBtn.addEventListener('click', () => historyManager.redo());
-
-    // // 监听历史变更，刷新视图
-    // historyManager.on('CHANGE', (data) => {
-    //     redrawCanvas(data); // 历史变更时重绘画布
-    //     updateTrackControls(data); // 更新轨道可见性
-    // });
 
     historyManager.on('UNDO', (data) => {
         updateTrackControls(data);
