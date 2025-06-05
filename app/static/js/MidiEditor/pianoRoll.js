@@ -127,6 +127,10 @@ function updatePreview() {
     const newMidi = noteNameToMidi(newName);
 
     const track = currentMidi.tracks[trackIndex];
+    if (!track) {
+        console.warn("Track not found");
+        return;
+    }
     const allNotes_copy = allNotes.slice();
     const track_notes_copy = track.notes.slice();
 
@@ -170,6 +174,7 @@ function updatePreview() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
     ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
 
+    // 这里使用的是预览，不用redraw函数（只使用副本值进行绘制)
     if (!trackVisibility[trackIndex]) return;
     track_notes_copy.forEach(note => {
         const thisNote = allNotes_copy.find(n => n.note === note);
@@ -207,6 +212,8 @@ nameInput_add.addEventListener('input', () => {
 });
 
 confirmBtn.addEventListener('click', () => {
+    let noteObj;
+
     const trackIndex = parseInt(trackInput_add.value, 10);
     const newTime = parseFloat(timeInput_add.value);
     const newDuration = parseFloat(slider_add.value);
@@ -231,7 +238,7 @@ confirmBtn.addEventListener('click', () => {
         const y = canvas.height - ((newNote.midi - pitchBase + 1) * noteHeight);
         const width = newNote.duration * timeScale;
         const height = noteHeight - 1;
-        const noteObj = {
+        noteObj = {
             note: newNote,
             x,
             y,
@@ -253,7 +260,8 @@ confirmBtn.addEventListener('click', () => {
         return;
     }
 
-    redrawCanvas(currentMidi); // 重新绘制画布
+    // redrawCanvas(currentMidi); // 重新绘制画布
+    ctx.fillRect(noteObj.x, noteObj.y, noteObj.width, noteObj.height);
 
     // historyManager.toggleTrackVisibility(trackIndex, trackToggle.checked);
     // // ✅ 添加历史记录：添加音符
@@ -264,6 +272,7 @@ confirmBtn.addEventListener('click', () => {
 
 resetBtn.addEventListener('click', () => {
     addNoteContainer.style.display = 'none';
+    // 预览是通过数组的副本实现的
     redrawCanvas(currentMidi);
 });
 
@@ -284,6 +293,8 @@ function noteNameToMidi(noteName) {
 function redrawCanvas(midi) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
     ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
+
+    console.log("redrawCanvas triggered");
 
     midi.tracks.forEach((track, trackIndex) => {
         if (!trackVisibility[trackIndex]) return;
@@ -310,7 +321,8 @@ canvas.addEventListener('contextmenu', (e) => {
         return x >= note.x - tolerance && x < note.x + note.width + tolerance && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
     });
 
-    console.log(`chooseNote = ${choosedNote.note.name}`);
+    if (choosedNote)
+        console.log(`chooseNote = ${choosedNote.note.name}`);
 
     const track = currentMidi.tracks[0];
     track.notes.forEach(note => {
@@ -368,6 +380,7 @@ confirmTime.addEventListener('click', () => {
     if (!isNaN(newTime)) {
         const track = currentMidi.tracks[choosedNote.trackIndex];
         const noteInTrack = track.notes.find(note => note === choosedNote.note);
+        // 修改choosedNote之前进行保存
         const oldNote = { ...choosedNote };
 
         // ✅ 添加历史记录：修改音符时间
@@ -378,7 +391,8 @@ confirmTime.addEventListener('click', () => {
             choosedNote.note.time = newTime;
             choosedNote.x = newTime * timeScale;
 
-            redrawCanvas(currentMidi); // 重新绘制画布
+            // redrawCanvas(currentMidi); // 重新绘制画布
+            redrawNote(oldNote, newNote);
         }
     }
     timeInputBox.style.display = 'none';
@@ -408,7 +422,7 @@ deleteBtn.addEventListener('click', (e) => {
 
     allNotes.splice(choosedIndex, 1); // 删除选中的音符
 
-    redrawCanvas(currentMidi);
+    // redrawCanvas(currentMidi);
 
     // ✅ 添加历史记录：删除音符
     historyManager.deleteNote(choosedNote.trackIndex, backupNote);
@@ -431,10 +445,19 @@ showSliderBtn.addEventListener('click', (e) => {
     sliderContainer.style.display = 'block';
 });
 
+function redrawNote(oldNote, newNote) {
+    ctx.clearRect(oldNote.x, oldNote.y, oldNote.width, oldNote.height);
+    ctx.fillStyle = getColor(newNote.trackIndex);
+    ctx.fillRect(newNote.x, newNote.y, newNote.width, newNote.height);
+}
+
 // 滑动时更新显示的值
 slider.addEventListener('input', () => {
     valueDisplay.textContent = slider.value;
     durationInput = parseFloat(slider.value);
+
+    // 保存旧状态的choosedNote
+    const oldNote = { ...choosedNote };
 
     const track = currentMidi.tracks[choosedNote.trackIndex];
     const choosedNoteInNotes = track.notes.find(note => note === choosedNote.note);
@@ -443,7 +466,8 @@ slider.addEventListener('input', () => {
         choosedNoteInNotes.duration = durationInput;
         choosedNote.width = durationInput * timeScale; // 更新选中音符的宽度
 
-        redrawCanvas(currentMidi); // 重新绘制画布
+        // redrawCanvas(currentMidi); // 重新绘制画布
+        redrawNote(oldNote, choosedNote);
     }
     else {
         console.warn("notes中找不到对应音符");
@@ -452,8 +476,12 @@ slider.addEventListener('input', () => {
 
 setSliderValue.addEventListener('click', () => {
     // ✅ 添加历史记录：修改音符持续时间
+    const initDuration = parseFloat(initDurationValue);
     const newDuration = parseFloat(slider.value);
-    // historyManager.modifyNote(trackIndex, noteIndex, { duration: newDuration });        // newDuration重新定义
+    const changedNote = { ...choosedNote };
+    historyManager.modifyNote(changedNote.trackIndex, changedNote, initDuration, newDuration);        // newDuration重新定义
+
+    sliderContainer.style.display = 'none';
 
     hasModified = true; // 标记为已修改
 });
@@ -732,17 +760,20 @@ playPauseBtn.addEventListener("click", async () => {
     }
 });
 
-document.getElementById("resetBtn").addEventListener("click", () => {
+const globalReset = document.getElementById("resetBtn");
+
+globalReset.addEventListener("click", () => {
     Tone.Transport.stop();
     isPlaying = false;
 
     // 重绘音符和网格
-    drawPianoRoll(currentMidi);
+    redrawCanvas(currentMidi);
 });
 
 // 新增：播放结束时的回调函数
 function onPlaybackEnd() {
     console.log('播放结束，停止进度线动画');
+    playPauseBtn.textContent = '播放';
     // 清除动画循环（若有残留的requestAnimationFrame）
     cancelAnimationFrame(animatePlayhead.id); // 需记录动画ID
 }
@@ -753,9 +784,6 @@ function animatePlayhead() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 先清空画布
     ctx.drawImage(offscreenCanvas, 0, 0); // 重绘音符网格背景
     drawPlayheadLine(currentTime, canvas.height);
-
-    console.log("AllNotes is:");
-    console.log(allNotes);
 
     currentMidi.tracks.forEach((track, trackIndex) => {
         if (!trackVisibility[trackIndex]) return;
@@ -775,6 +803,7 @@ function animatePlayhead() {
         Tone.Transport.stop();
         cancelAnimationFrame(playheadAnimationId);
         onPlaybackEnd();
+        // 用于清除进度线
         redrawCanvas(currentMidi);
     }
 }

@@ -13,9 +13,9 @@ const visibleRange = 88;
 
 export class MidiHistoryManager {
     constructor(midi, allNotes, options = {}) {
-        // 直接获得piano roll中currentMidi的引用
+        // 直接获得piano roll中currentMidi和allNotes的引用
+        // allNotes.note和track.notes中的note引用同一个对象
         this.currentMidi = midi;
-        // 先放着，可能有用
         this.allNotes = allNotes;
 
         // 历史记录相关
@@ -267,6 +267,7 @@ export class MidiHistoryManager {
             this._applyChanges(entry.changes.reverse(), 'undo');        // reverse确保撤销按照正确顺序回滚
             this.pointer--;
 
+            console.log("After changes applied, redraw");
             // 需要传输midi文件来重绘画布
             this._trigger(this.EVENTS.UNDO, this.currentMidi);
 
@@ -322,12 +323,34 @@ export class MidiHistoryManager {
 
     // 应用修改操作
     _applyModify(change, direction) {
+        if (!change) {
+            console.warn("Change not defined");
+        }
         const track = this.currentMidi.tracks[change.trackIndex];
-        if (!track || !track.notes[change.noteIndex]) return;
+        if (!track) {
+            console.log("Change has invalid value");
+            return;
+        }
 
-        track.notes[change.noteIndex] = (direction === 'undo')
-            ? change.originalValue
-            : change.newValue;
+        console.log("_applyModify triggered");
+
+        if (direction == 'undo') {
+            const noteInTrack = track.notes.find(note => note.midi === change.note.midi && note.time === change.note.time);
+            if (!noteInTrack) {
+                console.warn("noteInTrack not found")
+                return;
+            }
+
+            noteInTrack.duration = change.initDuration;
+
+            const noteInAll = this.allNotes.find(thisNote => thisNote.note.midi === change.note.midi && thisNote.note.time === change.note.time);
+            if (!noteInAll) {
+                console.warn("noteInAll not found");
+                return;
+            }
+
+            noteInAll.width = change.initDuration * timeScale;
+        }
     }
 
     // 应用添加操作
@@ -378,7 +401,7 @@ export class MidiHistoryManager {
         console.log("_applyModifyTime triggered");
 
         // change.originalNote.note是未经更新的，而this.currentMidi是已经通过引用更新的
-        const timeModifiedNote = track.notes.find(note => note.midi === change.newValue.note.midi);
+        const timeModifiedNote = track.notes.find(note => note.midi === change.newValue.note.midi && note.duration === change.newValue.note.duration);
 
         if (!timeModifiedNote) {
             console.warn("Cannot find corresponding note in track.notes");
@@ -390,7 +413,7 @@ export class MidiHistoryManager {
         }
 
         // originNote最初来自allNotes
-        const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.originalNote.note.midi);
+        const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration);
 
         if (!note2) {
             console.warn("Cannot find the note in allNotes");
@@ -400,10 +423,6 @@ export class MidiHistoryManager {
         if (direction === 'undo') {
             note2.x = change.originalNote.x;
         }
-
-        console.log("After modified----------------------------------------------");
-        console.log(this.currentMidi);
-        console.log(this.allNotes);
     }
 
     // 应用拖拽音符操作
@@ -436,22 +455,19 @@ export class MidiHistoryManager {
     }
 
     // 音符修改操作
-    modifyNote(trackIndex, noteIndex, newValues) {
-        if (!this.currentMidi.tracks[trackIndex] || !this.currentMidi.tracks[trackIndex].notes[noteIndex]) return false;
-
-        const originalValue = this._cloneMidi(this.currentMidi.tracks[trackIndex].notes[noteIndex]);
-        const newValue = { ...originalValue, ...newValues };
-
-        // 更新音符值
-        this.currentMidi.tracks[trackIndex].notes[noteIndex] = newValue;
+    modifyNote(trackIndex, changedNote, initDuration, newDuration) {
+        if (!this.currentMidi.tracks[trackIndex] || !changedNote || !newDuration) {
+            console.warn("Invalid input value");
+            return false;
+        }
 
         // 记录变更
         const change = {
             type: 'modify',
             trackIndex,
-            noteIndex,
-            originalValue,
-            newValue,
+            note: changedNote.note,
+            initDuration,
+            newDuration,
             timestamp: new Date()
         };
 
@@ -461,7 +477,7 @@ export class MidiHistoryManager {
         } else {
             this._addHistoryEntry({
                 type: 'modify',
-                label: `修改音符 (轨道 ${trackIndex + 1}, 音符 ${noteIndex + 1})`,
+                label: `修改音符 (轨道 ${trackIndex + 1}, 音符 ${change.note.name})`,
                 changes: [change],
                 timestamp: new Date()
             });

@@ -153,20 +153,24 @@
 
     <div id="addNoteContainer">
         <div id="trackInputBox-add">
-            <input id="trackInput-add" type="number" step="1" min="0" />
+            <label for="trackInput-add">请输入轨道编号 (从0开始)</label>
+            <input id="trackInput-add" type="number" step="1" min="0"/>
         </div>
 
         <div id="sliderContainer-add">
-            <input type="range" id="slider-add" min="0.01" max="3" step="0.01" />
+            <label for="slider-add">请输入持续时间</label>
+            <input type="range" id="slider-add" min="0.01" max="3" step="0.01"/>
             <span id="valueDisplay-add"></span>
         </div>
 
         <div id="timeInputBox-add">
-            <input id="timeInput-add" type="number" step="0.1" min="0" />
+            <label for="timeInput-add">请输入起始时间</label>
+            <input id="timeInput-add" type="number" step="0.1" min="0"/>
         </div>
 
         <div id="nameInputBox-add">
-            <input id="nameInput-add" type="text" />
+            <label for="nameInput-add"请输入音高名称 (如A0)></label>
+            <input id="nameInput-add" type="text"/>
         </div>
         <br>
 
