@@ -204,8 +204,8 @@ class DemoMidiPlayer {
                         }
                     });
                     
-                    // 显示轨道信息
-                    this.displayTracksInfo();
+                    // 显示轨道信息 - 注释掉，演奏示例播放时不显示轨道信息
+                    // this.displayTracksInfo();
                 } 
                 // 如果没有标准格式的tracks属性，尝试其他格式
                 else if (this.debug) {

@@ -180,6 +180,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function calculateTotalDuration() {
         if (!midiPlayer.midiNotes || midiPlayer.midiNotes.length === 0) return 0;
         
+        // 优化：添加缓存机制，避免重复计算
+        if (midiTotalDuration && midiPlayer.currentMidiData) {
+            return midiTotalDuration;
+        }
+        
         const lastNote = midiPlayer.midiNotes.reduce((prev, current) => {
             return (prev.time + prev.duration > current.time + current.duration) ? prev : current;
         });
@@ -188,10 +193,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // 保存总时长供其他地方使用
         midiTotalDuration = totalDuration;
         
-        // 确保总时长显示更新
-        const totalMinutes = Math.floor(totalDuration / 60000);
-        const totalSeconds = Math.floor((totalDuration % 60000) / 1000);
-        totalTimeDisplay.textContent = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+        // 优化：减少DOM操作频率
+        if (totalTimeDisplay) {
+            const totalMinutes = Math.floor(totalDuration / 60000);
+            const totalSeconds = Math.floor((totalDuration % 60000) / 1000);
+            totalTimeDisplay.textContent = `${totalMinutes.toString().padStart(2, '0')}:${totalSeconds.toString().padStart(2, '0')}`;
+        }
         
         return totalDuration;
     }

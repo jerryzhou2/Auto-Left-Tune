@@ -515,7 +515,18 @@ class MidiPlayer {
   playLoop() {
     if (this.midiStop) return;
     
-    let unPlayedNotes = this.midiNotes.filter(n => !n.played);
+    // 优化：减少数组过滤频率，每3次循环才重新计算未播放音符
+    if (!this.frameCounter) this.frameCounter = 0;
+    this.frameCounter++;
+    
+    let unPlayedNotes;
+    if (this.frameCounter % 3 === 1 || !this.cachedUnPlayedNotes) {
+      unPlayedNotes = this.midiNotes.filter(n => !n.played);
+      this.cachedUnPlayedNotes = unPlayedNotes;
+    } else {
+      unPlayedNotes = this.cachedUnPlayedNotes;
+    }
+    
     if (unPlayedNotes.length <= 0) {
       if (this.debug) console.log('所有音符播放完成');
       this.onMusicEnd();
@@ -526,26 +537,37 @@ class MidiPlayer {
     // 修正：音乐播放时间 = (当前时间 - 开始时间) * 倍速
     let playedTime = (now - this.startTime) * this.playbackSpeed;
     
-    if (this.debug && Math.floor(playedTime / 1000) !== Math.floor((playedTime - 100) / 1000)) { // 每秒只打印一次
+    // 优化：减少调试输出频率
+    if (this.debug && this.frameCounter % 60 === 0) { // 每60帧只打印一次
       console.log(`当前播放时间: ${(playedTime/1000).toFixed(1)}秒 (${this.playbackSpeed}x倍速), 剩余音符: ${unPlayedNotes.length}`);
     }
     
-    unPlayedNotes.forEach((note) => {
+    // 优化：使用for循环代替forEach，性能更好
+    for (let i = 0; i < unPlayedNotes.length; i++) {
+      const note = unPlayedNotes[i];
       if (playedTime >= note.time * 1000 && !note.played) {
-        // 播放note
         note.played = true;
         this.playNote(note);
+        // 从缓存中移除已播放的音符
+        if (this.cachedUnPlayedNotes) {
+          const index = this.cachedUnPlayedNotes.indexOf(note);
+          if (index > -1) {
+            this.cachedUnPlayedNotes.splice(index, 1);
+          }
+        }
       }
-    });
+    }
     
-    // 根据倍速调整循环间隔 - 倍速越快，间隔越短
-    const loopInterval = Math.max(5, 30 / this.playbackSpeed);
+    // 优化：显著增加循环间隔以减少CPU占用（从5ms增加到16ms，约60fps）
+    const loopInterval = Math.max(16, 50 / this.playbackSpeed);
     setTimeout(() => {
       this.playLoop();
     }, loopInterval);
     
-    // 发送进度更新事件给增强控制器
-    this.dispatchProgressUpdate();
+    // 优化：减少进度更新频率
+    if (this.frameCounter % 4 === 0) { // 每4帧更新一次进度
+      this.dispatchProgressUpdate();
+    }
   }
 
   // 播放单个音符
@@ -557,77 +579,65 @@ class MidiPlayer {
     }
     
     try {
-      // 调试音符对象结构
-      if (this.debug) {
+      // 优化：减少调试输出
+      if (this.debug && this.frameCounter % 30 === 0) {
         console.log('音符对象结构:', Object.keys(note));
         console.log('音符手部信息:', note.hand, '轨道:', note.trackIndex);
       }
       
-      // 获取音符名称，尝试多种可能的属性
-      let noteName = null;
+      // 优化：简化音符名称获取，减少条件判断
+      let noteName = note.name || note.pitch || note.note;
       
-      // 首先尝试获取音符名称
-      if (typeof note.name === 'string') {
-        noteName = note.name;
-      } else if (typeof note.pitch === 'string') {
-        noteName = note.pitch;
-      } else if (typeof note.note === 'string') {
-        noteName = note.note;
-      }
-      
-      // 如果上面方法都没找到，尝试使用MIDI编号
-      if (!noteName) {
+      // 如果没有找到音符名，尝试使用MIDI编号
+      if (!noteName && (note.midi || note.midiNumber || note.midiNote)) {
         const midiNumber = note.midi || note.midiNumber || note.midiNote;
-        if (typeof midiNumber === 'number') {
-          try {
-            noteName = Tone.Midi(midiNumber).toNote();
-          } catch (e) {
+        try {
+          noteName = Tone.Midi(midiNumber).toNote();
+        } catch (e) {
+          if (this.debug && this.frameCounter % 100 === 0) {
             console.warn('无法将MIDI编号转换为音符名:', midiNumber, e);
           }
         }
       }
       
-      // 如果仍然没有音符名，无法继续
+      // 如果仍然没有音符名，跳过
       if (!noteName) {
-        if (this.debug) console.warn('音符没有有效的名称或MIDI值:', note);
+        if (this.debug && this.frameCounter % 100 === 0) {
+          console.warn('音符没有有效的名称或MIDI值:', note);
+        }
         return;
       }
       
-      // 确保音符名称格式正确（例如："C4"而不是"c4"）
-      if (typeof noteName === 'string') {
-        // 确保第一个字母大写，避免某些版本的Tone.js不识别小写音符名
+      // 优化：简化音符名称格式化
+      if (typeof noteName === 'string' && noteName.length > 0) {
         noteName = noteName.charAt(0).toUpperCase() + noteName.slice(1);
       }
       
       // 获取持续时间和力度
-      const duration = note.duration || 0.5;  // 默认半秒
-      
-      // 更精确地处理力度，使声音更自然
-      // MIDI力度范围从0到127，这里将其标准化为0-1
+      const duration = note.duration || 0.5;
       let velocity = note.velocity !== undefined ? note.velocity : 0.7;
       
-      // 针对钢琴音色做特殊处理，普遍提高低音域的力度
-      if (noteName.match(/[A-G]#?[0-2]/)) {
-        // 低音域增强
-        velocity = Math.min(velocity * 1.2, 1);
-      } else if (noteName.match(/[A-G]#?[5-7]/)) {
-        // 高音域减弱，创造更自然的音色平衡
-        velocity = velocity * 0.9;
+      // 优化：简化力度处理，减少正则表达式使用
+      const noteChar = noteName.charAt(0);
+      const octave = parseInt(noteName.slice(-1)) || 4;
+      
+      if (octave <= 2) {
+        velocity = Math.min(velocity * 1.2, 1); // 低音域增强
+      } else if (octave >= 5) {
+        velocity = velocity * 0.9; // 高音域减弱
       }
       
-      // 获取左右手信息
       const hand = note.hand || 'unknown';
       
-      if (this.debug) {
+      // 优化：减少调试输出频率
+      if (this.debug && this.frameCounter % 60 === 0) {
         console.log(`播放音符: ${noteName}, 手部: ${hand}, 轨道: ${note.trackIndex}, 持续时间: ${duration}, 力度: ${velocity}`);
       }
       
-      // 使用Tone.js播放音符，添加微量随机时间偏移和释放时间变化
-      // 这可以模拟人类演奏的自然变化
-      const timeVariation = Math.random() * 0.01; // 最多10ms的时间随机变化
-      const releaseVariation = Math.random() * 0.1; // 释放时间的细微变化
+      // 优化：减少随机计算，固定变化值
+      const timeVariation = 0.005; // 固定5ms变化
       
-      // 更精确地控制触发和释放，模拟钢琴触键和松开的物理特性
+      // 播放音符
       this.synth.triggerAttackRelease(
         noteName,
         duration - timeVariation,
@@ -635,34 +645,55 @@ class MidiPlayer {
         velocity
       );
       
-      // 触发带手部信息的钢琴键盘视觉效果
-      this.triggerPianoKeyVisual(noteName, duration * 1000, hand); // 转换为毫秒
+      // 触发钢琴键盘视觉效果
+      this.triggerPianoKeyVisual(noteName, duration * 1000, hand);
       
-      // 触发音符播放回调，传递完整的音符信息包括手部信息
+      // 触发音符播放回调
       this.onNotePlay({...note, hand, noteName});
     } catch (err) {
-      console.error('播放音符出错:', err, note);
+      if (this.debug && this.frameCounter % 100 === 0) {
+        console.error('播放音符出错:', err, note);
+      }
     }
   }
 
   // 触发钢琴键盘视觉效果
   triggerPianoKeyVisual(noteName, durationMs = 300, hand = 'unknown') {
     try {
-      // 在DOM中找到对应的钢琴键
-      const pianoKey = document.querySelector(`.piano-key[data-name="${noteName}"]`);
+      // 优化：添加DOM元素缓存
+      if (!this.pianoKeyCache) {
+        this.pianoKeyCache = new Map();
+      }
+      
+      let pianoKey = this.pianoKeyCache.get(noteName);
+      if (!pianoKey) {
+        pianoKey = document.querySelector(`.piano-key[data-name="${noteName}"]`);
+        if (pianoKey) {
+          this.pianoKeyCache.set(noteName, pianoKey);
+        }
+      }
       
       if (pianoKey) {
-        // 判断是白键还是黑键
-        const keyClass = pianoKey.classList.contains('wkey') ? 'wkey' : 'bkey';
+        // 优化：预计算键类型并缓存
+        if (!this.keyTypeCache) {
+          this.keyTypeCache = new Map();
+        }
+        
+        let keyClass = this.keyTypeCache.get(noteName);
+        if (!keyClass) {
+          keyClass = pianoKey.classList.contains('wkey') ? 'wkey' : 'bkey';
+          this.keyTypeCache.set(noteName, keyClass);
+        }
         
         // 添加按下效果
         pianoKey.classList.add(`${keyClass}-active`);
         
-        // 触发带手部信息的钢琴卷帘窗矩形条效果
-        // 检查是否存在piano实例和triggerPianoRollEffect方法
+        // 触发矩形条效果（保持不变）
         if (window.pianoInstance && typeof window.pianoInstance.triggerPianoRollEffect === 'function') {
           window.pianoInstance.triggerPianoRollEffect(pianoKey, hand);
-          if (this.debug) console.log(`MIDI播放触发${hand}手矩形条效果: ${noteName}`);
+          if (this.debug && this.frameCounter % 60 === 0) {
+            console.log(`MIDI播放触发${hand}手矩形条效果: ${noteName}`);
+          }
         }
         
         // 在音符持续时间结束后移除效果
@@ -670,12 +701,16 @@ class MidiPlayer {
           pianoKey.classList.remove(`${keyClass}-active`);
         }, durationMs);
         
-        if (this.debug) console.log(`触发${hand}手钢琴键视觉效果: ${noteName}, 持续时间: ${durationMs}ms`);
-      } else if (this.debug) {
+        if (this.debug && this.frameCounter % 60 === 0) {
+          console.log(`触发${hand}手钢琴键视觉效果: ${noteName}, 持续时间: ${durationMs}ms`);
+        }
+      } else if (this.debug && this.frameCounter % 100 === 0) {
         console.warn(`找不到对应的钢琴键: ${noteName}`);
       }
     } catch (err) {
-      console.error('触发钢琴键视觉效果时出错:', err);
+      if (this.debug && this.frameCounter % 100 === 0) {
+        console.error('触发钢琴键视觉效果时出错:', err);
+      }
     }
   }
 
@@ -694,6 +729,16 @@ class MidiPlayer {
     this.lastPlayedTime = 0;
     this.midiNotes = [];
     this.currentMidiData = null;
+    
+    // 优化：清理性能缓存，避免内存泄漏
+    this.frameCounter = 0;
+    this.cachedUnPlayedNotes = null;
+    this.cachedTotalTime = null;
+    this.pianoKeyCache = null;
+    this.keyTypeCache = null;
+    this.dragCheckCache = null;
+    this.dragCheckTime = 0;
+    this.dragCheckResult = false;
     
     if (this.debug) console.log('重置播放状态，准备播放新文件');
   }
@@ -834,19 +879,35 @@ class MidiPlayer {
   dispatchProgressUpdate() {
     if (!this.currentMidiData || this.midiStop) return;
     
-    // 检查是否有增强控制器正在拖拽，如果是则不发送进度更新
-    const isDragging = document.querySelector('.midi-player-enhanced')?.classList.contains('dragging') || 
-                      document.querySelector('#midi-progress-thumb')?.classList.contains('dragging');
-    if (isDragging) return;
+    // 优化：缓存DOM查询结果
+    if (!this.dragCheckCache) {
+      this.dragCheckTime = 0;
+      this.dragCheckResult = false;
+    }
     
-    // 正确计算：音乐播放时间 = (当前时间 - 开始时间) * 倍速 / 1000（转换为秒）
-    // 这里的逻辑是：实际经过的时间 * 倍速 = 音乐时间轴上的播放时间
-    const realTimeElapsed = (+new Date() - this.startTime); // 实际经过的毫秒数
-    const musicTimeElapsed = realTimeElapsed * this.playbackSpeed; // 音乐时间轴上的毫秒数
-    const currentTime = musicTimeElapsed / 1000; // 转换为秒
-    const totalTime = this.calculateTotalDuration();
+    // 优化：减少DOM查询频率，每30帧检查一次拖拽状态
+    const now = Date.now();
+    if (now - this.dragCheckTime > 500) { // 每500ms检查一次
+      this.dragCheckResult = document.querySelector('.midi-player-enhanced')?.classList.contains('dragging') || 
+                           document.querySelector('#midi-progress-thumb')?.classList.contains('dragging');
+      this.dragCheckTime = now;
+    }
     
-    if (this.debug && Math.floor(currentTime) !== Math.floor((currentTime - 0.1))) { // 每秒只打印一次
+    if (this.dragCheckResult) return;
+    
+    // 优化：减少时间计算
+    const realTimeElapsed = (now - this.startTime);
+    const musicTimeElapsed = realTimeElapsed * this.playbackSpeed;
+    const currentTime = musicTimeElapsed / 1000;
+    
+    // 优化：缓存总时长计算
+    if (!this.cachedTotalTime || this.frameCounter % 120 === 0) { // 每120帧重新计算一次
+      this.cachedTotalTime = this.calculateTotalDuration();
+    }
+    const totalTime = this.cachedTotalTime;
+    
+    // 优化：减少调试输出
+    if (this.debug && this.frameCounter % 240 === 0) { // 每240帧打印一次
       console.log(`进度更新 - 实际时间: ${(realTimeElapsed/1000).toFixed(1)}s, 音乐时间: ${currentTime.toFixed(1)}s, 倍速: ${this.playbackSpeed}x`);
     }
     
