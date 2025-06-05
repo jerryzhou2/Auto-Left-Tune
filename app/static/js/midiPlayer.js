@@ -297,6 +297,69 @@ class MidiPlayer {
     reader.readAsArrayBuffer(file);
   }
 
+  // 从Blob对象加载并播放MIDI文件
+  loadMidiBlobAndPlay(blob, isConverted = false) {
+    if (!this.isMidiLibAvailable()) {
+      console.error('@tonejs/midi 未加载，无法播放MIDI文件');
+      return;
+    }
+
+    // 确保音频系统已初始化
+    if (!this.initialized) {
+      const initialized = this.initAudio();
+      if (!initialized) return;
+    }
+
+    // 使用时间戳作为标识
+    const fileId = `processed_midi_${Date.now()}`;
+
+    // 重置状态并设置新的文件标识
+    this.resetPlayStatus();
+    this.currentFileId = fileId;
+    this.isConvertedFile = isConverted;
+    
+    if (this.debug) console.log(`加载MIDI Blob: ${fileId}, 是否为转换后文件: ${isConverted}`);
+    
+    const MidiLib = this.getMidiLib();
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const midiData = e.target.result;
+      if (this.debug) console.log('MIDI Blob读取成功，开始解析');
+      
+      try {
+        // 尝试使用构造函数直接解析
+        try {
+          const midi = new MidiLib(midiData);
+          if (this.debug) console.log('使用构造函数直接解析MIDI Blob成功');
+          this.currentMidiData = midi;
+          this.playMidi();
+          return;
+        } catch (err) {
+          console.error('使用构造函数解析MIDI Blob失败:', err);
+          
+          // 如果构造函数失败，尝试使用parse方法
+          if (typeof MidiLib.parse === 'function') {
+            try {
+              const parsed = MidiLib.parse(midiData);
+              if (this.debug) console.log('使用parse方法解析MIDI Blob成功');
+              this.currentMidiData = parsed;
+              this.playMidi();
+              return;
+            } catch (parseErr) {
+              console.error('使用parse方法解析MIDI Blob失败:', parseErr);
+            }
+          }
+        }
+        
+        console.error('无法解析MIDI Blob数据，尝试所有可用方法均失败');
+      } catch (error) {
+        console.error('调用Midi解析方法时出错:', error);
+      }
+    };
+    reader.readAsArrayBuffer(blob);
+  }
+
   // 设置音量 (0-1之间的值)
   setVolume(volume) {
     this.volume = volume;
@@ -376,10 +439,11 @@ class MidiPlayer {
       try {
         // 检查是否有标准格式的tracks属性
         if (Array.isArray(this.currentMidiData.tracks)) {
-          // 收集所有轨道的音符
+          // 分析并标记每个轨道的左右手信息
           this.currentMidiData.tracks.forEach((track, trackIndex) => {
             if (this.debug) {
               console.info('轨道索引:', trackIndex);
+              console.info('轨道名称:', track.name);
               if (track.instrument) {
                 console.info('轨道乐器:', track.instrument.family, track.instrument.name);
               }
@@ -387,7 +451,21 @@ class MidiPlayer {
             
             // 检查轨道是否有notes数组
             if (Array.isArray(track.notes)) {
+              // 确定当前轨道是左手还是右手
+              const handType = this.determineTrackHand(track, trackIndex);
+              
+              // 为轨道中的每个音符添加手部信息
+              track.notes.forEach(note => {
+                note.hand = handType;
+                note.trackIndex = trackIndex;
+                note.trackName = track.name || `轨道 ${trackIndex + 1}`;
+              });
+              
               this.midiNotes = this.midiNotes.concat(track.notes);
+              
+              if (this.debug) {
+                console.log(`轨道 ${trackIndex} (${track.name || '未命名'}) 识别为: ${handType}手, 包含 ${track.notes.length} 个音符`);
+              }
             } else if (this.debug) {
               console.warn('轨道没有notes数组:', trackIndex);
             }
@@ -482,6 +560,7 @@ class MidiPlayer {
       // 调试音符对象结构
       if (this.debug) {
         console.log('音符对象结构:', Object.keys(note));
+        console.log('音符手部信息:', note.hand, '轨道:', note.trackIndex);
       }
       
       // 获取音符名称，尝试多种可能的属性
@@ -536,7 +615,12 @@ class MidiPlayer {
         velocity = velocity * 0.9;
       }
       
-      if (this.debug) console.log(`播放音符: ${noteName}, 持续时间: ${duration}, 力度: ${velocity}`);
+      // 获取左右手信息
+      const hand = note.hand || 'unknown';
+      
+      if (this.debug) {
+        console.log(`播放音符: ${noteName}, 手部: ${hand}, 轨道: ${note.trackIndex}, 持续时间: ${duration}, 力度: ${velocity}`);
+      }
       
       // 使用Tone.js播放音符，添加微量随机时间偏移和释放时间变化
       // 这可以模拟人类演奏的自然变化
@@ -551,18 +635,18 @@ class MidiPlayer {
         velocity
       );
       
-      // 触发钢琴键盘视觉效果
-      this.triggerPianoKeyVisual(noteName, duration * 1000); // 转换为毫秒
+      // 触发带手部信息的钢琴键盘视觉效果
+      this.triggerPianoKeyVisual(noteName, duration * 1000, hand); // 转换为毫秒
       
-      // 触发音符播放回调
-      this.onNotePlay(note);
+      // 触发音符播放回调，传递完整的音符信息包括手部信息
+      this.onNotePlay({...note, hand, noteName});
     } catch (err) {
       console.error('播放音符出错:', err, note);
     }
   }
 
   // 触发钢琴键盘视觉效果
-  triggerPianoKeyVisual(noteName, durationMs = 300) {
+  triggerPianoKeyVisual(noteName, durationMs = 300, hand = 'unknown') {
     try {
       // 在DOM中找到对应的钢琴键
       const pianoKey = document.querySelector(`.piano-key[data-name="${noteName}"]`);
@@ -574,11 +658,11 @@ class MidiPlayer {
         // 添加按下效果
         pianoKey.classList.add(`${keyClass}-active`);
         
-        // 触发钢琴卷帘窗矩形条效果
+        // 触发带手部信息的钢琴卷帘窗矩形条效果
         // 检查是否存在piano实例和triggerPianoRollEffect方法
         if (window.pianoInstance && typeof window.pianoInstance.triggerPianoRollEffect === 'function') {
-          window.pianoInstance.triggerPianoRollEffect(pianoKey);
-          if (this.debug) console.log(`MIDI播放触发矩形条效果: ${noteName}`);
+          window.pianoInstance.triggerPianoRollEffect(pianoKey, hand);
+          if (this.debug) console.log(`MIDI播放触发${hand}手矩形条效果: ${noteName}`);
         }
         
         // 在音符持续时间结束后移除效果
@@ -586,7 +670,7 @@ class MidiPlayer {
           pianoKey.classList.remove(`${keyClass}-active`);
         }, durationMs);
         
-        if (this.debug) console.log(`触发钢琴键视觉效果: ${noteName}, 持续时间: ${durationMs}ms`);
+        if (this.debug) console.log(`触发${hand}手钢琴键视觉效果: ${noteName}, 持续时间: ${durationMs}ms`);
       } else if (this.debug) {
         console.warn(`找不到对应的钢琴键: ${noteName}`);
       }
@@ -770,6 +854,80 @@ class MidiPlayer {
       detail: { currentTime, totalTime }
     });
     document.dispatchEvent(event);
+  }
+
+  // 新增方法：确定轨道的左右手类型
+  determineTrackHand(track, trackIndex) {
+    // 方法1: 基于轨道名称识别
+    if (track.name) {
+      const trackName = track.name.toLowerCase();
+      
+      // 检查常见的左右手标识词
+      const leftHandKeywords = ['left', 'bass', 'baixo', '左手', 'ひだり', 'gauche', 'links', 'izquierda', 'lh', 'l.h.'];
+      const rightHandKeywords = ['right', 'treble', 'melody', 'soprano', '右手', 'みぎ', 'droite', 'rechts', 'derecha', 'rh', 'r.h.'];
+      
+      for (const keyword of leftHandKeywords) {
+        if (trackName.includes(keyword)) {
+          return 'left';
+        }
+      }
+      
+      for (const keyword of rightHandKeywords) {
+        if (trackName.includes(keyword)) {
+          return 'right';
+        }
+      }
+    }
+    
+    // 方法2: 基于轨道索引（钢琴MIDI文件的常见约定）
+    if (trackIndex === 0) {
+      return 'right';  // 第一个轨道通常是主旋律（右手）
+    } else if (trackIndex === 1) {
+      return 'left';   // 第二个轨道通常是伴奏（左手）
+    }
+    
+    // 方法3: 基于音符的平均音高
+    if (track.notes && track.notes.length > 0) {
+      const avgPitch = track.notes.reduce((sum, note) => {
+        const midiNumber = note.midi || this.getMidiNumber(note);
+        return sum + midiNumber;
+      }, 0) / track.notes.length;
+      
+      // 如果平均音高低于中央C（60），认为是左手
+      return avgPitch < 60 ? 'left' : 'right';
+    }
+    
+    // 默认情况：基于轨道索引交替分配
+    return trackIndex % 2 === 0 ? 'right' : 'left';
+  }
+
+  // 辅助方法：获取音符的MIDI编号
+  getMidiNumber(note) {
+    if (note.midi) return note.midi;
+    if (note.midiNumber) return note.midiNumber;
+    if (note.name) {
+      try {
+        return Tone.Midi(note.name).toMidi();
+      } catch (e) {
+        return 60; // 默认中央C
+      }
+    }
+    return 60;
+  }
+
+  // 新增方法：获取轨道统计信息
+  getTracksInfo() {
+    if (!this.currentMidiData || !this.currentMidiData.tracks) {
+      return null;
+    }
+    
+    return this.currentMidiData.tracks.map((track, index) => ({
+      index,
+      name: track.name || `轨道 ${index + 1}`,
+      notesCount: track.notes ? track.notes.length : 0,
+      hand: this.determineTrackHand(track, index),
+      instrument: track.instrument ? track.instrument.name : '未知'
+    }));
   }
 }
 

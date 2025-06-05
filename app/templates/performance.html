@@ -165,6 +165,28 @@
             
             <!-- 右侧：演奏示例 -->
             <div class="info-box demo-box">
+                <!-- MIDI轨道信息显示 -->
+                <div class="tracks-info-container" id="tracks-info-container" style="display: none;">
+                    <h3>🎼 MIDI轨道信息</h3>
+                    <div id="tracks-info" class="tracks-info">
+                        <!-- 轨道信息将在这里显示 -->
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color left-hand"></div>
+                            <span>左手 (红色)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color right-hand"></div>
+                            <span>右手 (绿色)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color manual"></div>
+                            <span>手动按键 (紫色)</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- 歌曲列表界面（默认显示） -->
                 <div id="demo-list-view" class="view-container active">
                     <h3>🎼 演奏示例</h3>

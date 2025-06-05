@@ -487,8 +487,8 @@ class Piano {
     const keyClass = key.classList.contains('wkey') ? 'wkey' : 'bkey';
     key.classList.add(keyClass + '-active');
 
-    // 触发对应的钢琴卷帘窗效果
-    this.triggerPianoRollEffect(key);
+    // 触发对应的钢琴卷帘窗效果（手动按键时默认为未知手部）
+    this.triggerPianoRollEffect(key, 'manual');
 
     // 指定时间后移除active样式
     setTimeout(() => {
@@ -497,7 +497,7 @@ class Piano {
   }
 
   // 触发钢琴卷帘窗效果
-  triggerPianoRollEffect(key) {
+  triggerPianoRollEffect(key, hand = 'unknown') {
     if (!key) return;
 
     const keyName = key.getAttribute('data-name');
@@ -515,9 +515,19 @@ class Piano {
     const keyType = key.classList.contains('wkey') ? 'white-key' : 'black-key';
     rollStrip.classList.add(keyType);
     
+    // 根据左右手添加对应的样式类
+    if (hand === 'left') {
+      rollStrip.classList.add('left-hand');
+    } else if (hand === 'right') {
+      rollStrip.classList.add('right-hand');
+    } else {
+      rollStrip.classList.add('unknown-hand');
+    }
+    
     // 设置矩形条属性
     rollStrip.setAttribute('data-name', keyName);
     rollStrip.setAttribute('data-keycode', keyCode);
+    rollStrip.setAttribute('data-hand', hand);
 
     // 获取钢琴键在视口中的绝对位置
     const keyRect = key.getBoundingClientRect();
@@ -539,6 +549,8 @@ class Piano {
     
     // 添加激活类开始动画
     rollStrip.classList.add('active');
+    
+    console.log(`创建${hand}手矩形条: ${keyName}, 类名: ${rollStrip.className}`);
     
     // 动画结束后移除这个临时矩形条
     setTimeout(() => {
