@@ -105,8 +105,8 @@ addBtn.addEventListener('click', (e) => {
 
     addBtnContainer.style.display = 'none'; // 隐藏添加按钮容器
 
-    addNoteContainer.style.top = `${e.clientY}px`;
-    addNoteContainer.style.left = `${e.clientX}px`;
+    addNoteContainer.style.top = `${e.pageY}px`;
+    addNoteContainer.style.left = `${e.pageX}px`;
     addNoteContainer.style.display = 'block';
 
     trackInput_add.value = 0; // 设置初始轨道索引为当前选中的轨道
@@ -324,20 +324,13 @@ canvas.addEventListener('contextmenu', (e) => {
         console.log(`chooseNote = ${choosedNote.note.name}`);
 
     const track = currentMidi.tracks[0];
-    // track.notes.forEach(note => {
-    //     console.log(`track.notes has ${note.name}`);
-    // })
 
     if (!choosedNote) {
         console.warn("contextmenu没有选中音符");
         console.warn(`x = ${x}, y = ${y}`);
-        console.warn(`scrollLeft = ${canvas.scrollLeft}, scrollTop = ${canvas.scrollTop}`);
-        // allNotes.forEach(note => {
-        //     console.log(`note.x = (${note.x}, ${note.x + note.width}), note.y = (${note.y}, ${note.y + note.height})`);
-        // });
-        // 单独显示添加音符按钮
-        addBtnContainer.style.top = `${e.clientY}px`;   // 在鼠标点下方偏移一点
-        addBtnContainer.style.left = `${e.clientX}px`; // 在鼠标点右侧偏移一点
+        // 使用 pageY 和 pageX 来考虑页面滚动位置
+        addBtnContainer.style.top = `${e.pageY}px`;   // 在鼠标点下方偏移一点
+        addBtnContainer.style.left = `${e.pageX}px`; // 在鼠标点右侧偏移一点
         addBtnContainer.style.display = 'block';
         // 记得隐藏其他菜单
         menu.style.display = 'none';
@@ -346,8 +339,8 @@ canvas.addEventListener('contextmenu', (e) => {
     }
 
     // 设置菜单位置
-    menu.style.top = `${e.clientY}px`;
-    menu.style.left = `${e.clientX}px`;
+    menu.style.top = `${e.pageY}px`;
+    menu.style.left = `${e.pageX}px`;
     menu.style.display = 'block';
 
     initDurationValue = String(choosedNote.note.duration);
