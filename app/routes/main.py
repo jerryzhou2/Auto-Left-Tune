@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from app.config.config import Config
 from app.models.session import SessionManager
 from app.utils import transform
-
+from app.utils.infer import infer
 main = Blueprint('main', __name__)
 session_manager = SessionManager()
 
@@ -55,15 +55,38 @@ def upload_file():
         output_midi_path = os.path.join(Config.OUTPUT_FOLDER, f"{session_id}_output.mid")
         output_pdf_path = os.path.join(Config.OUTPUT_FOLDER, f"{session_id}_output.pdf")
         
-        file.save(input_path)
-        
-        # 处理MIDI文件
-        if not transform.split_midi(input_path, output_midi_path):
-            return jsonify({'error': 'MIDI处理失败'}), 500
+        try:
+            file.save(input_path)
             
-        # 直接生成PDF
-        if not transform.export_pdf(output_midi_path, output_pdf_path):
-            return jsonify({'error': 'PDF生成失败'}), 500
+            # 处理MIDI文件
+            print(f"开始处理MIDI文件: {input_path}")
+            if not infer(input_path, output_midi_path):
+                # 清理已上传的文件
+                if os.path.exists(input_path):
+                    os.remove(input_path)
+                return jsonify({'error': 'MIDI处理失败，可能是文件格式不正确或模型加载失败'}), 500
+                
+            # 验证输出文件是否创建成功
+            if not os.path.exists(output_midi_path):
+                if os.path.exists(input_path):
+                    os.remove(input_path)
+                return jsonify({'error': 'MIDI处理失败，输出文件未生成'}), 500
+                
+            # 直接生成PDF
+            print(f"开始生成PDF: {output_pdf_path}")
+            if not transform.export_pdf(output_midi_path, output_pdf_path):
+                return jsonify({'error': 'PDF生成失败，请检查MuseScore是否正确安装'}), 500
+                
+        except Exception as e:
+            print(f"文件处理过程中发生错误: {str(e)}")
+            # 清理可能的临时文件
+            for temp_file in [input_path, output_midi_path, output_pdf_path]:
+                if os.path.exists(temp_file):
+                    try:
+                        os.remove(temp_file)
+                    except:
+                        pass
+            return jsonify({'error': f'文件处理失败: {str(e)}'}), 500
         
         # 保存会话数据
         session_data = {
