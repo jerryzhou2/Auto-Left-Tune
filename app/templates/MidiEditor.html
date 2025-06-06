@@ -68,8 +68,8 @@
             <span>重做</span>
           </button>
           <button id="setSavePointBtn" title="设置保存点 (Ctrl+S)" class="btn-accent">
-            <i class="fa fa-star"></i> 
-            <span>保存点</span>
+            <i class="fa fa-star !text-red-500"></i> 
+            <span class="text-gray-800">保存点</span>
           </button>
           <i id="toggleHistoryIcon" class="fa fa-chevron-down transition-transform duration-300"></i>
         </div>
@@ -130,6 +130,16 @@
       <div id="sidebar" class="w-1/4 bg-neutral-50 border-r border-neutral-200 p-3 scrollbar-thin"></div>
       <div id="canvasWrapper" class="flex-1 bg-white p-2">
         <canvas id="pianoRoll" class="w-full h-full rounded border border-neutral-300 shadow-sm"></canvas>
+      </div>
+    </div>
+
+    <!-- 新增五线谱容器 -->
+    <div id="sheetMusicContainer" class="mt-8 bg-white border rounded-lg shadow-inner overflow-hidden">
+      <div class="p-4 border-b border-neutral-200">
+        <h3 class="text-lg font-semibold text-gray-800">五线谱视图</h3>
+      </div>
+      <div id="sheetMusicWrapper" class="p-4">
+        <div id="sheetMusic" class="w-full"></div>
       </div>
     </div>
 
@@ -194,6 +204,8 @@
 {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/tone@next/build/Tone.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.min.js"></script>
+    <!-- 修改 VexFlow 库引用 -->
+    <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.min.js"></script>
     <script src="../static/js/MidiEditor/pianoRoll.js" type="module"></script>
 
     <!-- 导入模块化JS文件 -->

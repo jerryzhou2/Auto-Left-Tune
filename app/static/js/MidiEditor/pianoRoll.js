@@ -1,6 +1,7 @@
 import SampleLibrary from '../lib/ToneInstruments.js';
 import Piano from '/static/js/MidiEditor/piano.js';
 import { MidiHistoryManager } from './MidiHistoryManager.js';
+import sheetMusicRenderer from './sheetMusic.js';
 
 const piano = new Piano();
 // 页面加载完成后初始化钢琴
@@ -30,7 +31,7 @@ let synth = SampleLibrary.load({
     }
 });
 let isPlaying = false;
-let trackVisibility = []; // 全局轨道可见性控制数组
+export let trackVisibility = []; // 全局轨道可见性控制数组
 // ✅ 新增：记录上一帧的进度线位置
 
 const canvas = document.getElementById("pianoRoll");
@@ -655,6 +656,10 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
     // 初始化历史管理器
     historyManager = new MidiHistoryManager(currentMidi, allNotes, trackVisibility);
     initHistoryUI();
+
+    // 渲染五线谱
+    console.log("Begin to render midi");
+    sheetMusicRenderer.renderMidi(midiData);
 });
 
 // 新增：初始化历史记录UI的函数
@@ -1068,3 +1073,11 @@ function formatTimeAgo(timestamp) {
         return `${Math.floor(diff / (60 * 60 * 1000))}小时前`;
     }
 }
+
+// 添加窗口大小改变事件监听器
+window.addEventListener('resize', () => {
+    if (currentMidi) {
+        console.log("Renderer resizes");
+        sheetMusicRenderer.resize();
+    }
+});
