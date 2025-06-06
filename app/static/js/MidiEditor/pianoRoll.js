@@ -7,14 +7,14 @@ const piano = new Piano();
 document.addEventListener('DOMContentLoaded', () => {
     piano.init('#piano-container');
 
-    // ✅ 绑定快捷键处理函数
-    document.addEventListener('keydown', (event) => {
-        // 仅在非输入框/文本区域时处理快捷键
-        const target = event.target;
-        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-            historyManager.handleShortcut(event);
-        }
-    });
+    // // ✅ 绑定快捷键处理函数
+    // document.addEventListener('keydown', (event) => {
+    //     // 仅在非输入框/文本区域时处理快捷键
+    //     const target = event.target;
+    //     if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+    //         historyManager.handleShortcut(event);
+    //     }
+    // });
 });
 
 let midiData = null;
@@ -36,7 +36,7 @@ let trackVisibility = []; // 全局轨道可见性控制数组
 const canvas = document.getElementById("pianoRoll");
 const ctx = canvas.getContext("2d");
 const noteHeight = 18;
-const timeScale = 150;
+const timeScale = 200;
 const pitchBase = 21; // A0
 const visibleRange = 88;
 
@@ -60,7 +60,7 @@ let choosedNote = null;      // 被选中的音符下标
 let initDurationValue = -1; // 初始化值为选中音符的持续时间
 let durationInput = -1;
 let initWidth = -1;
-const tolerance = 2;
+const tolerance = 3;
 
 const menu = document.getElementById('context-menu');
 
@@ -324,17 +324,17 @@ canvas.addEventListener('contextmenu', (e) => {
         console.log(`chooseNote = ${choosedNote.note.name}`);
 
     const track = currentMidi.tracks[0];
-    track.notes.forEach(note => {
-        console.log(`track.notes has ${note.name}`);
-    })
+    // track.notes.forEach(note => {
+    //     console.log(`track.notes has ${note.name}`);
+    // })
 
     if (!choosedNote) {
         console.warn("contextmenu没有选中音符");
         console.warn(`x = ${x}, y = ${y}`);
         console.warn(`scrollLeft = ${canvas.scrollLeft}, scrollTop = ${canvas.scrollTop}`);
-        allNotes.forEach(note => {
-            console.log(`note.x = (${note.x}, ${note.x + note.width}), note.y = (${note.y}, ${note.y + note.height})`);
-        });
+        // allNotes.forEach(note => {
+        //     console.log(`note.x = (${note.x}, ${note.x + note.width}), note.y = (${note.y}, ${note.y + note.height})`);
+        // });
         // 单独显示添加音符按钮
         addBtnContainer.style.top = `${e.clientY}px`;   // 在鼠标点下方偏移一点
         addBtnContainer.style.left = `${e.clientX}px`; // 在鼠标点右侧偏移一点
@@ -610,7 +610,6 @@ canvas.addEventListener('mouseup', (e) => {
             draggedNote // 新值（拖拽后）
         );
 
-        console.log(noteBeforeDrag.note);
         console.log(`Drag note from ${noteBeforeDrag.note.name} to ${draggedNote.note.name}`);
 
         // 性能还能提高
@@ -783,6 +782,7 @@ const globalReset = document.getElementById("resetBtn");
 globalReset.addEventListener("click", () => {
     Tone.Transport.stop();
     isPlaying = false;
+    playPauseBtn.textContent = '播放';
 
     // 重绘音符和网格
     redrawCanvas(currentMidi);
@@ -865,10 +865,12 @@ function drawPianoRoll(midi) {
     });
 
     // 计算需要的canvas宽度（例如：1秒 = 150像素）
-    const canvasWidth = maxTime * timeScale + 1500;     // 留一些富余的位置
+    const canvasWidth = maxTime * timeScale + 3000;     // 留一些富余的位置
     canvas.width = canvasWidth;
 
     offscreenCanvas.width = canvas.width;
+    // 极其关键！！！
+    canvas.style.width = canvasWidth + "px";
     offCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height); // 白色背景
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -919,7 +921,7 @@ function drawSidebarNoteNames() {
     sidebar.style.position = 'relative';
     sidebar.style.height = `${visibleRange * noteHeight}px`;
 
-    for (let i = 0; i < visibleRange; i++) {
+    for (let i = visibleRange - 1; i >= 0; i--) {
         const midiNum = pitchBase + i;
         const noteName = getNoteName(midiNum);
         const div = document.createElement('div');
@@ -929,12 +931,12 @@ function drawSidebarNoteNames() {
         div.style.display = 'flex';
         div.style.alignItems = 'center';      // 垂直居中
         div.style.justifyContent = 'flex-end';// 水平右对齐
-        div.style.fontSize = `${Math.floor(noteHeight * 0.6)}px`; // 比如 noteHeight=20 → 14px 字号
+        div.style.fontSize = `${Math.floor(noteHeight * 0.5)}px`; // 比如 noteHeight=20 → 14px 字号
         div.style.paddingRight = '5px';
         // 添加边框样式
         div.style.borderBottom = '1px solid #333'; // 浅灰色边框
 
-        sidebar.prepend(div); // 从高音往低音画，和 canvas 对齐
+        sidebar.append(div); // 从高音往低音画，和 canvas 对齐
     }
 }
 
@@ -944,7 +946,7 @@ function drawGrid() {
     const beatWidth = timeScale * beatsToSeconds(1);       // 每拍的宽度
 
     // 1. 绘制音高横线（水平）
-    for (let i = 0; i < visibleRange; i++) {
+    for (let i = 0; i < visibleRange + 1; i++) {
         // 从底部开始画
         const y = canvas.height - (i * noteHeight);
         offCtx.beginPath();
@@ -1013,8 +1015,8 @@ function updateHistoryList(manager) {
     const newItems = recentEntries.map((entry) => {
         let actionText, detailText;
 
-        console.log(`When update history list, get:`);
-        console.log(entry);
+        // console.log(`When update history list, get:`);
+        // console.log(entry);
 
         // 根据操作类型，生成不同的文案
         switch (entry.type) {
