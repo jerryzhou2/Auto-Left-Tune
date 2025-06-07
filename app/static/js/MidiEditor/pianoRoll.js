@@ -8,14 +8,14 @@ const piano = new Piano();
 document.addEventListener('DOMContentLoaded', () => {
     piano.init('#piano-container');
 
-    // // ✅ 绑定快捷键处理函数
-    // document.addEventListener('keydown', (event) => {
-    //     // 仅在非输入框/文本区域时处理快捷键
-    //     const target = event.target;
-    //     if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-    //         historyManager.handleShortcut(event);
-    //     }
-    // });
+    // ✅ 绑定快捷键处理函数
+    document.addEventListener('keydown', (event) => {
+        // 仅在非输入框/文本区域时处理快捷键
+        const target = event.target;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+            historyManager.handleShortcut(event);
+        }
+    });
 });
 
 let midiData = null;
@@ -305,7 +305,7 @@ function redrawCanvas(midi) {
             const height = noteHeight - 1;
             ctx.fillStyle = getColor(trackIndex);
             ctx.fillRect(x, y, width, height);
-            console.log(`In redraw, draw ${note.name}`);
+            // console.log(`In redraw, draw ${note.name}`);
         });
     });
 }
@@ -363,8 +363,8 @@ setTimeBtn.addEventListener('click', (e) => {
 
     // 设置初值和位置
     timeInput.value = choosedNote.note.time;
-    timeInputBox.style.top = `${e.clientY}px`;
-    timeInputBox.style.left = `${e.clientX}px`;
+    timeInputBox.style.top = `${e.pageY}px`;
+    timeInputBox.style.left = `${e.pageX}px`;
     timeInputBox.style.display = 'block';
 });
 
@@ -420,9 +420,12 @@ deleteBtn.addEventListener('click', (e) => {
     // ✅ 添加历史记录：删除音符
     historyManager.deleteNote(choosedNote.trackIndex, backupNote);
 
-    showMidi(currentMidi);
+    // showMidi(currentMidi);
 
     menu.style.display = 'none';
+
+    // 部分网格被连同音符一起消去，需要重绘
+    drawGrid();
 });
 
 export function showMidi(midi) {
@@ -433,8 +436,8 @@ export function showMidi(midi) {
 }
 
 showSliderBtn.addEventListener('click', (e) => {
-    sliderContainer.style.top = `${e.clientY}px`;
-    sliderContainer.style.left = `${e.clientX}px`;
+    sliderContainer.style.top = `${e.pageY}px`;
+    sliderContainer.style.left = `${e.pageX}px`;
     sliderContainer.style.display = 'block';
 });
 
@@ -526,7 +529,7 @@ canvas.addEventListener('mousedown', (e) => {
         }
 
         if (!begun) {
-            historyManager.beginBatch("拖拽音符*2"); // 开始批量操作
+            historyManager.beginBatch("拖拽音符*1"); // 开始批量操作
             begun = true;
         }
     }
@@ -620,7 +623,7 @@ canvas.addEventListener('mouseup', (e) => {
             });
         });
 
-        if (dragCount === 2) {
+        if (dragCount === 1) {
             historyManager.endBatch(); // 结束批量操作
             begun = false;
         }
@@ -677,6 +680,11 @@ function initHistoryUI() {
     historyManager.on('CHANGE', (data) => {
         updateHistoryList(historyManager);
     });
+
+    historyManager.on('REDO', (data) => {
+        updateTrackControls(data);
+        redrawCanvas(data);
+    });
 }
 
 // 新增：轨道控制函数
@@ -718,7 +726,16 @@ const playPauseBtn = document.getElementById("playBtn");
 let hasScheduled = false;
 
 playPauseBtn.addEventListener("click", async () => {
-    if (!currentMidi) return;
+    if (!currentMidi) {
+        console.log("currentMidi not defined");
+        return;
+    }
+
+    allNotes.forEach(_note => {
+        console.log(`name: ${_note.note.name}, duration: ${_note.note.duration}`);
+    })
+
+    console.log("---------------------------------------");
 
     if (!isPlaying) {
         isPlaying = true;
@@ -810,6 +827,15 @@ function animatePlayhead() {
         });
     });
 
+    // 该函数没有用到allNotes，绘制正确，显然是allNotes的问题
+    redrawCanvas(currentMidi);
+
+    // allNotes.forEach(_note => {
+    //     console.log(`name: ${_note.note.name}, duration: ${_note.note.duration}`);
+    // })
+
+    highlightPlayingNotes(currentTime);
+
     let playheadAnimationId;
     // 播放未结束则继续动画
     if (currentTime < currentMidi.duration) {
@@ -822,6 +848,21 @@ function animatePlayhead() {
         // 用于清除进度线
         redrawCanvas(currentMidi);
     }
+}
+
+function highlightPlayingNotes(currentTime) {
+    // 遍历所有音符，找出正在播放的音符并高亮显示
+    currentMidi.tracks.forEach((track, trackIndex) => {
+        if (!trackVisibility[trackIndex]) return;
+
+        track.notes.forEach(note => {
+            if (note.time <= currentTime && note.time + note.duration >= currentTime) {
+                const thisNote = allNotes.find(n => n.note === note);
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.7)'; // 使用半透明黄色高亮
+                ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+            }
+        });
+    });
 }
 
 function drawPlayheadLine(currentTime, canvasHeight) {

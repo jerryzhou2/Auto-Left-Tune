@@ -251,9 +251,13 @@ export class MidiHistoryManager {
 
     // 重做操作
     redo() {
-        if (this.pointer >= this.history.length - 1 || this.history.length === 0) return false;
+        if (this.pointer >= this.history.length - 1 || this.history.length === 0) {
+            console.log("history error");
+            return false;
+        }
 
         try {
+            // undo只是指针移动，并未真正删除存储的entry
             this.pointer++;
             const entry = this.history[this.pointer];
             this._applyChanges(entry.changes, 'redo');
@@ -304,19 +308,23 @@ export class MidiHistoryManager {
                     break;
                 case 'add':
                     if (direction === 'undo') {
+                        console.log("add undo");
                         this._applyDelete(change, direction);
                     }
                     else if (direction === 'redo') {
+                        console.log("add redo");
                         this._applyAdd(change, direction);
                     }
                     break;
                 case 'delete':
                     // undo撤销操作
                     if (direction === 'undo') {
+                        console.log("delete undo");
                         this._applyAdd(change, direction);
                     }
                     // redo重新执行被撤销的操作
                     else if (direction === 'redo') {
+                        console.log("delete redo");
                         this._applyDelete(change, direction);
                     }
                     break;
@@ -348,22 +356,28 @@ export class MidiHistoryManager {
 
         console.log("_applyModify triggered");
 
+        const noteInTrack = track.notes.find(note => note.midi === change.note.midi && note.time === change.note.time);
+        if (!noteInTrack) {
+            console.warn("noteInTrack not found")
+            return;
+        }
+
+        const noteInAll = this.allNotes.find(thisNote => thisNote.note.midi === change.note.midi && thisNote.note.time === change.note.time);
+        if (!noteInAll) {
+            console.warn("noteInAll not found");
+            return;
+        }
+
+        // 此处的两者引用是否相同？
         if (direction == 'undo') {
-            const noteInTrack = track.notes.find(note => note.midi === change.note.midi && note.time === change.note.time);
-            if (!noteInTrack) {
-                console.warn("noteInTrack not found")
-                return;
-            }
-
             noteInTrack.duration = change.initDuration;
-
-            const noteInAll = this.allNotes.find(thisNote => thisNote.note.midi === change.note.midi && thisNote.note.time === change.note.time);
-            if (!noteInAll) {
-                console.warn("noteInAll not found");
-                return;
-            }
-
             noteInAll.width = change.initDuration * timeScale;
+        }
+        else if (direction == 'redo') {
+            // 是否有通过引用一同被更改？？？
+            console.log("modify duration redo");
+            noteInTrack.duration = change.note.duration;
+            noteInAll.width = change.note.duration * timeScale;
         }
     }
 
@@ -375,7 +389,7 @@ export class MidiHistoryManager {
         console.log("Apply add invoked.");
 
         if (!change) {
-            console.log("change obj undefined");
+            console.log("change undefined");
             return;
         }
 
@@ -390,15 +404,31 @@ export class MidiHistoryManager {
     // 应用删除操作
     _applyDelete(change, direction) {
         const track = this.currentMidi.tracks[change.trackIndex];
-        if (!track) return;
-
-        if (direction === 'undo') {
-            const index1 = track.notes.findIndex(note => note === change.noteObj.note);
-            track.notes.splice(index1, 1);
-
-            const index2 = this.allNotes.findIndex(note => note === change.noteObj.note);
-            this.allNotes.splice(index2, 1);
+        if (!track) {
+            console.log("Track not found");
+            return;
         }
+
+        // console.log(change);
+        // track.notes.forEach(note => {
+        //     console.log(note);
+        // })
+
+        const _note = change.changedNote.note;
+        // 此处没有共用引用，直接通过属性进行比较
+        const index1 = track.notes.findIndex(note => note.midi == _note.midi && note.time == _note.time && note.duration == _note.duration);
+        if (index1 < 0) {
+            console.log(`index1 is ${index1}, return`);
+            return;
+        }
+        track.notes.splice(index1, 1);
+
+        const index2 = this.allNotes.findIndex(thisNote => thisNote.note === change.changedNote.note);
+        if (index2 < 0) {
+            console.log("index2 not found");
+            return;
+        }
+        this.allNotes.splice(index2, 1);
     }
 
     // 应用修改时间操作
@@ -416,28 +446,46 @@ export class MidiHistoryManager {
 
         console.log("_applyModifyTime triggered");
 
-        // change.originalNote.note是未经更新的，而this.currentMidi是已经通过引用更新的
-        const timeModifiedNote = track.notes.find(note => note.midi === change.newValue.note.midi && note.duration === change.newValue.note.duration);
-
-        if (!timeModifiedNote) {
-            console.warn("Cannot find corresponding note in track.notes");
-            return;
-        }
-
         if (direction === 'undo') {
+            // change.originalNote.note是未经更新的，而this.currentMidi是已经通过引用更新的
+            const timeModifiedNote = track.notes.find(note => note.midi === change.newValue.note.midi && note.duration === change.newValue.note.duration);
+
+            if (!timeModifiedNote) {
+                console.warn("Cannot find corresponding note in track.notes");
+                return;
+            }
+
+            // originNote最初来自allNotes -- 修改为使用newValue寻找
+            const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.newValue.note.midi && thisNote.note.duration === change.newValue.note.duration);
+
+            if (!note2) {
+                console.warn("Cannot find the note in allNotes");
+                return;
+            }
+
             timeModifiedNote.time = change.originalNote.x / timeScale;
-        }
-
-        // originNote最初来自allNotes
-        const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration);
-
-        if (!note2) {
-            console.warn("Cannot find the note in allNotes");
-            return;
-        }
-
-        if (direction === 'undo') {
             note2.x = change.originalNote.x;
+        }
+        else if (direction === 'redo') {
+            // change.originalNote.note是未经更新的，而this.currentMidi是已经通过引用更新的
+            const timeModifiedNote = track.notes.find(note => note.midi === change.originalNote.note.midi && note.duration === change.originalNote.note.duration);
+
+            if (!timeModifiedNote) {
+                console.warn("Cannot find corresponding note in track.notes");
+                return;
+            }
+
+            // originNote最初来自allNotes
+            const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration);
+
+            if (!note2) {
+                console.warn("Cannot find the note in allNotes");
+                return;
+            }
+
+            console.log("modify time redo");
+            timeModifiedNote.time = change.newValue.x / timeScale;
+            note2.x = change.newValue.x;
         }
     }
 
@@ -457,6 +505,7 @@ export class MidiHistoryManager {
         }
 
         if (direction === 'undo') {
+            // 判断不够精确，可能产生冲突
             const draggedNoteInTrackIndex = track.notes.findIndex(note => note.midi === change.newNote.note.midi && note.duration === change.newNote.note.duration);
 
             if (draggedNoteInTrackIndex < 0) {
@@ -464,22 +513,22 @@ export class MidiHistoryManager {
                 return;
             }
 
-            track.notes.splice(draggedNoteInTrackIndex, 1);
-            track.notes.push(change.originalNote.note);
-            track.notes.sort((a, b) => a.time - b.time);
-
-            showMidi(this.currentMidi);
-
-            console.log("-------------------------------------------");
-
-            console.log(`draggedNoteInTrack restore to ${change.originalNote.note.name}`);
-
             const draggedNoteInAllIndex = this.allNotes.findIndex(thisNote => thisNote.note.midi === change.newNote.note.midi && thisNote.note.duration === change.newNote.note.duration)
 
             if (draggedNoteInAllIndex < 0) {
                 console.warn("Cannot find in allNotes");
                 return;
             }
+
+            track.notes.splice(draggedNoteInTrackIndex, 1);
+            track.notes.push(change.originalNote.note);
+            track.notes.sort((a, b) => a.time - b.time);
+
+            // showMidi(this.currentMidi);
+
+            // console.log("-------------------------------------------");
+
+            // console.log(`draggedNoteInTrack restore to ${change.originalNote.note.name}`);
 
             // note已经跟着track.notes的一起修改了
             let draggedNoteInAll = {};
@@ -492,10 +541,42 @@ export class MidiHistoryManager {
             draggedNoteInAll.note = change.originalNote.note;
             this.allNotes.push(draggedNoteInAll);
 
-            console.log(`draggedNoteInAll restore to ${draggedNoteInAll.note.name}`);
-            console.log("-----------------------------------------------");
+            // console.log(`draggedNoteInAll restore to ${draggedNoteInAll.note.name}`);
+            // console.log("-----------------------------------------------");
         }
-        // else
+        else if (direction == 'redo') {
+            console.log("drag note redo");
+
+            // 通过旧的信息找到音符
+            const draggedNoteInTrackIndex = track.notes.findIndex(note => note.midi === change.originalNote.note.midi && note.duration === change.originalNote.note.duration);
+
+            if (draggedNoteInTrackIndex < 0) {
+                console.warn("Cannot find in track.notes");
+                return;
+            }
+
+            const draggedNoteInAllIndex = this.allNotes.findIndex(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration)
+
+            if (draggedNoteInAllIndex < 0) {
+                console.warn("Cannot find in allNotes");
+                return;
+            }
+
+            // 使用新的信息修改音符
+            track.notes.splice(draggedNoteInTrackIndex, 1);
+            track.notes.push(change.newNote.note);
+            track.notes.sort((a, b) => a.time - b.time);
+
+            let draggedNoteInAll = {};
+            draggedNoteInAll.x = change.newNote.x;
+            draggedNoteInAll.y = change.newNote.y;
+            draggedNoteInAll.width = change.newNote.width;
+            draggedNoteInAll.height = change.newNote.height;
+            draggedNoteInAll.trackIndex = change.newNote.trackIndex;
+
+            draggedNoteInAll.note = change.newNote.note;
+            this.allNotes.push(draggedNoteInAll);
+        }
     }
 
     // 应用轨道可见性变更
@@ -541,7 +622,7 @@ export class MidiHistoryManager {
     }
 
     // 添加音符
-    addNote(trackIndex, noteObj) {
+    addNote(trackIndex, changedNote) {
         if (!this.currentMidi.tracks[trackIndex]) return false;
 
         const track = this.currentMidi.tracks[trackIndex];
@@ -550,7 +631,7 @@ export class MidiHistoryManager {
         const change = {
             type: 'add',
             trackIndex,
-            noteObj,
+            changedNote,
             timestamp: new Date()
         };
 
@@ -704,20 +785,36 @@ export class MidiHistoryManager {
 
     // 处理快捷键
     handleShortcut(event) {
-        const keyCombination = `${event.ctrlKey || event.metaKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key}`;
+        // 立即阻止浏览器默认行为
+        if (this.isModifierKey(event) || this.isShortcutKey(event)) {
+            event.preventDefault();
+        }
+
+        const keyCombination = `${event.ctrlKey || event.metaKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key.toLowerCase()}`;
+
+        console.log('快捷键按下:', keyCombination);
 
         if (this.shortcuts.undo.includes(keyCombination)) {
-            event.preventDefault();
+            console.log('执行撤销操作');
             this.undo();
             return true;
         }
 
         if (this.shortcuts.redo.includes(keyCombination)) {
-            event.preventDefault();
+            console.log('执行重做操作');
             this.redo();
             return true;
         }
 
         return false;
+    }
+
+    isModifierKey(event) {
+        return event.ctrlKey || event.metaKey || event.shiftKey || event.altKey;
+    }
+
+    isShortcutKey(event) {
+        const shortcutKeys = ['z', 'y'];
+        return shortcutKeys.includes(event.key.toLowerCase());
     }
 }    
