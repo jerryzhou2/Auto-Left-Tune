@@ -304,6 +304,7 @@ function redrawCanvas(midi) {
             const width = note.duration * timeScale;
             const height = noteHeight - 1;
             ctx.fillStyle = getColor(trackIndex);
+            // console.log("redrawCanvas draws", width);
             ctx.fillRect(x, y, width, height);
             // console.log(`In redraw, draw ${note.name}`);
         });
@@ -313,6 +314,18 @@ function redrawCanvas(midi) {
 // 显示菜单
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault(); // 阻止默认菜单
+
+    console.log("Initailly----------------------------------------------");
+
+    allNotes.forEach(_note => {
+        console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
+    })
+
+    currentMidi.tracks[0].notes.forEach(note => {
+        console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
+    })
+
+    console.log("----------------------------------------------");
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
@@ -475,6 +488,19 @@ setSliderValue.addEventListener('click', () => {
     const initDuration = parseFloat(initDurationValue);
     const newDuration = parseFloat(slider.value);
     const changedNote = { ...choosedNote };
+
+    console.log("In setSlider Btn----------------------------------------------");
+
+    allNotes.forEach(_note => {
+        console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
+    })
+
+    currentMidi.tracks[0].notes.forEach(note => {
+        console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
+    })
+
+    console.log("----------------------------------------------");
+
     historyManager.modifyNote(changedNote.trackIndex, changedNote, initDuration, newDuration);        // newDuration重新定义
 
     sliderContainer.style.display = 'none';
@@ -731,12 +757,6 @@ playPauseBtn.addEventListener("click", async () => {
         return;
     }
 
-    allNotes.forEach(_note => {
-        console.log(`name: ${_note.note.name}, duration: ${_note.note.duration}`);
-    })
-
-    console.log("---------------------------------------");
-
     if (!isPlaying) {
         isPlaying = true;
         playPauseBtn.textContent = "暂停";
@@ -823,16 +843,13 @@ function animatePlayhead() {
         track.notes.forEach(note => {
             const thisNote = allNotes.find(n => n.note === note);
             ctx.fillStyle = getColor(trackIndex);
+            // console.log("animatePlayHead draws", thisNote.width);
             ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
         });
     });
 
     // 该函数没有用到allNotes，绘制正确，显然是allNotes的问题
     redrawCanvas(currentMidi);
-
-    // allNotes.forEach(_note => {
-    //     console.log(`name: ${_note.note.name}, duration: ${_note.note.duration}`);
-    // })
 
     highlightPlayingNotes(currentTime);
 
@@ -1122,3 +1139,17 @@ window.addEventListener('resize', () => {
         sheetMusicRenderer.resize();
     }
 });
+
+export function compareRecord(allNotes, currentMidi) {
+    console.log("----------------------------------------------");
+
+    allNotes.forEach(_note => {
+        console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
+    })
+
+    currentMidi.tracks[0].notes.forEach(note => {
+        console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
+    })
+
+    console.log("----------------------------------------------");
+}

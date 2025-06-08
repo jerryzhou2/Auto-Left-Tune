@@ -7,7 +7,7 @@ import { showMidi } from "./pianoRoll.js";
 const canvas = document.getElementById("pianoRoll");
 const ctx = canvas.getContext("2d");
 const noteHeight = 18;
-const timeScale = 150;
+const timeScale = 200;
 const pitchBase = 21; // A0
 const visibleRange = 88;
 
@@ -356,6 +356,18 @@ export class MidiHistoryManager {
 
         console.log("_applyModify triggered");
 
+        console.log("In _apply function head----------------------------------------------");
+
+        this.allNotes.forEach(_note => {
+            console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
+        })
+
+        this.currentMidi.tracks[0].notes.forEach(note => {
+            console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
+        })
+
+        console.log("----------------------------------------------");
+
         const noteInTrack = track.notes.find(note => note.midi === change.note.midi && note.time === change.note.time);
         if (!noteInTrack) {
             console.warn("noteInTrack not found")
@@ -376,9 +388,21 @@ export class MidiHistoryManager {
         else if (direction == 'redo') {
             // 是否有通过引用一同被更改？？？
             console.log("modify duration redo");
-            noteInTrack.duration = change.note.duration;
-            noteInAll.width = change.note.duration * timeScale;
+            noteInTrack.duration = change.newDuration;
+            noteInAll.width = change.newDuration * timeScale;
         }
+
+        console.log("In _apply function tail----------------------------------------------");
+
+        this.allNotes.forEach(_note => {
+            console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
+        })
+
+        this.currentMidi.tracks[0].notes.forEach(note => {
+            console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
+        })
+
+        console.log("----------------------------------------------");
     }
 
     // 应用添加操作
