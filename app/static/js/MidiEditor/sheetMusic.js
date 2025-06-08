@@ -168,7 +168,7 @@ export class SheetMusicRenderer {
 
         measures.forEach((measureNotes, i) => {
             const stave = new Vex.Stave(x, 0, staveWidth);
-            console.log(measureNotes);
+            // console.log(measureNotes);
             // 初始时绘制4/4标签
             if (i === 0) {
                 stave.addClef("treble").addTimeSignature(`${totalBeats}/${beatValue}`);

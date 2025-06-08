@@ -482,18 +482,6 @@ setSliderValue.addEventListener('click', () => {
     const newDuration = parseFloat(slider.value);
     const changedNote = { ...choosedNote };
 
-    console.log("In setSlider Btn----------------------------------------------");
-
-    allNotes.forEach(_note => {
-        console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
-    })
-
-    currentMidi.tracks[0].notes.forEach(note => {
-        console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
-    })
-
-    console.log("----------------------------------------------");
-
     historyManager.modifyNote(changedNote.trackIndex, changedNote, initDuration, newDuration);        // newDuration重新定义
 
     sliderContainer.style.display = 'none';
@@ -513,7 +501,6 @@ resetSliderValue.addEventListener('click', () => {
 
 let dragCount = 0;
 let noteBeforeDrag = null;
-let begun = false;
 canvas.addEventListener('mousedown', (e) => {
     if (menu.contains(e.target) || sliderContainer.contains(e.target)) {
         return;
@@ -548,9 +535,8 @@ canvas.addEventListener('mousedown', (e) => {
             console.warn("noteBeforeDrag is null");
         }
 
-        if (!begun) {
+        if (!dragCount) {
             historyManager.beginBatch("拖拽音符*1"); // 开始批量操作
-            begun = true;
         }
     }
 });
@@ -645,7 +631,7 @@ canvas.addEventListener('mouseup', (e) => {
 
         if (dragCount === 1) {
             historyManager.endBatch(); // 结束批量操作
-            begun = false;
+            dragCount = 0;
         }
 
         hasModified = true; // 标记为已修改
@@ -679,8 +665,6 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
     // 初始化历史管理器
     historyManager = new MidiHistoryManager(currentMidi, allNotes, trackVisibility);
     initHistoryUI();
-
-    console.log(currentMidi.tracks);
 
     // 渲染五线谱
     console.log("Begin to render midi");
@@ -1066,9 +1050,6 @@ function updateHistoryList(manager) {
     // 构建新的列表 HTML
     const newItems = recentEntries.map((entry) => {
         let actionText, detailText;
-
-        // console.log(`When update history list, get:`);
-        // console.log(entry);
 
         // 根据操作类型，生成不同的文案
         switch (entry.type) {

@@ -285,11 +285,9 @@ export class MidiHistoryManager {
             this.pointer--;
 
             console.log("After changes applied, redraw");
-            showMidi(this.currentMidi);
+            // showMidi(this.currentMidi);
             // 需要传输midi文件来重绘画布
             this._trigger(this.EVENTS.UNDO, this.currentMidi);
-
-            // showMidi(this.currentMidi);
 
             return true;
         } catch (error) {
@@ -356,18 +354,6 @@ export class MidiHistoryManager {
 
         console.log("_applyModify triggered");
 
-        console.log("In _apply function head----------------------------------------------");
-
-        this.allNotes.forEach(_note => {
-            console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
-        })
-
-        this.currentMidi.tracks[0].notes.forEach(note => {
-            console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
-        })
-
-        console.log("----------------------------------------------");
-
         const noteInTrack = track.notes.find(note => note.midi === change.note.midi && note.time === change.note.time);
         if (!noteInTrack) {
             console.warn("noteInTrack not found")
@@ -391,18 +377,6 @@ export class MidiHistoryManager {
             noteInTrack.duration = change.newDuration;
             noteInAll.width = change.newDuration * timeScale;
         }
-
-        console.log("In _apply function tail----------------------------------------------");
-
-        this.allNotes.forEach(_note => {
-            console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
-        })
-
-        this.currentMidi.tracks[0].notes.forEach(note => {
-            console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
-        })
-
-        console.log("----------------------------------------------");
     }
 
     // 应用添加操作
@@ -432,11 +406,6 @@ export class MidiHistoryManager {
             console.log("Track not found");
             return;
         }
-
-        // console.log(change);
-        // track.notes.forEach(note => {
-        //     console.log(note);
-        // })
 
         const _note = change.changedNote.note;
         // 此处没有共用引用，直接通过属性进行比较
@@ -549,10 +518,6 @@ export class MidiHistoryManager {
             track.notes.sort((a, b) => a.time - b.time);
 
             // showMidi(this.currentMidi);
-
-            // console.log("-------------------------------------------");
-
-            // console.log(`draggedNoteInTrack restore to ${change.originalNote.note.name}`);
 
             // note已经跟着track.notes的一起修改了
             let draggedNoteInAll = {};
@@ -769,7 +734,7 @@ export class MidiHistoryManager {
             // 添加到历史记录
             this._addHistoryEntry({
                 type: 'dragNote',
-                label: `拖拽音符 (轨道 ${trackIndex + 1}, 音符 ${noteIndex + 1})`,
+                label: `拖拽音符 (轨道 ${trackIndex + 1}, 音符 ${originalNote.note.name})`,
                 changes: [change],
                 timestamp: new Date(),
             });
