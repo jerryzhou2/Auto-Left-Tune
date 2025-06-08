@@ -1182,3 +1182,13 @@ function handleDelete(entry) {
     historyManager.history.splice(index, 1);
     updateHistoryList(historyManager);
 }
+
+const setSavePointBtn = document.getElementById("setSavePointBtn");
+setSavePointBtn.addEventListener('click', () => {
+    historyManager.setSavePoint();
+});
+
+const restoreSavePointBtn = document.getElementById("restoreSavePointBtn");
+restoreSavePointBtn.addEventListener('click', () => {
+    historyManager.restoreToSavePoint();
+});

@@ -228,7 +228,12 @@ export class MidiHistoryManager {
 
     // 设置保存点
     setSavePoint() {
-        if (this.history.length === 0 || this.pointer < 0) return;
+        if (this.history.length === 0 || this.pointer < 0) {
+            console.warn("In setSavePoint, cannot find available history");
+            return;
+        }
+
+        console.log("setSavePoint triggered");
 
         // 最多保留3个保存点
         this.savePoints.add(this.pointer);
@@ -237,6 +242,36 @@ export class MidiHistoryManager {
         }
 
         this._trigger(this.EVENTS.CHANGE, this.getStatus());
+    }
+
+    // 恢复到最近的保存点
+    restoreToSavePoint() {
+        if (this.savePoints.size === 0) {
+            console.warn("没有保存点可恢复");
+            return false;
+        }
+
+        console.log("restoreToSavePoint triggered");
+
+        // 获取最近的保存点（最大的索引值）
+        const latestSavePoint = Math.max(...this.savePoints);
+
+        try {
+            // 撤销/重做操作直到到达保存点
+            while (this.pointer > latestSavePoint) {
+                this.undo();
+            }
+
+            while (this.pointer < latestSavePoint) {
+                this.redo();
+            }
+
+            this._trigger(this.EVENTS.CHANGE, this.getStatus());
+            return true;
+        } catch (error) {
+            console.error("恢复到保存点失败:", error);
+            return false;
+        }
     }
 
     // 重置操作
@@ -779,7 +814,9 @@ export class MidiHistoryManager {
             event.preventDefault();
         }
 
-        const keyCombination = `${event.ctrlKey || event.metaKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key.toLowerCase()}`;
+        console.log("handleShortCut triggered");
+
+        const keyCombination = `${event.ctrlKey || event.metaKey ? 'Ctrl+' : ''}${event.shiftKey ? 'Shift+' : ''}${event.key.toUpperCase()}`;
 
         console.log('快捷键按下:', keyCombination);
 

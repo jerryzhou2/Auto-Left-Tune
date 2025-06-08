@@ -68,8 +68,11 @@
             <span>重做</span>
           </button>
           <button id="setSavePointBtn" title="设置保存点 (Ctrl+S)" class="btn-accent">
-            <i class="fa fa-star !text-red-500"></i> 
+            <i class="fa fa-star"></i> 
             <span class="text-gray-800">保存点</span>
+          </button>
+          <button id="restoreSavePointBtn" title="恢复保存点" class="btn-accent">
+            <span class="text-gray-800">恢复保存点</span>
           </button>
           <i id="toggleHistoryIcon" class="fa fa-chevron-down transition-transform duration-300"></i>
         </div>
@@ -132,6 +135,8 @@
             <input id="trackInput-add" type="number" step="1" min="0"/>
         </div>
 
+        <br>
+
         <div id="sliderContainer-add">
             <div class="label-wrapper">
               <label for="slider-add">时长</label>
@@ -140,6 +145,8 @@
             <span id="valueDisplay-add"></span>
         </div>
 
+        <br>
+
         <div id="timeInputBox-add">
             <div class="label-wrapper">
               <label for="timeInput-add">起始时间</label>
@@ -147,12 +154,15 @@
             <input id="timeInput-add" type="number" step="0.1" min="0"/>
         </div>
 
+        <br>
+
         <div id="nameInputBox-add">
             <div class="label-wrapper">
-              <label for="nameInput-add"音高 (如A0)></label>
+              <label for="nameInput-add">音高 (如A0)</label>
             </div>
             <input id="nameInput-add" type="text"/>
         </div>
+
         <br>
 
         <button id="confirm-add">确定</button>
