@@ -315,18 +315,6 @@ function redrawCanvas(midi) {
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault(); // 阻止默认菜单
 
-    console.log("Initailly----------------------------------------------");
-
-    allNotes.forEach(_note => {
-        console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
-    })
-
-    currentMidi.tracks[0].notes.forEach(note => {
-        console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
-    })
-
-    console.log("----------------------------------------------");
-
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
@@ -334,12 +322,13 @@ canvas.addEventListener('contextmenu', (e) => {
         return x >= note.x - tolerance && x < note.x + note.width + tolerance && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
     });
 
-    if (choosedNote)
+    if (choosedNote) {
+        // 展示menu时隐藏add相关的元素
+        addBtnContainer.style.display = 'none';
+        addNoteContainer.style.display = 'none';
         console.log(`chooseNote = ${choosedNote.note.name}`);
-
-    const track = currentMidi.tracks[0];
-
-    if (!choosedNote) {
+    }
+    else {
         console.warn("contextmenu没有选中音符");
         console.warn(`x = ${x}, y = ${y}`);
         // 使用 pageY 和 pageX 来考虑页面滚动位置
@@ -348,6 +337,10 @@ canvas.addEventListener('contextmenu', (e) => {
         addBtnContainer.style.display = 'block';
         // 记得隐藏其他菜单
         menu.style.display = 'none';
+
+        // 给历史记录按键一同隐藏
+        const contextMenu = document.getElementById('history-context-menu');
+        contextMenu.style.display = 'none';
 
         return; // 没有选中音符
     }
@@ -528,8 +521,9 @@ canvas.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return; // 只处理左键点击
 
     // 点击任意地方鼠标隐藏
-    addBtn.style.display = 'none';
+    addBtnContainer.style.display = 'none';
     menu.style.display = 'none';
+    addNoteContainer.style.display = 'none';
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
@@ -685,6 +679,8 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
     // 初始化历史管理器
     historyManager = new MidiHistoryManager(currentMidi, allNotes, trackVisibility);
     initHistoryUI();
+
+    console.log(currentMidi.tracks);
 
     // 渲染五线谱
     console.log("Begin to render midi");
@@ -1103,8 +1099,9 @@ function updateHistoryList(manager) {
         // 判断是否是当前步骤（用于高亮）
         const isCurrent = entry.index === manager.pointer;
 
+        // entry.index经过了映射得到
         return `
-        <div class="history-item ${isCurrent ? 'history-item-current' : ''} bg-white hover:bg-neutral-50">
+        <div class="history-item ${isCurrent ? 'history-item-current' : ''} bg-white hover:bg-neutral-50"  data-index="${entry.index}">
           <div class="flex items-center">
             <span class="midi-action midi-action-${entry.type} mr-2">${actionText}</span>
             <span class="text-neutral-700">${detailText}</span>
@@ -1152,4 +1149,55 @@ export function compareRecord(allNotes, currentMidi) {
     })
 
     console.log("----------------------------------------------");
+}
+
+// 找到历史记录列表容器
+const historyList = document.getElementById('historyList');
+
+// 事件委托：监听右键菜单事件
+historyList.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); // 阻止浏览器默认右键菜单
+
+    // 找到点击的 history-item 元素
+    const historyItem = e.target.closest('.history-item');
+    if (!historyItem) {
+        console.warn("Cannot find any history-item");
+        return; // 未点击在 item 上，直接返回
+    }
+
+    // 直接从 data-index 获取真实索引
+    const entryIndex = parseInt(historyItem.getAttribute('data-index'));
+    const historyEntry = historyManager.history[entryIndex];
+
+    // 显示自定义右键菜单（需先准备好右键菜单 DOM）
+    const contextMenu = document.getElementById('history-context-menu');
+    if (contextMenu) {
+        // 定位：基于鼠标位置显示
+        contextMenu.style.top = `${e.pageY}px`;
+        contextMenu.style.left = `${e.pageX}px`;
+        contextMenu.style.display = 'block';
+
+        // 绑定按键逻辑（如删除该历史记录、还原历史记录等）
+        const deleteHistoryBtn = contextMenu.querySelector('#delete-history');
+        deleteHistoryBtn?.addEventListener('click', () => {
+            handleDelete(historyEntry);
+            contextMenu.style.display = 'none';
+        });
+    }
+    else {
+        console.warn("Cannot find contextMenu");
+        return;
+    }
+});
+
+historyList.addEventListener('mousedown', () => {
+    const contextMenu = document.getElementById('history-context-menu');
+    contextMenu.style.display = 'none';
+})
+
+function handleDelete(entry) {
+    console.log("Delete choosed history !");
+    const index = historyManager.history.findIndex(_entry => _entry === entry);
+    historyManager.history.splice(index, 1);
+    updateHistoryList(historyManager);
 }

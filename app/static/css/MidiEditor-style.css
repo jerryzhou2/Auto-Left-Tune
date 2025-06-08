@@ -563,3 +563,55 @@ button {
 #reset-add:hover {
     background-color: #357ABD;
 }
+
+/* label-wrapper 样式 */
+.label-wrapper {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* label 样式 */
+.label-wrapper label {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+
+#history-context-menu {
+    display: none;
+    position: absolute;
+    /* ✅ 必须添加这一行 */
+    z-index: 9999;
+    /* 防止被其他元素遮住 */
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-width: 200px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* 通用按钮样式 */
+#history-context-menu button {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* 删除按钮样式（红色） */
+#delete-history {
+    background-color: #ef4444;
+    color: white;
+}
+
+#delete-history:hover {
+    background-color: #dc2626;
+    transform: scale(1.02);
+}

@@ -126,7 +126,7 @@ export class MidiHistoryManager {
                 type: "batch",
                 label: this.batchGroup.label,
                 changes: batchChanges,
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         }
         else {
@@ -638,7 +638,7 @@ export class MidiHistoryManager {
                 type: 'modify',
                 label: `修改音符 (轨道 ${trackIndex + 1}, 音符 ${change.note.name})`,
                 changes: [change],
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         }
 
@@ -667,7 +667,7 @@ export class MidiHistoryManager {
                 type: 'add',
                 label: `添加音符 (轨道 ${trackIndex + 1})`,
                 changes: [change],
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         }
 
@@ -700,7 +700,7 @@ export class MidiHistoryManager {
                 type: 'delete',
                 label: `删除音符 (轨道 ${trackIndex + 1}, 音符 ${backupNote.note.name})`,
                 changes: [change],
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         }
 
@@ -735,7 +735,7 @@ export class MidiHistoryManager {
                 type: 'modifyTime',
                 label: `修改音符时间 (轨道 ${trackIndex + 1}, 音符 ${originalNote.note.name})`,
                 changes: [change],
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         }
 
@@ -771,7 +771,7 @@ export class MidiHistoryManager {
                 type: 'dragNote',
                 label: `拖拽音符 (轨道 ${trackIndex + 1}, 音符 ${noteIndex + 1})`,
                 changes: [change],
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         }
     }
@@ -800,7 +800,7 @@ export class MidiHistoryManager {
                 type: 'toggleTrackVisibility',
                 label: `${isVisible ? '显示' : '隐藏'}轨道 (轨道 ${trackIndex + 1})`,
                 changes: [change],
-                timestamp: new Date()
+                timestamp: new Date(),
             });
         }
 
