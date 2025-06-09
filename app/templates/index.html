@@ -18,9 +18,28 @@
     <h1 class="app-title">AutoLeftPiano</h1>
     
     <!-- 添加80%宽度的容器 -->
-    <div class="piano-wrapper" style="width: 80%; margin: 0 auto;">
+    <div class="piano-wrapper" style="width: 80%; margin: 0 auto; position: relative;">
         <!-- 钢琴组件将在这里由piano.js动态插入，使用piano-visual.html中的精确参数 -->
         <div id="piano-container"></div>
+        
+        <!-- 独立的左右手按键显示容器 -->
+        <div class="hands-display-wrapper">
+            <!-- 左手按键显示框 -->
+            <div class="hand-display-container left-hand-display" id="leftHandDisplay">
+                <div class="hand-title">🤚 左手</div>
+                <div class="keys-list" id="leftHandKeysList">
+                    <!-- 左手按键将在这里动态显示 -->
+                </div>
+            </div>
+
+            <!-- 右手按键显示框 -->
+            <div class="hand-display-container right-hand-display" id="rightHandDisplay">
+                <div class="hand-title">✋ 右手</div>
+                <div class="keys-list" id="rightHandKeysList">
+                    <!-- 右手按键将在这里动态显示 -->
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="container">

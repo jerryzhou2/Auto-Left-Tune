@@ -91,6 +91,16 @@ class Piano {
     this.clearStoredNotes = this.clearStoredNotes.bind(this);
     this.recordBegin = this.recordBegin.bind(this);
 
+    // 绑定左右手显示相关方法
+    this.addHandKeyDisplay = this.addHandKeyDisplay.bind(this);
+    this.removeHandKeyDisplay = this.removeHandKeyDisplay.bind(this);
+    this.clearHandDisplay = this.clearHandDisplay.bind(this);
+    this.updateHandDisplay = this.updateHandDisplay.bind(this);
+
+    // 存储当前按下的按键
+    this.currentLeftHandKeys = new Set();
+    this.currentRightHandKeys = new Set();
+
     // 添加样式到DOM
     const style = document.createElement('style');
     style.textContent = `
@@ -503,6 +513,11 @@ class Piano {
     const keyName = key.getAttribute('data-name');
     const keyCode = key.getAttribute('data-keycode');
     
+    // 同时更新左右手按键显示框
+    if (hand === 'left' || hand === 'right') {
+      this.addHandKeyDisplay(keyName, hand, 300);
+    }
+    
     // 检查卷帘窗容器是否存在
     let rollContainer = document.getElementById('piano-roll-container');
     if (!rollContainer) return;
@@ -572,6 +587,9 @@ class Piano {
 
     // 添加视觉效果
     this.triggerKeyEffect(target);
+
+    // 触发钢琴卷帘窗效果（手动按键标记为manual）
+    this.triggerPianoRollEffect(target, 'manual');
 
     // 播放声音
     this.playNoteByKeyCode(keyCode);
@@ -847,6 +865,124 @@ class Piano {
     } catch (e) {
       console.error('播放音符错误:', e);
     }
+  }
+
+  // 添加左右手按键显示方法
+  addHandKeyDisplay(noteName, hand, duration = 300) {
+    if (!noteName || !hand) return;
+
+    // 确保DOM元素存在
+    const handContainer = hand === 'left' ? 
+      document.getElementById('leftHandKeysList') : 
+      document.getElementById('rightHandKeysList');
+    
+    if (!handContainer) return;
+
+    // 查找是否已存在相同按键的显示
+    let keyItem = handContainer.querySelector(`.key-item[data-note="${noteName}"]`);
+    
+    if (!keyItem) {
+      // 创建新的按键显示项
+      keyItem = document.createElement('div');
+      keyItem.className = 'key-item';
+      keyItem.setAttribute('data-note', noteName);
+      keyItem.textContent = noteName;
+      handContainer.appendChild(keyItem);
+    }
+
+    // 添加激活状态
+    keyItem.classList.add('active');
+
+    // 更新当前按键集合
+    if (hand === 'left') {
+      this.currentLeftHandKeys.add(noteName);
+    } else {
+      this.currentRightHandKeys.add(noteName);
+    }
+
+    // 设置定时器移除激活状态
+    setTimeout(() => {
+      keyItem.classList.remove('active');
+      
+      // 如果按键不再被按下，从集合中移除并删除DOM元素
+      setTimeout(() => {
+        if (hand === 'left') {
+          this.currentLeftHandKeys.delete(noteName);
+        } else {
+          this.currentRightHandKeys.delete(noteName);
+        }
+        
+        // 移除不活跃的按键显示
+        if (!keyItem.classList.contains('active') && keyItem.parentNode) {
+          keyItem.parentNode.removeChild(keyItem);
+        }
+      }, 100);
+    }, duration);
+  }
+
+  // 移除特定按键显示
+  removeHandKeyDisplay(noteName, hand) {
+    if (!noteName || !hand) return;
+
+    const handContainer = hand === 'left' ? 
+      document.getElementById('leftHandKeysList') : 
+      document.getElementById('rightHandKeysList');
+    
+    if (!handContainer) return;
+
+    const keyItem = handContainer.querySelector(`.key-item[data-note="${noteName}"]`);
+    if (keyItem) {
+      keyItem.classList.remove('active');
+      
+      // 从集合中移除
+      if (hand === 'left') {
+        this.currentLeftHandKeys.delete(noteName);
+      } else {
+        this.currentRightHandKeys.delete(noteName);
+      }
+
+      // 延迟删除DOM元素，确保动画完成
+      setTimeout(() => {
+        if (keyItem.parentNode) {
+          keyItem.parentNode.removeChild(keyItem);
+        }
+      }, 300);
+    }
+  }
+
+  // 清空所有手部按键显示
+  clearHandDisplay(hand = null) {
+    if (!hand || hand === 'left') {
+      const leftContainer = document.getElementById('leftHandKeysList');
+      if (leftContainer) {
+        leftContainer.innerHTML = '';
+      }
+      this.currentLeftHandKeys.clear();
+    }
+    
+    if (!hand || hand === 'right') {
+      const rightContainer = document.getElementById('rightHandKeysList');
+      if (rightContainer) {
+        rightContainer.innerHTML = '';
+      }
+      this.currentRightHandKeys.clear();
+    }
+  }
+
+  // 更新手部按键显示（用于批量更新）
+  updateHandDisplay(leftKeys = [], rightKeys = []) {
+    // 清空当前显示
+    this.clearHandDisplay();
+
+    // 添加左手按键
+    leftKeys.forEach(noteName => {
+      this.addHandKeyDisplay(noteName, 'left', 1000);
+    });
+
+    // 添加右手按键
+    rightKeys.forEach(noteName => {
+      this.addHandKeyDisplay(noteName, 'right', 1000);
+    });
   }
 }
 
