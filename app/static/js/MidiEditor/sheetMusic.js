@@ -11,6 +11,20 @@ export class SheetMusicRenderer {
         this.notes = [];
         this.currentMidiData = null;
         this.init();
+
+        // VexFlow 支持的音符时值及对应的拍数（4/4 拍）
+        this.durationMap = [
+            { duration: 'w', beats: 4 },
+            { duration: 'hd', beats: 3 },  // dotted half
+            { duration: 'h', beats: 2 },
+            { duration: 'qd', beats: 1.5 }, // dotted quarter
+            { duration: 'q', beats: 1 },
+            { duration: '8d', beats: 0.75 }, // dotted eighth
+            { duration: '8', beats: 0.5 },
+            { duration: '16', beats: 0.25 },
+            { duration: '32', beats: 0.125 },
+            { duration: '64', beats: 0.0625 },
+        ];
     }
 
     init() {
@@ -18,6 +32,8 @@ export class SheetMusicRenderer {
         this.renderer.resize(this.container.clientWidth, 200);
         this.context = this.renderer.getContext();
         this.stave = new Vex.Stave(10, 0, this.container.clientWidth - 20);
+
+        // ???
         this.stave.addClef("treble").addTimeSignature("4/4");
         this.stave.setContext(this.context).draw();
     }
@@ -29,37 +45,12 @@ export class SheetMusicRenderer {
         return noteNames[noteIndex] + '/' + octave;
     }
 
-    getDuration(duration) {
-        if (duration <= 0.25) return '16';
-        if (duration <= 0.5) return '8';
-        if (duration <= 1) return 'q';
-        if (duration <= 2) return 'h';
-        return 'w';
-    }
-
-    getNoteDuration(duration) {
-        switch (duration) {
-            case 'w': return 4;
-            case 'h': return 2;
-            case 'q': return 1;
-            case '8': return 0.5;
-            case '16': return 0.25;
-            default: return 1;
-        }
-    }
-
-    getDurationFromBeats(beats) {
-        if (beats >= 4) return 'w';
-        if (beats >= 2) return 'h';
-        if (beats >= 1) return 'q';
-        if (beats >= 0.5) return '8';
-        return '16';
-    }
-
     createRest(duration) {
         return new Vex.StaveNote({
+            // 随便
             keys: ['b/4'],
-            duration: duration,
+            // 休止符
+            duration: duration + 'r',
             stem_direction: Vex.StaveNote.STEM_DOWN
         }).setStyle({ fillStyle: 'transparent' });
     }
@@ -67,16 +58,73 @@ export class SheetMusicRenderer {
     convertMidiToVexFlowNotes(midiNotes) {
         const vexNotes = [];
         midiNotes.forEach(note => {
+            // 要求中间带有/的
             const noteName = this.midiToNoteName(note.midi);
             if (noteName) {
                 vexNotes.push({
                     keys: [noteName],
+                    // 字符串
                     duration: note.duration,
                     time: note.time
                 });
             }
         });
         return vexNotes;
+    }
+
+    /**
+     * 将任意节拍数拆分成若干合法时值数组
+     * @param {number} beatsLeft - 还剩多少拍需要拆分
+     * @returns {string[]} - 按顺序的 duration 字符串数组
+     */
+    splitBeatsToDurations(beatsLeft) {
+        const result = [];
+        // 规定的误差
+        const epsilon = 0.001;
+
+        while (beatsLeft > epsilon) {
+            // 找到第一个满足 beats <= beatsLeft 的 duration
+            const dur = this.durationMap.find(d => d.beats <= beatsLeft + epsilon);
+            if (!dur) {
+                // 理论上不会进来，保险起见防止死循环
+                console.warn('Cannot split beats:', beatsLeft);
+                break;
+            }
+            result.push(dur.duration);
+            beatsLeft -= dur.beats;
+        }
+
+        return result;
+    }
+
+    getBeat(durationInSeconds, bpm) {
+        return durationInSeconds * (bpm / 60);
+    }
+
+    getInitialBPM(midiData) {
+        if (midiData.header.tempos.length > 0) {
+            return midiData.header.tempos[0].bpm;
+        } else {
+            return 120; // 默认 BPM
+        }
+    }
+
+    getClosestDuration(beats) {
+        for (const entry of this.durationMap) {
+            if (entry.beats <= beats) {
+                return entry.duration;
+            }
+        }
+        // 若 beats 小于最小值，则返回最短时值
+        return this.durationMap[this.durationMap.length - 1].duration;
+    }
+
+    getValue(duration) {
+        for (const entry of this.durationMap) {
+            if (entry.duration === duration) {
+                return entry.beats;
+            }
+        }
     }
 
     renderMidi(midiData) {
@@ -92,7 +140,10 @@ export class SheetMusicRenderer {
         this.currentMidiData = midiData;
 
         const visibleTracks = midiData.tracks.filter((track, index) => trackVisibility[index]);
-        if (visibleTracks.length === 0) return;
+        if (visibleTracks.length === 0) {
+            console.warn("No track visible");
+            return;
+        }
 
         const allNotes = visibleTracks.reduce((notes, track) => {
             if (track.notes && track.notes.length > 0) {
@@ -102,6 +153,8 @@ export class SheetMusicRenderer {
         }, []).sort((a, b) => a.time - b.time);
 
         const rawNotes = this.convertMidiToVexFlowNotes(allNotes);
+
+        // 默认为4/4
         const timeSigRaw = midiData.header.timeSignatures?.[0];
         const timeSig = (timeSigRaw && timeSigRaw.numerator && timeSigRaw.denominator)
             ? timeSigRaw
@@ -110,65 +163,65 @@ export class SheetMusicRenderer {
         const totalBeats = timeSig.numerator;
         const beatValue = timeSig.denominator;
 
+        const bpm = this.getInitialBPM(this.currentMidiData);
+
+        // 小节
         const measures = [];
 
         let currentMeasure = [];
-        let currentBeats = 0;
+        const remainingBeats = totalBeats;
 
+        // 还需要计算所在小节
         for (let i = 0; i < rawNotes.length; i++) {
+            // time用来干嘛？
             let { keys, duration } = rawNotes[i];
 
-            // 当前音符还有多少节拍没有被分配到小节之中
-            let beatsLeft = this.getNoteDuration(this.getDuration(duration));
+            // 当前音符还有多少没有被分配到小节之中
+            let beatsLeft = getBeat(parseFloat(duration), bpm);
 
-            while (beatsLeft > 0) {
-                // 当前小节允许的总拍数（4/4为4）- 当前小节已经使用的拍数
-                const space = totalBeats - currentBeats;
+            while (remainingBeats > 0.0625 && beatsLeft > 0.625) {
+                // 当beatsLeft太小就忽略
+                if (beatsLeft <= remainingBeats && beatsLeft > 0.0625) {
+                    // 当前小节足够容纳这个音符
+                    const dur = this.getClosestDuration(beatsLeft);
+                    const note = new Vex.StaveNote({ keys, duration: dur });
 
-                // 小节已经填满
-                if (space <= 0) {
-                    measures.push(currentMeasure);
-                    currentMeasure = [];
-                    currentBeats = 0;
-                    continue;
-                }
+                    currentMeasure.push(note);
+                    const durValue = this.getValue(dur);
+                    remainingBeats -= durValue;
+                    beatsLeft -= durValue;
+                } else if (beatsLeft > remainingBeats) {
+                    // 当前小节不够，需要拆分
+                    let dur;
+                    const splitBeats = this.splitBeatsToDurations(beatsLeft);
+                    for (let i = 0; i < splitBeats.length; i++) {
+                        if (splitBeats[i] <= remainingBeats) {
+                            // 得到的是字符串
+                            dur = splitBeats[i];
+                            break;
+                        }
+                    }
 
-                // 剩余节拍数太大的音符被切割
-                const beatsToUse = Math.min(beatsLeft, space);
-                const vexDuration = this.getDurationFromBeats(beatsToUse);
-
-                const note = new Vex.StaveNote({ keys, duration: vexDuration });
-                currentMeasure.push(note);
-                currentBeats += beatsToUse;
-                beatsLeft -= beatsToUse;
-
-                if (beatsLeft > 0 && space === beatsToUse) {
-                    // 跨小节延音符号可考虑在此添加 Tie（留待拓展）
-                }
-            }
-        }
-
-        if (currentMeasure.length > 0) {
-            if (currentBeats < totalBeats) {
-                const beatsToFill = totalBeats - currentBeats;
-                let beatsFilled = 0;
-
-                while (beatsFilled < beatsToFill) {
-                    const restDuration = this.getDurationFromBeats(beatsToFill - beatsFilled);
-                    const restNote = this.createRest(restDuration);
-                    currentMeasure.push(restNote);
-                    beatsFilled += this.getNoteDuration(restDuration);
+                    const note = new Vex.StaveNote({ keys, duration: dur });
+                    currentMeasure.push(note);
+                    const durValue = this.getValue(dur);
+                    remainingBeats -= durValue;
+                    beatsLeft -= durValue;
                 }
             }
-            measures.push(currentMeasure);
+
+            // 理论上不会出现这种情况
+            if (remainingBeats < 0.0625) {
+                console.warn("二分过程出现未知错误");
+                return;
+            }
         }
 
         let x = 10;
-        const staveWidth = Math.max(120, (this.container.clientWidth - 20) / measures.length);
+        const staveWidth = Math.max(400, (this.container.clientWidth - 20) / measures.length);
 
         measures.forEach((measureNotes, i) => {
             const stave = new Vex.Stave(x, 0, staveWidth);
-            // console.log(measureNotes);
             // 初始时绘制4/4标签
             if (i === 0) {
                 stave.addClef("treble").addTimeSignature(`${totalBeats}/${beatValue}`);
@@ -182,8 +235,20 @@ export class SheetMusicRenderer {
 
             console.log("Join voices and draw!");
             voice.addTickables(measureNotes);
+
             new Vex.Formatter().joinVoices([voice]).format([voice], staveWidth - 20);
             voice.draw(this.context, stave);
+
+            measureNotes.forEach(note => {
+                note.setContext(this.context);
+                note.setStave(stave);
+                note.draw();  // ✅ 只有显式调用 note.draw()，postFormatted 才会变 true
+                console.log("After draw:", note.preFormatted, note.postFormatted);
+            });
+
+            measureNotes.forEach(note => {
+                console.log(note.preFormatted, note.postFormatted);
+            })
 
             x += staveWidth;
         });

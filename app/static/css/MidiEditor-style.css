@@ -56,14 +56,35 @@ canvas {
 
 #sidebar {
     width: 50px;
-    background: #fff;
-    border: 1px solid #ccc;
+    /* 不变 */
+    height: 1621px;
+    /* 不变 */
     position: sticky;
-    z-index: 1;
     left: 0;
     bottom: 0;
-    height: 1621px;
-    opacity: 0.8;
+    z-index: 1;
+
+    /* 美化部分 ↓↓↓ */
+    background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+    /* 柔和渐变背景 */
+    border-right: 1px solid #d1d5db;
+    /* 更现代的灰色边框 */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    /* 柔和阴影 */
+    opacity: 0.95;
+
+    /* 圆角让它更现代感，但不会破坏布局 */
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+#sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
 }
 
 #trackControls {

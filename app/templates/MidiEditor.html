@@ -58,24 +58,26 @@
           <i class="fa fa-history mr-2"></i> 
           <span>修改历史</span>
         </h3>
-        <div class="history-actions flex space-x-2">
-          <button id="undoBtn" title="撤销 (Ctrl+Z)" class="btn-secondary">
-            <i class="fa fa-undo"></i> 
+        <div class="history-actions flex flex-wrap gap-2 items-center">
+          <button id="undoBtn" title="撤销 (Ctrl+Z)" class="btn-secondary min-w-[100px]">
+            <i class="fa fa-undo"></i>
             <span>撤销</span>
           </button>
-          <button id="redoBtn" title="重做 (Ctrl+Y)" class="btn-secondary">
-            <i class="fa fa-repeat"></i> 
+          <button id="redoBtn" title="重做 (Ctrl+Y)" class="btn-secondary min-w-[100px]">
+            <i class="fa fa-repeat"></i>
             <span>重做</span>
           </button>
-          <button id="setSavePointBtn" title="设置保存点 (Ctrl+S)" class="btn-accent">
-            <i class="fa fa-star"></i> 
-            <span class="text-gray-800">保存点</span>
+          <button id="setSavePointBtn" title="设置保存点 (Ctrl+S)" class="btn-accent min-w-[120px]">
+            <i class="fa fa-star text-yellow-500"></i>
+            <span class="text-base">设置保存点</span>
           </button>
-          <button id="restoreSavePointBtn" title="恢复保存点" class="btn-accent">
-            <span class="text-gray-800">恢复保存点</span>
-          </button>
-          <i id="toggleHistoryIcon" class="fa fa-chevron-down transition-transform duration-300"></i>
+          <button id="restoreSavePointBtn" title="恢复保存点" class="btn-accent min-w-[120px]">
+            <i class="fa fa-refresh text-blue-500"></i>
+            <span class="text-base">恢复保存点</span>
+          </button>          
+          <i id="toggleHistoryIcon" class="fa fa-chevron-down text-white ml-2 transition-transform duration-300"></i>
         </div>
+        
       </div>
       
       <!-- 历史记录列表 -->
