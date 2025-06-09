@@ -261,7 +261,7 @@ confirmBtn.addEventListener('click', () => {
         return;
     }
 
-    // redrawCanvas(currentMidi); // 重新绘制画布
+    // 只绘制该音符即可
     ctx.fillRect(noteObj.x, noteObj.y, noteObj.width, noteObj.height);
 
     // // ✅ 添加历史记录：添加音符
@@ -304,9 +304,7 @@ function redrawCanvas(midi) {
             const width = note.duration * timeScale;
             const height = noteHeight - 1;
             ctx.fillStyle = getColor(trackIndex);
-            // console.log("redrawCanvas draws", width);
             ctx.fillRect(x, y, width, height);
-            // console.log(`In redraw, draw ${note.name}`);
         });
     });
 }
@@ -431,7 +429,7 @@ deleteBtn.addEventListener('click', (e) => {
     menu.style.display = 'none';
 
     // 部分网格被连同音符一起消去，需要重绘
-    drawGrid();
+    ctx.drawImage(offscreenCanvas, 0, 0);
 });
 
 export function showMidi(midi) {
@@ -548,26 +546,23 @@ canvas.addEventListener('mousemove', (e) => {
         const y = e.clientY - rect.top;
         const dx = x - startX;
         const dy = y - startY;
+
+        const oldNote = { ...draggedNote };
+
         draggedNote.x += dx;
         draggedNote.y += dy;
         startX = x;
         startY = y;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
-        ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
         const track = currentMidi.tracks[draggedNote.trackIndex];
         if (draggedNote) {
             track.notes.find(note => note === draggedNote.note).time = draggedNote.x / timeScale; // 更新时间 --> 影响接下来的绘制
         }
 
-        currentMidi.tracks.forEach((track, trackIndex) => {
-            if (!trackVisibility[trackIndex]) return;
-            track.notes.forEach(note => {
-                const thisNote = allNotes.find(n => n.note === note);
-                ctx.fillStyle = getColor(trackIndex);
-                ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-            });
-        });
+        ctx.clearRect(oldNote.x, oldNote.y, oldNote.width, oldNote.height);
+        ctx.drawImage(offscreenCanvas, 0, 0);
+        ctx.fillStyle = getColor(draggedNote.trackIndex);
+        ctx.fillRect(draggedNote.x, draggedNote.y, draggedNote.width, draggedNote.height);
     }
 });
 
@@ -596,11 +591,6 @@ canvas.addEventListener('mouseup', (e) => {
                 draggedNoteInNotes.name = clampedMidi;      // 播放时使用字符串
 
             draggedNote.note = draggedNoteInNotes;
-
-            const newX = draggedNoteInNotes.time * timeScale;
-            const newY = canvas.height - ((draggedNoteInNotes.midi - pitchBase) * noteHeight);
-            draggedNote.x = newX;
-            draggedNote.y = newY;
         }
 
         track.notes.sort((a, b) => a.time - b.time); // 不需要allNotes和其顺序一致
@@ -617,17 +607,29 @@ canvas.addEventListener('mouseup', (e) => {
 
         // 性能还能提高
         // 重新绘制自动挪移的音符
+
         ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
         ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
 
-        currentMidi.tracks.forEach((track, trackIndex) => {
-            if (!trackVisibility[trackIndex]) return;
-            track.notes.forEach(note => {
-                const thisNote = allNotes.find(n => n.note === note);
-                ctx.fillStyle = getColor(trackIndex);
+        allNotes.forEach(thisNote => {
+            if (trackVisibility[thisNote.trackIndex]) {
+                ctx.fillStyle = getColor(thisNote.trackIndex);
                 ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-            });
+                console.log("Draw", thisNote.note);
+                console.log("Draw:", thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+            }
         });
+
+
+        // currentMidi.tracks.forEach((track, trackIndex) => {
+        //     if (!trackVisibility[trackIndex]) return;
+        //     track.notes.forEach(note => {
+        //         const thisNote = allNotes.find(n => n.note === note);
+        //         ctx.fillStyle = getColor(trackIndex);
+        //         ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+        //         console.log("Draw", thisNote.note.name);
+        //     });
+        // });
 
         if (dragCount === 1) {
             historyManager.endBatch(); // 结束批量操作
@@ -815,23 +817,20 @@ function onPlaybackEnd() {
 function animatePlayhead() {
     const currentTime = Tone.Transport.seconds; // 或你的播放时间
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 先清空画布
-    ctx.drawImage(offscreenCanvas, 0, 0); // 重绘音符网格背景
+    // ctx.drawImage(offscreenCanvas, 0, 0); // 重绘音符网格背景
     drawPlayheadLine(currentTime, canvas.height);
 
-    currentMidi.tracks.forEach((track, trackIndex) => {
-        if (!trackVisibility[trackIndex]) return;
-        track.notes.forEach(note => {
-            const thisNote = allNotes.find(n => n.note === note);
-            ctx.fillStyle = getColor(trackIndex);
-            // console.log("animatePlayHead draws", thisNote.width);
-            ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-        });
-    });
+    // currentMidi.tracks.forEach((track, trackIndex) => {
+    //     if (!trackVisibility[trackIndex]) return;
+    //     track.notes.forEach(note => {
+    //         const thisNote = allNotes.find(n => n.note === note);
+    //         ctx.fillStyle = getColor(trackIndex);
+    //         ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+    //     });
+    // });
 
-    // 该函数没有用到allNotes，绘制正确，显然是allNotes的问题
     redrawCanvas(currentMidi);
-
-    highlightPlayingNotes(currentTime);
+    // highlightPlayingNotes(currentTime);
 
     let playheadAnimationId;
     // 播放未结束则继续动画
@@ -849,16 +848,14 @@ function animatePlayhead() {
 
 function highlightPlayingNotes(currentTime) {
     // 遍历所有音符，找出正在播放的音符并高亮显示
-    currentMidi.tracks.forEach((track, trackIndex) => {
-        if (!trackVisibility[trackIndex]) return;
-
-        track.notes.forEach(note => {
-            if (note.time <= currentTime && note.time + note.duration >= currentTime) {
-                const thisNote = allNotes.find(n => n.note === note);
+    allNotes.forEach(thisNote => {
+        if (trackVisibility[thisNote.trackIndex]) {
+            if (thisNote.note.time <= currentTime && thisNote.note.time + thisNote.note.duration >= currentTime) {
+                ctx.clearRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
                 ctx.fillStyle = 'rgba(255, 255, 0, 0.7)'; // 使用半透明黄色高亮
                 ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
             }
-        });
+        }
     });
 }
 
