@@ -1,5 +1,5 @@
 *.pyc
 __pycache__/
-session_data.json
+app/files/session_data.json
 *.pt
 app/files
