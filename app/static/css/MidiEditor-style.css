@@ -56,14 +56,35 @@ canvas {
 
 #sidebar {
     width: 50px;
-    background: #fff;
-    border: 1px solid #ccc;
+    /* 不变 */
+    height: 1621px;
+    /* 不变 */
     position: sticky;
-    z-index: 1;
     left: 0;
     bottom: 0;
-    height: 1621px;
-    opacity: 0.8;
+    z-index: 1;
+
+    /* 美化部分 ↓↓↓ */
+    background: linear-gradient(to bottom, #f9fafb, #f3f4f6);
+    /* 柔和渐变背景 */
+    border-right: 1px solid #d1d5db;
+    /* 更现代的灰色边框 */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    /* 柔和阴影 */
+    opacity: 0.95;
+
+    /* 圆角让它更现代感，但不会破坏布局 */
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+
+#sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
 }
 
 #trackControls {
@@ -562,4 +583,56 @@ button {
 #confirm-add:hover,
 #reset-add:hover {
     background-color: #357ABD;
+}
+
+/* label-wrapper 样式 */
+.label-wrapper {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+/* label 样式 */
+.label-wrapper label {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+
+#history-context-menu {
+    display: none;
+    position: absolute;
+    /* ✅ 必须添加这一行 */
+    z-index: 9999;
+    /* 防止被其他元素遮住 */
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-width: 200px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* 通用按钮样式 */
+#history-context-menu button {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* 删除按钮样式（红色） */
+#delete-history {
+    background-color: #ef4444;
+    color: white;
+}
+
+#delete-history:hover {
+    background-color: #dc2626;
+    transform: scale(1.02);
 }

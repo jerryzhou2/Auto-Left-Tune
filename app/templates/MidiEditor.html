@@ -58,68 +58,36 @@
           <i class="fa fa-history mr-2"></i> 
           <span>修改历史</span>
         </h3>
-        <div class="history-actions flex space-x-2">
-          <button id="undoBtn" title="撤销 (Ctrl+Z)" class="btn-secondary">
-            <i class="fa fa-undo"></i> 
+        <div class="history-actions flex flex-wrap gap-2 items-center">
+          <button id="undoBtn" title="撤销 (Ctrl+Z)" class="btn-secondary min-w-[100px]">
+            <i class="fa fa-undo"></i>
             <span>撤销</span>
           </button>
-          <button id="redoBtn" title="重做 (Ctrl+Y)" class="btn-secondary">
-            <i class="fa fa-repeat"></i> 
+          <button id="redoBtn" title="重做 (Ctrl+Y)" class="btn-secondary min-w-[100px]">
+            <i class="fa fa-repeat"></i>
             <span>重做</span>
           </button>
-          <button id="setSavePointBtn" title="设置保存点 (Ctrl+S)" class="btn-accent">
-            <i class="fa fa-star"></i> 
-            <span>保存点</span>
+          <button id="setSavePointBtn" title="设置保存点 (Ctrl+S)" class="btn-accent min-w-[120px]">
+            <i class="fa fa-star text-yellow-500"></i>
+            <span class="text-base">设置保存点</span>
           </button>
-          <i id="toggleHistoryIcon" class="fa fa-chevron-down transition-transform duration-300"></i>
+          <button id="restoreSavePointBtn" title="恢复保存点" class="btn-accent min-w-[120px]">
+            <i class="fa fa-refresh text-blue-500"></i>
+            <span class="text-base">恢复保存点</span>
+          </button>          
+          <i id="toggleHistoryIcon" class="fa fa-chevron-down text-white ml-2 transition-transform duration-300"></i>
         </div>
+        
       </div>
       
       <!-- 历史记录列表 -->
       <div id="historyList" class="history-list overflow-y-auto scrollbar-thin px-3 max-h-0 transition-all duration-500 ease-in-out">
-        <!-- 示例历史记录项（当前状态） -->
-        <div class="history-item bg-neutral-50 hover:bg-neutral-100 history-item-current relative">
-          <div class="flex items-center">
-            <span class="midi-action midi-action-delete mr-2">删除</span>
-            <span class="text-neutral-700">音符 (轨道 1, 音符 A0)</span>
-          </div>
-          <span class="text-xs text-neutral-500">刚刚</span>
-        </div>
-        
-        <!-- 保存点历史记录项 -->
-        <div class="history-item bg-white hover:bg-neutral-50 history-item-savepoint relative">
-          <div class="flex items-center">
-            <span class="midi-action midi-action-add mr-2">添加</span>
-            <span class="text-neutral-700">音符 (轨道 2)</span>
-          </div>
-          <span class="text-xs text-neutral-500">2分钟前</span>
-        </div>
-        
-        <!-- 普通历史记录项 -->
-        <div class="history-item bg-white hover:bg-neutral-50">
-          <div class="flex items-center">
-            <span class="midi-action midi-action-modify mr-2">修改</span>
-            <span class="text-neutral-700">音符时间 (轨道 1, 音符 A0)</span>
-          </div>
-          <span class="text-xs text-neutral-500">5分钟前</span>
-        </div>
-        
-        <div class="history-item bg-white hover:bg-neutral-50">
-          <div class="flex items-center">
-            <span class="midi-action midi-action-move mr-2">拖拽</span>
-            <span class="text-neutral-700">音符 (轨道 3, 音符 A0)</span>
-          </div>
-          <span class="text-xs text-neutral-500">10分钟前</span>
-        </div>
-        
-        <div class="history-item bg-white hover:bg-neutral-50">
-          <div class="flex items-center">
-            <span class="midi-action midi-action-modify mr-2">修改</span>
-            <span class="text-neutral-700">音符属性 (轨道 2, 音符 A0)</span>
-          </div>
-          <span class="text-xs text-neutral-500">15分钟前</span>
-        </div>
+        <!-- 在执行修改操作时动态添加 -->
       </div>
+    </div>
+
+    <div id="history-context-menu">
+      <button id="delete-history">删除历史记录</button>
     </div>
 
     <!-- 新增轨道控制面板 -->
@@ -130,6 +98,16 @@
       <div id="sidebar" class="w-1/4 bg-neutral-50 border-r border-neutral-200 p-3 scrollbar-thin"></div>
       <div id="canvasWrapper" class="flex-1 bg-white p-2">
         <canvas id="pianoRoll" class="w-full h-full rounded border border-neutral-300 shadow-sm"></canvas>
+      </div>
+    </div>
+
+    <!-- 新增五线谱容器 -->
+    <div id="sheetMusicContainer" class="mt-8 bg-white border rounded-lg shadow-inner overflow-hidden">
+      <div class="p-4 border-b border-neutral-200">
+        <h3 class="text-lg font-semibold text-gray-800">五线谱视图</h3>
+      </div>
+      <div id="sheetMusicWrapper" class="p-4">
+        <div id="sheetMusic" class="w-full"></div>
       </div>
     </div>
 
@@ -153,25 +131,40 @@
 
     <div id="addNoteContainer">
         <div id="trackInputBox-add">
-            <label for="trackInput-add">请输入轨道编号 (从0开始)</label>
+            <div class="label-wrapper">
+              <label for="trackInput-add">轨道 (从0开始)</label>
+            </div>
             <input id="trackInput-add" type="number" step="1" min="0"/>
         </div>
 
+        <br>
+
         <div id="sliderContainer-add">
-            <label for="slider-add">请输入持续时间</label>
+            <div class="label-wrapper">
+              <label for="slider-add">时长</label>
+            </div>
             <input type="range" id="slider-add" min="0.01" max="3" step="0.01"/>
             <span id="valueDisplay-add"></span>
         </div>
 
+        <br>
+
         <div id="timeInputBox-add">
-            <label for="timeInput-add">请输入起始时间</label>
+            <div class="label-wrapper">
+              <label for="timeInput-add">起始时间</label>
+            </div>
             <input id="timeInput-add" type="number" step="0.1" min="0"/>
         </div>
 
+        <br>
+
         <div id="nameInputBox-add">
-            <label for="nameInput-add"请输入音高名称 (如A0)></label>
+            <div class="label-wrapper">
+              <label for="nameInput-add">音高 (如A0)</label>
+            </div>
             <input id="nameInput-add" type="text"/>
         </div>
+
         <br>
 
         <button id="confirm-add">确定</button>
@@ -185,15 +178,36 @@
     </div>
 
     <!-- 添加80%宽度的容器 -->
-    <div class="piano-wrapper" style="width: 80%; margin: 0 auto;">
+    <div class="piano-wrapper" style="width: 80%; margin: 0 auto; position: relative;">
         <!-- 钢琴组件将在这里由piano.js动态插入，使用piano-visual.html中的精确参数 -->
         <div id="piano-container"></div>
+        
+        <!-- 独立的左右手按键显示容器 -->
+        <div class="hands-display-wrapper">
+            <!-- 左手按键显示框 -->
+            <div class="hand-display-container left-hand-display" id="leftHandDisplay">
+                <div class="hand-title">🤚 左手</div>
+                <div class="keys-list" id="leftHandKeysList">
+                    <!-- 左手按键将在这里动态显示 -->
+                </div>
+            </div>
+
+            <!-- 右手按键显示框 -->
+            <div class="hand-display-container right-hand-display" id="rightHandDisplay">
+                <div class="hand-title">✋ 右手</div>
+                <div class="keys-list" id="rightHandKeysList">
+                    <!-- 右手按键将在这里动态显示 -->
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}
 
 {% block scripts %}
     <script src="https://cdn.jsdelivr.net/npm/tone@next/build/Tone.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.min.js"></script>
+    <!-- 修改 VexFlow 库引用 -->
+    <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.min.js"></script>
     <script src="../static/js/MidiEditor/pianoRoll.js" type="module"></script>
 
     <!-- 导入模块化JS文件 -->

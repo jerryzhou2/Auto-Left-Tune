@@ -100,7 +100,7 @@ def auto_process_midi():
     if contains_chinese(file.filename):
         return jsonify({'error': '文件名不能包含中文'}), 400
     
-    if file and file.filename.endswith('.mid'):
+    if file and (file.filename.endswith('.mid') or file.filename.endswith('.midi')):
         # 生成临时ID和文件路径
         temp_id = str(uuid.uuid4())
         filename = secure_filename(file.filename)
