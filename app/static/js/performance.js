@@ -385,6 +385,14 @@ class DemoMidiPlayer {
                     window.pianoInstance.triggerPianoRollEffect(pianoKey, hand);
                     if (this.debug) console.log(`演奏示例触发${hand}手矩形条效果: ${noteName}`);
                 }
+
+                // 同时更新左右手按键显示框
+                if (window.pianoInstance && typeof window.pianoInstance.addHandKeyDisplay === 'function') {
+                    if (hand === 'left' || hand === 'right') {
+                        window.pianoInstance.addHandKeyDisplay(noteName, hand, durationMs);
+                        if (this.debug) console.log(`演奏示例更新${hand}手按键显示: ${noteName}`);
+                    }
+                }
                 
                 // 在音符持续时间结束后移除效果
                 setTimeout(() => {
