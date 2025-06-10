@@ -13,5 +13,4 @@ def create_app():
     
     # 注册蓝图
     app.register_blueprint(main)
-    
     return app 

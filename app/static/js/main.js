@@ -804,7 +804,55 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
         
-        startTimeInput.focus();
+        // 初始化处理方式选择
+        initProcessingOptions();
+        
+        // 默认选择处理完整文件
+        selectProcessingOption('full');
+    }
+    
+    // 初始化处理方式选择
+    function initProcessingOptions() {
+        const processFullBtn = document.getElementById('process-full-file-option');
+        const processTimeRangeBtn = document.getElementById('process-time-range-option');
+        const timeRangeSelection = document.getElementById('time-range-selection');
+        
+        if (processFullBtn && processTimeRangeBtn && timeRangeSelection) {
+            processFullBtn.addEventListener('click', () => {
+                selectProcessingOption('full');
+            });
+            
+            processTimeRangeBtn.addEventListener('click', () => {
+                selectProcessingOption('time-range');
+            });
+        }
+    }
+    
+    // 选择处理方式
+    function selectProcessingOption(option) {
+        const processFullBtn = document.getElementById('process-full-file-option');
+        const processTimeRangeBtn = document.getElementById('process-time-range-option');
+        const timeRangeSelection = document.getElementById('time-range-selection');
+        const startTimeInput = document.getElementById('start-time');
+        
+        if (option === 'full') {
+            // 选择处理完整文件
+            processFullBtn.className = 'btn btn-primary option-btn';
+            processTimeRangeBtn.className = 'btn btn-secondary option-btn';
+            timeRangeSelection.style.display = 'none';
+            window.selectedProcessingOption = 'full';
+        } else if (option === 'time-range') {
+            // 选择时间区间
+            processFullBtn.className = 'btn btn-secondary option-btn';
+            processTimeRangeBtn.className = 'btn btn-primary option-btn';
+            timeRangeSelection.style.display = 'block';
+            window.selectedProcessingOption = 'time-range';
+            
+            // 聚焦到开始时间输入框
+            if (startTimeInput) {
+                setTimeout(() => startTimeInput.focus(), 100);
+            }
+        }
     }
 
     // 获取MIDI文件时长
@@ -1081,61 +1129,181 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 确认时间区间并处理文件
     confirmTimeBtn.addEventListener('click', () => {
-        const startTime = startTimeInput.value.trim();
-        const endTime = endTimeInput.value.trim();
-
-        // 验证时间格式
-        if (!validateTimeFormat(startTime)) {
-            alert('请输入正确的开始时间格式（MM:SS）');
-            startTimeInput.focus();
+        // 验证target_len参数
+        const targetLenInput = document.getElementById('target-len');
+        const targetLen = parseInt(targetLenInput.value);
+        
+        if (isNaN(targetLen) || targetLen < 100 || targetLen > 4000) {
+            alert('请输入有效的目标生成序列长度 (100-4000)');
+            targetLenInput.focus();
             return;
         }
+        
+        if (window.selectedProcessingOption === 'full') {
+            // 处理完整文件
+            hideTimeRangeModal();
+            processFile(pendingFile);
+        } else {
+            // 处理时间区间
+            const startTimeInput = document.getElementById('start-time');
+            const endTimeInput = document.getElementById('end-time');
+            const startTime = startTimeInput.value.trim();
+            const endTime = endTimeInput.value.trim();
 
-        if (!validateTimeFormat(endTime)) {
-            alert('请输入正确的结束时间格式（MM:SS）');
-            endTimeInput.focus();
-            return;
-        }
-
-        // 验证时间逻辑
-        const [startMin, startSec] = startTime.split(':').map(Number);
-        const [endMin, endSec] = endTime.split(':').map(Number);
-        const startTotalSec = startMin * 60 + startSec;
-        const endTotalSec = endMin * 60 + endSec;
-
-        if (endTotalSec <= startTotalSec) {
-            alert('结束时间必须大于开始时间');
-            endTimeInput.focus();
-            return;
-        }
-
-        // 检查是否超过文件时长
-        if (window.currentMidiDuration) {
-            const maxDuration = Math.floor(window.currentMidiDuration);
-            
-            if (startTotalSec >= maxDuration) {
-                const maxMin = Math.floor(maxDuration / 60);
-                const maxSec = maxDuration % 60;
-                const maxTimeStr = `${maxMin.toString().padStart(2, '0')}:${maxSec.toString().padStart(2, '0')}`;
-                alert(`开始时间不能超过文件总时长 ${maxTimeStr}`);
+            // 验证时间格式
+            if (!validateTimeFormat(startTime)) {
+                alert('请输入正确的开始时间格式（MM:SS）');
                 startTimeInput.focus();
                 return;
             }
-            
-            if (endTotalSec > maxDuration) {
-                const maxMin = Math.floor(maxDuration / 60);
-                const maxSec = maxDuration % 60;
-                const maxTimeStr = `${maxMin.toString().padStart(2, '0')}:${maxSec.toString().padStart(2, '0')}`;
-                alert(`结束时间不能超过文件总时长 ${maxTimeStr}`);
+
+            if (!validateTimeFormat(endTime)) {
+                alert('请输入正确的结束时间格式（MM:SS）');
                 endTimeInput.focus();
                 return;
             }
+
+            // 验证时间逻辑
+            const [startMin, startSec] = startTime.split(':').map(Number);
+            const [endMin, endSec] = endTime.split(':').map(Number);
+            const startTotalSec = startMin * 60 + startSec;
+            const endTotalSec = endMin * 60 + endSec;
+
+            if (endTotalSec <= startTotalSec) {
+                alert('结束时间必须大于开始时间');
+                endTimeInput.focus();
+                return;
+            }
+
+            // 检查是否超过文件时长
+            if (window.currentMidiDuration) {
+                const maxDuration = Math.floor(window.currentMidiDuration);
+                
+                if (startTotalSec >= maxDuration) {
+                    const maxMin = Math.floor(maxDuration / 60);
+                    const maxSec = maxDuration % 60;
+                    const maxTimeStr = `${maxMin.toString().padStart(2, '0')}:${maxSec.toString().padStart(2, '0')}`;
+                    alert(`开始时间不能超过文件总时长 ${maxTimeStr}`);
+                    startTimeInput.focus();
+                    return;
+                }
+                
+                if (endTotalSec > maxDuration) {
+                    const maxMin = Math.floor(maxDuration / 60);
+                    const maxSec = maxDuration % 60;
+                    const maxTimeStr = `${maxMin.toString().padStart(2, '0')}:${maxSec.toString().padStart(2, '0')}`;
+                    alert(`结束时间不能超过文件总时长 ${maxTimeStr}`);
+                    endTimeInput.focus();
+                    return;
+                }
+            }
+
+            // 隐藏模态框并开始处理
+            hideTimeRangeModal();
+            processFileWithTimeInterval(pendingFile, startTime, endTime);
+        }
+    });
+
+    // 处理完整文件
+    function processFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // 获取target_len参数
+        const targetLenInput = document.getElementById('target-len');
+        const targetLen = targetLenInput ? targetLenInput.value : '800';
+        formData.append('target_len', targetLen);
+
+        uploadBtn.disabled = true;
+        uploadProgress.style.width = '0%';
+        uploadStatus.textContent = `正在处理完整文件... (目标生成序列长度: ${targetLen})`;
+        uploadStatus.className = 'status';
+
+        // 显示加载动画和按钮效果
+        let loadingOverlay = null;
+        if (window.visualEnhancements) {
+            loadingOverlay = window.visualEnhancements.showLoadingAnimation();
+            window.visualEnhancements.triggerUploadButtonEffects();
         }
 
-        // 隐藏模态框并开始处理
-        hideTimeRangeModal();
-        processFileWithTimeInterval(pendingFile, startTime, endTime);
-    });
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                uploadProgress.style.width = '100%';
+                return response.json();
+            })
+            .then(data => {
+                // 隐藏加载动画
+                if (loadingOverlay && window.visualEnhancements) {
+                    window.visualEnhancements.hideLoadingAnimation(loadingOverlay);
+                }
+                
+                if (data.success) {
+                    localStorage.setItem('midi_session_id', data.session_id);
+
+                    uploadStatus.textContent = data.message;
+                    uploadStatus.className = 'status status-success';
+
+                    document.getElementById('result-container').style.display = 'block';
+
+                    // 更新转换后的文件名显示
+                    document.getElementById('converted-midi-filename').textContent = data.converted_midi_name;
+                    document.getElementById('converted-pdf-filename').textContent = data.converted_pdf_name;
+
+                    // 启用所有功能按钮
+                    if (playConvertedMidiBtn) playConvertedMidiBtn.disabled = false;
+                    if (playOriginalMidiBtn) playOriginalMidiBtn.disabled = false;
+                    
+                    // 启用下载和查看按钮
+                    if (downloadMidiBtn) downloadMidiBtn.disabled = false;
+                    if (viewPdfBtn) viewPdfBtn.disabled = false;
+                    
+                    // 设置按钮点击事件
+                    if (downloadMidiBtn) downloadMidiBtn.onclick = () => downloadFile('midi', data.session_id);
+                    if (viewPdfBtn) viewPdfBtn.onclick = () => viewPdf(data.session_id);
+
+                    // 显示和启用原始PDF按钮
+                    if (viewOriginalPdfBtn) {
+                        viewOriginalPdfBtn.style.display = 'inline-block';
+                        viewOriginalPdfBtn.disabled = false;
+                        viewOriginalPdfBtn.onclick = () => viewOriginalPdf(data.session_id);
+                    }
+
+                    // 自动导出并显示原始MIDI文件的PDF
+                    exportOriginalPDF(data.session_id);
+                    
+                    // 获取处理后的MIDI文件并设置到播放器
+                    fetch(`/download/original-midi/${data.session_id}`)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            processedMidiBlob = blob;
+                            midiStatus.textContent = '文件已处理完成，可以播放';
+                            midiStatus.className = 'status status-success';
+                            console.log('处理后的MIDI文件已准备播放');
+                        })
+                        .catch(error => {
+                            console.error('获取处理后的MIDI文件失败:', error);
+                        });
+                } else {
+                    uploadStatus.textContent = data.error || '上传失败';
+                    uploadStatus.className = 'status status-error';
+                    uploadBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                // 隐藏加载动画
+                if (loadingOverlay && window.visualEnhancements) {
+                    window.visualEnhancements.hideLoadingAnimation(loadingOverlay);
+                }
+                
+                console.error('Error:', error);
+                uploadStatus.textContent = '上传失败: ' + error.message;
+                uploadStatus.className = 'status status-error';
+                uploadBtn.disabled = false;
+            });
+    }
 
     // 处理带时间区间的文件上传
     function processFileWithTimeInterval(file, startTime, endTime) {
@@ -1143,10 +1311,15 @@ document.addEventListener('DOMContentLoaded', function () {
         formData.append('file', file);
         formData.append('start_time', startTime);
         formData.append('end_time', endTime);
+        
+        // 获取target_len参数
+        const targetLenInput = document.getElementById('target-len');
+        const targetLen = targetLenInput ? targetLenInput.value : '800';
+        formData.append('target_len', targetLen);
 
         uploadBtn.disabled = true;
         uploadProgress.style.width = '0%';
-        uploadStatus.textContent = `正在处理时间区间 ${startTime}-${endTime}...`;
+        uploadStatus.textContent = `正在处理时间区间 ${startTime}-${endTime}... (目标生成序列长度: ${targetLen})`;
         uploadStatus.className = 'status';
 
         // 在这里显示加载动画和按钮效果
@@ -1156,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', function () {
             window.visualEnhancements.triggerUploadButtonEffects();
         }
 
-        fetch('/upload-with-time-interval', {
+        fetch('/upload', {
             method: 'POST',
             body: formData
         })

@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from app.config.config import Config
 from app.models.session import SessionManager
 from app.utils import transform
+from app.utils.infer import infer
 from app.utils.utils import slice_midi
 
 main = Blueprint('main', __name__)
@@ -44,6 +45,23 @@ def upload_file():
     if file.filename == '':
         return jsonify({'error': '没有选择文件'}), 400
     
+    # 获取时间区间参数（可选）
+    start_time = request.form.get('start_time')
+    end_time = request.form.get('end_time')
+    has_time_interval = start_time and end_time
+    
+    # 获取target_len参数（可选，默认800）
+    target_len = request.form.get('target_len', '800')
+    try:
+        target_len = int(target_len)
+        # 限制target_len范围
+        if target_len < 100:
+            target_len = 100
+        elif target_len > 4000:
+            target_len = 4000
+    except (ValueError, TypeError):
+        target_len = 800
+    
     # 检查文件名是否包含中文
     if contains_chinese(file.filename):
         return jsonify({'error': '文件名不能包含中文'}), 400
@@ -56,15 +74,54 @@ def upload_file():
         output_midi_path = os.path.join(Config.OUTPUT_FOLDER, f"{session_id}_output.mid")
         output_pdf_path = os.path.join(Config.OUTPUT_FOLDER, f"{session_id}_output.pdf")
         
-        file.save(input_path)
-        
-        # 处理MIDI文件
-        if not transform.split_midi(input_path, output_midi_path):
-            return jsonify({'error': 'MIDI处理失败'}), 500
+        try:
+            file.save(input_path)
             
-        # 直接生成PDF
-        if not transform.export_pdf(output_midi_path, output_pdf_path):
-            return jsonify({'error': 'PDF生成失败'}), 500
+            # 如果指定了时间区间，先截取文件
+            process_input_path = input_path
+            if has_time_interval:
+                sliced_path = os.path.join(Config.UPLOAD_FOLDER, f"{session_id}_sliced.mid")
+                slice_midi(input_path, sliced_path, start_time, end_time)
+                process_input_path = sliced_path
+            
+            # 处理MIDI文件
+            print(f"开始处理MIDI文件: {process_input_path}，目标生成序列长度: {target_len}")
+            if not infer(process_input_path, output_midi_path, target_len=target_len):
+                # 清理已上传的文件
+                if os.path.exists(input_path):
+                    os.remove(input_path)
+                if has_time_interval and os.path.exists(process_input_path):
+                    os.remove(process_input_path)
+                return jsonify({'error': 'MIDI处理失败，可能是文件格式不正确或模型加载失败'}), 500
+                
+            # 验证输出文件是否创建成功
+            if not os.path.exists(output_midi_path):
+                if os.path.exists(input_path):
+                    os.remove(input_path)
+                if has_time_interval and os.path.exists(process_input_path):
+                    os.remove(process_input_path)
+                return jsonify({'error': 'MIDI处理失败，输出文件未生成'}), 500
+                
+            # 直接生成PDF
+            print(f"开始生成PDF: {output_pdf_path}")
+            if not transform.export_pdf(output_midi_path, output_pdf_path):
+                return jsonify({'error': 'PDF生成失败，请检查MuseScore是否正确安装'}), 500
+                
+        except Exception as e:
+            print(f"文件处理过程中发生错误: {str(e)}")
+            # 清理可能的临时文件
+            for temp_file in [input_path, output_midi_path, output_pdf_path]:
+                if os.path.exists(temp_file):
+                    try:
+                        os.remove(temp_file)
+                    except:
+                        pass
+            if has_time_interval and os.path.exists(process_input_path):
+                try:
+                    os.remove(process_input_path)
+                except:
+                    pass
+            return jsonify({'error': f'文件处理失败: {str(e)}'}), 500
         
         # 保存会话数据
         session_data = {
@@ -73,12 +130,25 @@ def upload_file():
             'output_midi_path': output_midi_path,
             'output_pdf_path': output_pdf_path
         }
+        
+        # 如果有时间区间，保存相关信息
+        if has_time_interval:
+            session_data['sliced_path'] = process_input_path
+            session_data['start_time'] = start_time
+            session_data['end_time'] = end_time
+            message = f'左手伴奏生成成功（时间区间：{start_time}-{end_time}，目标生成序列长度：{target_len}）'
+        else:
+            message = f'左手伴奏生成成功（目标生成序列长度：{target_len}）'
+        
+        # 保存target_len到会话数据
+        session_data['target_len'] = target_len
+            
         session_manager.create_session(session_id, session_data)
         
         return jsonify({
             'success': True,
             'session_id': session_id,
-            'message': '左手伴奏生成成功',
+            'message': message,
             'converted_midi_name': f"converted_{filename}",
             'converted_pdf_name': filename.replace('.mid', '.pdf')
         })
