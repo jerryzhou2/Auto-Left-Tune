@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
             historyManager.handleShortcut(event);
         }
     });
+
+    initScrollHandlers();
 });
 
 let midiData = null;
@@ -120,6 +122,7 @@ addBtn.addEventListener('click', (e) => {
     valueDisplay_add.textContent = slider_add.value;
 });
 
+let oldObj = null;
 function updatePreview() {
     const trackIndex = parseInt(trackInput_add.value, 10);
     const newTime = parseFloat(timeInput_add.value);
@@ -132,27 +135,29 @@ function updatePreview() {
         console.warn("Track not found");
         return;
     }
-    const allNotes_copy = allNotes.slice();
-    const track_notes_copy = track.notes.slice();
+
+    // 第二次开始删除旧的音符块
+    if (oldObj) {
+        ctx.clearRect(oldObj.x, oldObj.y, oldObj.width, oldObj.height);
+    }
 
     let isValid = true;
+    let newNote = null;
+    let noteObj = null;
     if (!isNaN(newTime) && newTime !== '' && !isNaN(newDuration) && newDuration > 0 && newName !== '' && trackIndex !== '') {
-        const track = currentMidi.tracks[trackIndex];
-        const newNote = {
+        // const track = currentMidi.tracks[trackIndex];
+        newNote = {
             time: newTime,
             duration: newDuration,
             name: newName,
             midi: newMidi
         };
 
-        track_notes_copy.push(newNote); // 添加到轨道的notes数组中
-        track_notes_copy.sort((a, b) => a.time - b.time); // 确保按时间排序
-
         const x = newNote.time * timeScale;
         const y = canvas.height - ((newNote.midi - pitchBase + 1) * noteHeight);
         const width = newNote.duration * timeScale;
         const height = noteHeight - 1;
-        const noteObj = {
+        noteObj = {
             note: newNote,
             x,
             y,
@@ -160,8 +165,8 @@ function updatePreview() {
             height,
             trackIndex
         };
-
-        allNotes_copy.push(noteObj); // 添加到全局音符数组
+        // 一旦调用就进行更新
+        oldObj = { ...noteObj };
     }
     else {
         alert("请确保输入的时间、持续时间和音符名称有效！");
@@ -172,16 +177,8 @@ function updatePreview() {
         return;
     }
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
-    ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
-
-    // 这里使用的是预览，不用redraw函数（只使用副本值进行绘制)
-    if (!trackVisibility[trackIndex]) return;
-    track_notes_copy.forEach(note => {
-        const thisNote = allNotes_copy.find(n => n.note === note);
-        ctx.fillStyle = getColor(trackIndex);
-        ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-    });
+    ctx.fillStyle = getColor(noteObj.trackIndex);
+    ctx.fillRect(noteObj.x, noteObj.y, noteObj.width, noteObj.height);
 }
 
 function isValidNoteName(name) {
@@ -539,6 +536,7 @@ canvas.addEventListener('mousedown', (e) => {
     }
 });
 
+let oldNote = null;
 canvas.addEventListener('mousemove', (e) => {
     if (isDragging) {
         const rect = canvas.getBoundingClientRect();
@@ -547,7 +545,7 @@ canvas.addEventListener('mousemove', (e) => {
         const dx = x - startX;
         const dy = y - startY;
 
-        const oldNote = { ...draggedNote };
+        oldNote = { ...draggedNote };
 
         draggedNote.x += dx;
         draggedNote.y += dy;
@@ -563,6 +561,8 @@ canvas.addEventListener('mousemove', (e) => {
         ctx.drawImage(offscreenCanvas, 0, 0);
         ctx.fillStyle = getColor(draggedNote.trackIndex);
         ctx.fillRect(draggedNote.x, draggedNote.y, draggedNote.width, draggedNote.height);
+
+        // smoothScrollToNote(draggedNote);
     }
 });
 
@@ -571,6 +571,8 @@ canvas.addEventListener('mouseup', (e) => {
     if (e.button !== 0) return;
     if (isDragging) {
         isDragging = false;
+        oldNote = { ...draggedNote };
+
         // 新的y需要更新到画布上
         const nearestY = Math.round(draggedNote.y / noteHeight) * noteHeight;
         draggedNote.y = nearestY;
@@ -608,28 +610,25 @@ canvas.addEventListener('mouseup', (e) => {
         // 性能还能提高
         // 重新绘制自动挪移的音符
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
-        ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
+        // ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+        // ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
 
-        allNotes.forEach(thisNote => {
-            if (trackVisibility[thisNote.trackIndex]) {
-                ctx.fillStyle = getColor(thisNote.trackIndex);
-                ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-                console.log("Draw", thisNote.note);
-                console.log("Draw:", thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-            }
-        });
-
-
-        // currentMidi.tracks.forEach((track, trackIndex) => {
-        //     if (!trackVisibility[trackIndex]) return;
-        //     track.notes.forEach(note => {
-        //         const thisNote = allNotes.find(n => n.note === note);
-        //         ctx.fillStyle = getColor(trackIndex);
+        // allNotes.forEach(thisNote => {
+        //     if (trackVisibility[thisNote.trackIndex]) {
+        //         ctx.fillStyle = getColor(thisNote.trackIndex);
         //         ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-        //         console.log("Draw", thisNote.note.name);
-        //     });
+        //     }
         // });
+
+        if (!oldNote) {
+            console.warn("old note not defined");
+            return;
+        }
+        ctx.clearRect(oldNote.x, oldNote.y, oldNote.width, oldNote.height);
+        ctx.fillStyle = getColor(draggedNote.trackIndex);
+        ctx.fillRect(draggedNote.x, draggedNote.y, draggedNote.width, draggedNote.height);
+        // 还可以优化
+        ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
 
         if (dragCount === 1) {
             historyManager.endBatch(); // 结束批量操作
@@ -668,9 +667,9 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
     historyManager = new MidiHistoryManager(currentMidi, allNotes, trackVisibility);
     initHistoryUI();
 
-    // 渲染五线谱
-    console.log("Begin to render midi");
-    sheetMusicRenderer.renderMidi(midiData);
+    // // 渲染五线谱
+    // console.log("Begin to render midi");
+    // sheetMusicRenderer.renderMidi(midiData);
 });
 
 // 新增：初始化历史记录UI的函数
@@ -887,6 +886,124 @@ document.getElementById("exportBtn").addEventListener("click", () => {
     historyManager.setSavePoint();
 });
 
+// 滚动相关变量
+let scrollX = 0;
+let scrollY = 0;
+let viewportWidth = canvas.clientWidth;
+let viewportHeight = canvas.clientHeight;
+
+// 初始化滚动事件监听
+function initScrollHandlers() {
+    // 假设使用了滚动容器
+    const scrollContainer = document.getElementById('canvasWrapper');
+    if (!scrollContainer) {
+        console.warn("Cannot find scroll container");
+        return;
+    }
+
+    // 监听滚动事件
+    scrollContainer.addEventListener('scroll', handleScroll);
+}
+
+// 节流控制变量
+let isRendering = false;
+
+// 处理滚动事件（节流版）
+function handleScroll(e) {
+    scrollX = e.target.scrollLeft;
+    scrollY = e.target.scrollTop;
+
+    // 如果当前已有一个绘制请求，则跳过
+    if (!isRendering) {
+        isRendering = true;
+        requestAnimationFrame(() => {
+            renderVisibleNotes();
+            isRendering = false;
+        });
+    }
+}
+
+// 获取可见区域内的音符
+function getVisibleNotes() {
+    const startX = scrollX;
+    const endX = scrollX + viewportWidth;
+    const startY = scrollY;
+    const endY = scrollY + viewportHeight;
+
+    return allNotes.filter(note => {
+        // 检查音符是否在可见区域内
+        return (
+            note.x + note.width >= startX &&
+            note.x <= endX &&
+            note.y + note.height >= startY &&
+            note.y <= endY
+        );
+    });
+}
+
+// 只渲染可见区域内的音符
+function renderVisibleNotes() {
+    // 清除可见区域
+    ctx.clearRect(scrollX, scrollY, viewportWidth, viewportHeight);
+
+    // 绘制可见区域内的网格
+    ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
+
+    // 获取可见音符
+    const visibleNotes = getVisibleNotes();
+
+    // 绘制可见音符
+    visibleNotes.forEach(note => {
+        ctx.fillStyle = getColor(note.trackIndex);
+        ctx.fillRect(note.x, note.y, note.width, note.height);
+    });
+
+    // 绘制进度线（如果需要）
+    if (isPlaying) {
+        drawPlayheadLine(Tone.Transport.seconds, canvas.height);
+    }
+}
+
+// 更新音符位置时，确保滚动到可见区域
+function scrollToNote(note) {
+    const scrollContainer = document.getElementById('canvasWrapper');
+    if (!scrollContainer) {
+        console.warn("Cannot find wrapper");
+        return;
+    }
+
+    // 计算音符在视口中的位置（中心）
+    const noteCenterX = note.x + note.width / 2;
+    const noteCenterY = note.y + note.height / 2;
+
+    // 滚动到音符位置，也即让音符中心处于视口中心
+    scrollContainer.scrollLeft = noteCenterX - viewportWidth / 2;
+    scrollContainer.scrollTop = noteCenterY - viewportHeight / 2;
+}
+
+function smoothScrollToNote(note, duration = 300) {
+    const scrollContainer = document.getElementById('canvasWrapper');
+    if (!scrollContainer) return;
+
+    const startX = scrollContainer.scrollLeft;
+    const startY = scrollContainer.scrollTop;
+    const targetX = note.x + note.width / 2 - viewportWidth / 2;
+    const targetY = note.y + note.height / 2 - viewportHeight / 2;
+    const distanceX = targetX - startX;
+    const distanceY = targetY - startY;
+    let startTime = null;
+
+    function animateScroll(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const progress = (timestamp - startTime) / duration;
+        scrollContainer.scrollLeft = startX + distanceX * progress;
+        scrollContainer.scrollTop = startY + distanceY * progress;
+        if (progress < 1) requestAnimationFrame(animateScroll);
+    }
+
+    requestAnimationFrame(animateScroll);
+}
+
 function drawPianoRoll(midi) {
     // 计算总持续时间
     let maxTime = 0;
@@ -911,7 +1028,7 @@ function drawPianoRoll(midi) {
     // ✅ 绘制网格在底层
     drawGrid();     // 画在离屏画布上
 
-    ctx.drawImage(offscreenCanvas, 0, 0); // 将离屏画布绘制到主画布上
+    // ctx.drawImage(offscreenCanvas, 0, 0); // 将离屏画布绘制到主画布上
 
     midi.tracks.forEach((track, trackIndex) => {
         if (!trackVisibility[trackIndex]) return;
@@ -920,8 +1037,9 @@ function drawPianoRoll(midi) {
             const y = canvas.height - ((note.midi - pitchBase + 1) * noteHeight);
             const width = note.duration * timeScale;
             const height = noteHeight - 1;
-            ctx.fillStyle = getColor(trackIndex);       // track通过颜色区分
-            ctx.fillRect(x, y, width, height);
+            // 不进行全部的绘制
+            // ctx.fillStyle = getColor(trackIndex);       // track通过颜色区分
+            // ctx.fillRect(x, y, width, height);
             const noteObj = {
                 note,
                 x,
@@ -933,6 +1051,8 @@ function drawPianoRoll(midi) {
             allNotes.push(noteObj);
         });
     });
+
+    renderVisibleNotes();
 }
 
 function getColor(index) {

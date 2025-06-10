@@ -25,10 +25,11 @@ class VisualEnhancements {
         if (uploadBtn) {
             uploadBtn.classList.add('btn-glow', 'btn-3d');
             
-            uploadBtn.addEventListener('click', () => {
-                uploadBtn.classList.add('btn-loading');
-                this.createSuccessAnimation(uploadBtn);
-            });
+            // 移除直接的点击监听器，改为在处理开始时手动调用
+            // uploadBtn.addEventListener('click', () => {
+            //     uploadBtn.classList.add('btn-loading');
+            //     this.createSuccessAnimation(uploadBtn);
+            // });
         }
 
         // 为播放按钮添加脉冲效果
@@ -405,23 +406,26 @@ class VisualEnhancements {
             return overlay;
         };
 
-        // 为文件上传添加加载动画
+        // 为文件上传添加加载动画 - 移除自动监听，改为手动调用
         const uploadBtn = document.getElementById('upload-btn');
         if (uploadBtn) {
-            uploadBtn.addEventListener('click', () => {
-                const overlay = createLoadingOverlay();
-                document.body.appendChild(overlay);
+            // 将创建加载覆盖层的功能暴露给全局，以便主逻辑调用
+            window.createLoadingOverlay = createLoadingOverlay;
+            
+            // uploadBtn.addEventListener('click', () => {
+            //     const overlay = createLoadingOverlay();
+            //     document.body.appendChild(overlay);
 
-                // 模拟处理完成后移除
-                setTimeout(() => {
-                    overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
-                    setTimeout(() => {
-                        if (overlay.parentNode) {
-                            overlay.parentNode.removeChild(overlay);
-                        }
-                    }, 300);
-                }, 3000);
-            });
+            //     // 模拟处理完成后移除
+            //     setTimeout(() => {
+            //         overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+            //         setTimeout(() => {
+            //             if (overlay.parentNode) {
+            //                 overlay.parentNode.removeChild(overlay);
+            //             }
+            //         }, 300);
+            //     }, 3000);
+            // });
         }
 
         this.addStyleAnimation('fadeIn', `
@@ -455,6 +459,43 @@ class VisualEnhancements {
             style.id = `animation-${name}`;
             style.textContent = keyframes;
             document.head.appendChild(style);
+        }
+    }
+
+    /**
+     * 手动显示加载动画
+     */
+    showLoadingAnimation() {
+        if (window.createLoadingOverlay) {
+            const overlay = window.createLoadingOverlay();
+            document.body.appendChild(overlay);
+            return overlay;
+        }
+        return null;
+    }
+
+    /**
+     * 隐藏加载动画
+     */
+    hideLoadingAnimation(overlay) {
+        if (overlay && overlay.parentNode) {
+            overlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+            }, 300);
+        }
+    }
+
+    /**
+     * 手动触发上传按钮效果
+     */
+    triggerUploadButtonEffects() {
+        const uploadBtn = document.getElementById('upload-btn');
+        if (uploadBtn) {
+            uploadBtn.classList.add('btn-loading');
+            this.createSuccessAnimation(uploadBtn);
         }
     }
 }
