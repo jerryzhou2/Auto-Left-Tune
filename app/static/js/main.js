@@ -453,8 +453,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     stopMidiBtn.disabled = true;
                 }
 
-                // 自动处理MIDI文件进行左右手拆分
-                autoProcessMidiFile(file);
+                // 注释掉自动处理，改为在用户选择时间区间后处理
+                // autoProcessMidiFile(file);
 
                 midiStatus.textContent = '';
                 midiStatus.className = 'status';
@@ -499,8 +499,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 midiStatus.textContent = '';
                 midiStatus.className = 'status';
 
-                // 自动处理MIDI文件进行左右手拆分
-                autoProcessMidiFile(file);
+                // 注释掉自动处理，改为在用户选择时间区间后处理
+                // autoProcessMidiFile(file);
 
                 // 隐藏PDF按钮，因为还没有上传和处理
                 if (viewOriginalPdfBtn) viewOriginalPdfBtn.style.display = 'none';
@@ -763,7 +763,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 上传按钮点击处理
+    // 时间区间模态框相关元素
+    const timeRangeModal = document.getElementById('time-range-modal');
+    const closeTimeModal = document.getElementById('close-time-modal');
+    const cancelTimeBtn = document.getElementById('cancel-time-btn');
+    const confirmTimeBtn = document.getElementById('confirm-time-btn');
+    const startTimeInput = document.getElementById('start-time');
+    const endTimeInput = document.getElementById('end-time');
+
+    // 存储待处理的文件
+    let pendingFile = null;
+
+    // 上传按钮点击处理 - 显示时间区间选择模态框
     uploadBtn.addEventListener('click', () => {
         let file;
         if (droppedFile) {
@@ -774,15 +785,378 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // 存储文件并显示模态框
+        pendingFile = file;
+        showTimeRangeModal();
+    });
+
+    // 显示时间区间选择模态框
+    function showTimeRangeModal() {
+        timeRangeModal.style.display = 'block';
+        
+        // 获取并显示MIDI文件时长
+        if (pendingFile) {
+            getMidiFileDuration(pendingFile).then(duration => {
+                updateModalWithDuration(duration);
+            }).catch(error => {
+                console.error('获取MIDI时长失败:', error);
+                updateModalWithDuration(null);
+            });
+        }
+        
+        startTimeInput.focus();
+    }
+
+    // 获取MIDI文件时长
+    function getMidiFileDuration(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // 使用Midi.js库解析MIDI文件
+                    if (typeof Midi !== 'undefined') {
+                        const midi = new Midi(e.target.result);
+                        const duration = midi.duration; // 以秒为单位
+                        resolve(duration);
+                    } else {
+                        // 如果Midi.js不可用，尝试基本的MIDI文件读取
+                        const arrayBuffer = e.target.result;
+                        const dataView = new DataView(arrayBuffer);
+                        
+                        // 基本的MIDI文件解析来估算时长
+                        // 这是一个简化的方法，仅作为后备方案
+                        const estimatedDuration = estimateMidiDuration(dataView);
+                        resolve(estimatedDuration);
+                    }
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // 简化的MIDI时长估算（后备方案）
+    function estimateMidiDuration(dataView) {
+        // 这是一个非常简化的估算方法
+        // 实际情况下，应该正确解析MIDI文件格式
+        const fileSize = dataView.byteLength;
+        // 基于文件大小的粗略估算，仅作为后备
+        return Math.max(60, Math.min(600, fileSize / 1000)); // 1分钟到10分钟之间
+    }
+
+    // 更新模态框显示时长信息
+    function updateModalWithDuration(duration) {
+        const durationDisplay = document.getElementById('midi-duration-display');
+        if (durationDisplay) {
+            if (duration !== null && duration > 0) {
+                const minutes = Math.floor(duration / 60);
+                const seconds = Math.floor(duration % 60);
+                const durationText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                durationDisplay.textContent = `文件总时长: ${durationText}`;
+                durationDisplay.style.color = '#2d5a27';
+                
+                // 存储时长用于验证
+                window.currentMidiDuration = duration;
+                
+                // 更新预设按钮，确保不超过文件时长
+                updatePresetButtons(duration);
+            } else {
+                durationDisplay.textContent = '⚠️ 无法获取文件时长，请手动输入';
+                durationDisplay.style.color = '#d32f2f';
+                window.currentMidiDuration = null;
+            }
+        }
+    }
+
+    // 更新预设按钮，根据文件时长动态生成选项
+    function updatePresetButtons(maxDuration) {
+        const container = document.getElementById('preset-buttons-container');
+        if (!container) return;
+        
+        // 清空现有按钮
+        container.innerHTML = '';
+        
+        // 根据文件时长生成合适的预设选项
+        const presets = generatePresetOptions(maxDuration);
+        
+        presets.forEach(preset => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'preset-btn';
+            btn.setAttribute('data-start', preset.start);
+            btn.setAttribute('data-end', preset.end);
+            btn.textContent = preset.label;
+            container.appendChild(btn);
+        });
+    }
+
+    // 根据文件时长生成预设选项
+    function generatePresetOptions(duration) {
+        const presets = [];
+        const durationMin = Math.floor(duration / 60);
+        
+        // 前30秒（如果文件超过30秒）
+        if (duration > 30) {
+            presets.push({ start: '00:00', end: '00:30', label: '前30秒' });
+        }
+        
+        // 前1分钟（如果文件超过1分钟）
+        if (duration > 60) {
+            presets.push({ start: '00:00', end: '01:00', label: '前1分钟' });
+        }
+        
+        // 中间1分钟（如果文件超过2分钟）
+        if (duration > 120) {
+            const startSec = Math.floor(duration / 4); // 从1/4处开始
+            const endSec = startSec + 60;
+            const startMin = Math.floor(startSec / 60);
+            const startSecRem = startSec % 60;
+            const endMin = Math.floor(endSec / 60);
+            const endSecRem = endSec % 60;
+            
+            if (endSec <= duration) {
+                const startStr = `${startMin.toString().padStart(2, '0')}:${startSecRem.toString().padStart(2, '0')}`;
+                const endStr = `${endMin.toString().padStart(2, '0')}:${endSecRem.toString().padStart(2, '0')}`;
+                presets.push({ start: startStr, end: endStr, label: '中间1分钟' });
+            }
+        }
+        
+        // 前2分钟（如果文件超过2分钟）
+        if (duration > 120) {
+            presets.push({ start: '00:00', end: '02:00', label: '前2分钟' });
+        }
+        
+        // 前3分钟（如果文件超过3分钟）
+        if (duration > 180) {
+            presets.push({ start: '00:00', end: '03:00', label: '前3分钟' });
+        }
+        
+        // 后半部分（如果文件超过1分钟）
+        if (duration > 60) {
+            const halfPoint = Math.floor(duration / 2);
+            const halfMin = Math.floor(halfPoint / 60);
+            const halfSec = halfPoint % 60;
+            const endMin = Math.floor(duration / 60);
+            const endSecRem = Math.floor(duration % 60);
+            
+            const startStr = `${halfMin.toString().padStart(2, '0')}:${halfSec.toString().padStart(2, '0')}`;
+            const endStr = `${endMin.toString().padStart(2, '0')}:${endSecRem.toString().padStart(2, '0')}`;
+            presets.push({ start: startStr, end: endStr, label: '后半部分' });
+        }
+        
+        // 完整文件
+        const fullMin = Math.floor(duration / 60);
+        const fullSec = Math.floor(duration % 60);
+        const fullEndStr = `${fullMin.toString().padStart(2, '0')}:${fullSec.toString().padStart(2, '0')}`;
+        presets.push({ start: '00:00', end: fullEndStr, label: '完整文件' });
+        
+        return presets;
+    }
+
+    // 隐藏时间区间选择模态框
+    function hideTimeRangeModal() {
+        timeRangeModal.classList.add('closing');
+        setTimeout(() => {
+            timeRangeModal.style.display = 'none';
+            timeRangeModal.classList.remove('closing');
+        }, 300);
+    }
+
+    // 关闭模态框事件处理
+    closeTimeModal.addEventListener('click', hideTimeRangeModal);
+    cancelTimeBtn.addEventListener('click', hideTimeRangeModal);
+
+    // 点击模态框外部关闭
+    timeRangeModal.addEventListener('click', (e) => {
+        if (e.target === timeRangeModal) {
+            hideTimeRangeModal();
+        }
+    });
+
+    // 时间输入格式验证
+    function validateTimeFormat(timeStr) {
+        const timeRegex = /^([0-9]{1,2}):([0-5][0-9])$/;
+        const match = timeStr.match(timeRegex);
+        if (!match) return false;
+        
+        const minutes = parseInt(match[1]);
+        const seconds = parseInt(match[2]);
+        return minutes >= 0 && seconds >= 0;
+    }
+
+    // 时间输入自动格式化和验证
+    function formatTimeInput(input) {
+        input.addEventListener('input', function() {
+            let value = this.value.replace(/[^\d:]/g, '');
+            
+            // 自动添加冒号
+            if (value.length === 2 && !value.includes(':')) {
+                value = value + ':';
+            }
+            
+            // 限制格式为 MM:SS
+            if (value.length > 5) {
+                value = value.substring(0, 5);
+            }
+            
+            this.value = value;
+            
+            // 实时验证
+            validateTimeInput(this);
+        });
+        
+        input.addEventListener('blur', function() {
+            validateTimeInput(this);
+        });
+    }
+
+    // 实时验证时间输入
+    function validateTimeInput(input) {
+        const value = input.value.trim();
+        if (!value) return;
+        
+        // 重置样式
+        input.style.borderColor = '';
+        input.style.boxShadow = '';
+        
+        // 验证格式
+        if (!validateTimeFormat(value)) {
+            input.style.borderColor = '#d32f2f';
+            input.style.boxShadow = '0 0 0 2px rgba(211, 47, 47, 0.2)';
+            return;
+        }
+        
+        // 验证是否超过文件时长
+        if (window.currentMidiDuration) {
+            const [min, sec] = value.split(':').map(Number);
+            const totalSeconds = min * 60 + sec;
+            const maxDuration = Math.floor(window.currentMidiDuration);
+            
+            if (totalSeconds > maxDuration) {
+                input.style.borderColor = '#ff9800';
+                input.style.boxShadow = '0 0 0 2px rgba(255, 152, 0, 0.2)';
+                
+                // 显示提示
+                const maxMin = Math.floor(maxDuration / 60);
+                const maxSec = maxDuration % 60;
+                const maxTimeStr = `${maxMin.toString().padStart(2, '0')}:${maxSec.toString().padStart(2, '0')}`;
+                input.title = `不能超过文件总时长 ${maxTimeStr}`;
+            } else {
+                input.style.borderColor = '#4caf50';
+                input.style.boxShadow = '0 0 0 2px rgba(76, 175, 80, 0.2)';
+                input.title = '';
+            }
+        }
+    }
+
+    formatTimeInput(startTimeInput);
+    formatTimeInput(endTimeInput);
+
+    // 键盘快捷键支持
+    timeRangeModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideTimeRangeModal();
+        } else if (e.key === 'Enter') {
+            confirmTimeBtn.click();
+        }
+    });
+
+    // 预设时间按钮事件处理
+    timeRangeModal.addEventListener('click', (e) => {
+        if (e.target.classList.contains('preset-btn')) {
+            const startTime = e.target.getAttribute('data-start');
+            const endTime = e.target.getAttribute('data-end');
+            startTimeInput.value = startTime;
+            endTimeInput.value = endTime;
+            
+            // 添加视觉反馈
+            e.target.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                e.target.style.transform = '';
+            }, 150);
+        }
+    });
+
+    // 确认时间区间并处理文件
+    confirmTimeBtn.addEventListener('click', () => {
+        const startTime = startTimeInput.value.trim();
+        const endTime = endTimeInput.value.trim();
+
+        // 验证时间格式
+        if (!validateTimeFormat(startTime)) {
+            alert('请输入正确的开始时间格式（MM:SS）');
+            startTimeInput.focus();
+            return;
+        }
+
+        if (!validateTimeFormat(endTime)) {
+            alert('请输入正确的结束时间格式（MM:SS）');
+            endTimeInput.focus();
+            return;
+        }
+
+        // 验证时间逻辑
+        const [startMin, startSec] = startTime.split(':').map(Number);
+        const [endMin, endSec] = endTime.split(':').map(Number);
+        const startTotalSec = startMin * 60 + startSec;
+        const endTotalSec = endMin * 60 + endSec;
+
+        if (endTotalSec <= startTotalSec) {
+            alert('结束时间必须大于开始时间');
+            endTimeInput.focus();
+            return;
+        }
+
+        // 检查是否超过文件时长
+        if (window.currentMidiDuration) {
+            const maxDuration = Math.floor(window.currentMidiDuration);
+            
+            if (startTotalSec >= maxDuration) {
+                const maxMin = Math.floor(maxDuration / 60);
+                const maxSec = maxDuration % 60;
+                const maxTimeStr = `${maxMin.toString().padStart(2, '0')}:${maxSec.toString().padStart(2, '0')}`;
+                alert(`开始时间不能超过文件总时长 ${maxTimeStr}`);
+                startTimeInput.focus();
+                return;
+            }
+            
+            if (endTotalSec > maxDuration) {
+                const maxMin = Math.floor(maxDuration / 60);
+                const maxSec = maxDuration % 60;
+                const maxTimeStr = `${maxMin.toString().padStart(2, '0')}:${maxSec.toString().padStart(2, '0')}`;
+                alert(`结束时间不能超过文件总时长 ${maxTimeStr}`);
+                endTimeInput.focus();
+                return;
+            }
+        }
+
+        // 隐藏模态框并开始处理
+        hideTimeRangeModal();
+        processFileWithTimeInterval(pendingFile, startTime, endTime);
+    });
+
+    // 处理带时间区间的文件上传
+    function processFileWithTimeInterval(file, startTime, endTime) {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('start_time', startTime);
+        formData.append('end_time', endTime);
 
         uploadBtn.disabled = true;
         uploadProgress.style.width = '0%';
-        uploadStatus.textContent = '上传并处理中...';
+        uploadStatus.textContent = `正在处理时间区间 ${startTime}-${endTime}...`;
         uploadStatus.className = 'status';
 
-        fetch('/upload', {
+        // 在这里显示加载动画和按钮效果
+        let loadingOverlay = null;
+        if (window.visualEnhancements) {
+            loadingOverlay = window.visualEnhancements.showLoadingAnimation();
+            window.visualEnhancements.triggerUploadButtonEffects();
+        }
+
+        fetch('/upload-with-time-interval', {
             method: 'POST',
             body: formData
         })
@@ -791,6 +1165,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
+                // 隐藏加载动画
+                if (loadingOverlay && window.visualEnhancements) {
+                    window.visualEnhancements.hideLoadingAnimation(loadingOverlay);
+                }
+                
                 if (data.success) {
                     localStorage.setItem('midi_session_id', data.session_id);
 
@@ -824,6 +1203,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     // 自动导出并显示原始MIDI文件的PDF
                     exportOriginalPDF(data.session_id);
+                    
+                    // 获取处理后的MIDI文件并设置到播放器
+                    fetch(`/download/original-midi/${data.session_id}`)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            // 将截取并处理后的MIDI文件设置为可播放
+                            processedMidiBlob = blob;
+                            midiStatus.textContent = '文件已处理完成，可以播放';
+                            midiStatus.className = 'status status-success';
+                            console.log('截取并处理后的MIDI文件已准备播放');
+                        })
+                        .catch(error => {
+                            console.error('获取处理后的MIDI文件失败:', error);
+                        });
                 } else {
                     uploadStatus.textContent = data.error || '上传失败';
                     uploadStatus.className = 'status status-error';
@@ -831,12 +1224,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
+                // 隐藏加载动画
+                if (loadingOverlay && window.visualEnhancements) {
+                    window.visualEnhancements.hideLoadingAnimation(loadingOverlay);
+                }
+                
                 console.error('Error:', error);
                 uploadStatus.textContent = '上传失败: ' + error.message;
                 uploadStatus.className = 'status status-error';
                 uploadBtn.disabled = false;
             });
-    });
+    }
 
     // 尝试预初始化音频系统
     document.body.addEventListener('click', function initAudioOnFirstClick() {

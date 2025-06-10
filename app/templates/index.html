@@ -18,9 +18,28 @@
     <h1 class="app-title">AutoLeftPiano</h1>
     
     <!-- 添加80%宽度的容器 -->
-    <div class="piano-wrapper" style="width: 80%; margin: 0 auto;">
+    <div class="piano-wrapper" style="width: 80%; margin: 0 auto; position: relative;">
         <!-- 钢琴组件将在这里由piano.js动态插入，使用piano-visual.html中的精确参数 -->
         <div id="piano-container"></div>
+        
+        <!-- 独立的左右手按键显示容器 -->
+        <div class="hands-display-wrapper">
+            <!-- 左手按键显示框 -->
+            <div class="hand-display-container left-hand-display" id="leftHandDisplay">
+                <div class="hand-title">🤚 左手</div>
+                <div class="keys-list" id="leftHandKeysList">
+                    <!-- 左手按键将在这里动态显示 -->
+                </div>
+            </div>
+
+            <!-- 右手按键显示框 -->
+            <div class="hand-display-container right-hand-display" id="rightHandDisplay">
+                <div class="hand-title">✋ 右手</div>
+                <div class="keys-list" id="rightHandKeysList">
+                    <!-- 右手按键将在这里动态显示 -->
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="container">
@@ -122,16 +141,16 @@
                         <p>转换后的PDF文件: <span id="converted-pdf-filename"></span></p>
                     </div>
                                             <div class="buttons">
-                            <button class="btn btn-success" id="view-pdf-btn" disabled>📄 打开PDF</button>
+                            <button class="btn btn-success" id="view-pdf-btn" disabled>📄 查看转换后的乐谱</button>
                             <button class="btn btn-primary player-btn" id="play-original-midi-btn" disabled>
-                                🎵 转换前
+                                🎵 播放转换前的乐谱
                             </button>
                             <button class="btn btn-success player-btn" id="play-converted-midi-btn" disabled>
-                                🎶 转换后
+                                🎶 播放转换后的乐谱
                             </button>
                         </div>
                         <div class="buttons original-pdf-buttons">
-                            <button class="btn btn-warning" id="view-original-pdf-btn" disabled>📋 查看原始PDF</button>
+                            <button class="btn btn-warning" id="view-original-pdf-btn" disabled>📋 查看转换前的乐谱</button>
                         </div>
                     <div id="result-status" class="status"></div>
                 </div>
@@ -154,6 +173,54 @@
                     </div>
                     <div id="upload-status" class="status"></div>
                     <div id="pdf-status" class="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 时间区间选择模态框 -->
+    <div id="time-range-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⏰ 选择MIDI文件时间区间</h3>
+                <span class="close-btn" id="close-time-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>请输入要截取的时间区间（格式：MM:SS）</p>
+                
+                <!-- MIDI文件时长显示 -->
+                <div class="midi-duration-info">
+                    <div id="midi-duration-display" class="duration-display">
+                        🎵 正在获取文件时长...
+                    </div>
+                </div>
+                
+                <!-- 快速选择预设 -->
+                <div class="time-presets">
+                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">💡 快速选择：</p>
+                    <div class="preset-buttons" id="preset-buttons-container">
+                        <button type="button" class="preset-btn" data-start="00:00" data-end="00:30">前30秒</button>
+                        <button type="button" class="preset-btn" data-start="00:00" data-end="01:00">前1分钟</button>
+                        <button type="button" class="preset-btn" data-start="00:30" data-end="01:30">0:30-1:30</button>
+                        <button type="button" class="preset-btn" data-start="01:00" data-end="02:00">1:00-2:00</button>
+                        <button type="button" class="preset-btn" data-start="00:00" data-end="02:00">前2分钟</button>
+                        <button type="button" class="preset-btn" data-start="00:00" data-end="03:00">前3分钟</button>
+                    </div>
+                </div>
+                
+                <div class="time-input-group">
+                    <div class="time-input-item">
+                        <label for="start-time">开始时间:</label>
+                        <input type="text" id="start-time" placeholder="00:00" pattern="[0-9]{2}:[0-9]{2}">
+                    </div>
+                    <div class="time-input-item">
+                        <label for="end-time">结束时间:</label>
+                        <input type="text" id="end-time" placeholder="01:30" pattern="[0-9]{2}:[0-9]{2}">
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-secondary" id="cancel-time-btn">取消</button>
+                    <button class="btn btn-primary" id="confirm-time-btn">确认并处理</button>
                 </div>
             </div>
         </div>
