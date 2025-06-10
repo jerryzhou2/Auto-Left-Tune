@@ -22,30 +22,6 @@ def temperature_sample(logits, temperature=1.0):
     token = torch.multinomial(probs, num_samples=1)
     return token.item()
 
-# ========== 逐 token 采样生成 ==========
-# @torch.no_grad()
-# def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperature=1.0):
-#     model.eval()
-#     memory = model.encoder(model.src_pos_encoder(model.src_embedding(src)))
-#     ys = torch.tensor([[bos_id]], dtype=torch.long).to(src.device)
-#     generated = []
-
-#     for _ in range(max_len):
-#         print(_)
-#         tgt_emb = model.tgt_pos_encoder(model.tgt_embedding(ys))
-#         out = tgt_emb
-#         for layer in model.decoder_layers:
-#             out = layer(out, memory, tgt_mask=None, memory_mask=None,
-#                         tgt_key_padding_mask=(ys == pad_id), memory_key_padding_mask=(src == pad_id))
-#         logits = model.output_layer(out[:, -1])  # 最后一个位置的预测
-#         next_token = temperature_sample(logits.squeeze(0), temperature=temperature)
-
-#         ys = torch.cat([ys, torch.tensor([[next_token]], device=src.device)], dim=1)
-#         if next_token == eos_id:
-#             break
-#         generated.append(next_token)
-
-#     return generated
 @torch.no_grad()
 def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperature=1.0,target_len=800):
     model.eval()
@@ -54,7 +30,6 @@ def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperatur
     generated = []
 
     for _ in range(max_len):
-        print(_)
         if target_len is not None and len(generated) >= target_len:
             break
         tgt_emb = model.tgt_pos_encoder(model.tgt_embedding(ys))
