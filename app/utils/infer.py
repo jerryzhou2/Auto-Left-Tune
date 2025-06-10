@@ -23,8 +23,31 @@ def temperature_sample(logits, temperature=1.0):
     return token.item()
 
 # ========== 逐 token 采样生成 ==========
+# @torch.no_grad()
+# def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperature=1.0):
+#     model.eval()
+#     memory = model.encoder(model.src_pos_encoder(model.src_embedding(src)))
+#     ys = torch.tensor([[bos_id]], dtype=torch.long).to(src.device)
+#     generated = []
+
+#     for _ in range(max_len):
+#         print(_)
+#         tgt_emb = model.tgt_pos_encoder(model.tgt_embedding(ys))
+#         out = tgt_emb
+#         for layer in model.decoder_layers:
+#             out = layer(out, memory, tgt_mask=None, memory_mask=None,
+#                         tgt_key_padding_mask=(ys == pad_id), memory_key_padding_mask=(src == pad_id))
+#         logits = model.output_layer(out[:, -1])  # 最后一个位置的预测
+#         next_token = temperature_sample(logits.squeeze(0), temperature=temperature)
+
+#         ys = torch.cat([ys, torch.tensor([[next_token]], device=src.device)], dim=1)
+#         if next_token == eos_id:
+#             break
+#         generated.append(next_token)
+
+#     return generated
 @torch.no_grad()
-def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperature=1.0):
+def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperature=1.0,target_len=800):
     model.eval()
     memory = model.encoder(model.src_pos_encoder(model.src_embedding(src)))
     ys = torch.tensor([[bos_id]], dtype=torch.long).to(src.device)
@@ -32,6 +55,8 @@ def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperatur
 
     for _ in range(max_len):
         print(_)
+        if target_len is not None and len(generated) >= target_len:
+            break
         tgt_emb = model.tgt_pos_encoder(model.tgt_embedding(ys))
         out = tgt_emb
         for layer in model.decoder_layers:
@@ -47,7 +72,7 @@ def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperatur
 
     return generated
 @torch.no_grad()
-def infer(input_path,output_path,model_name='music_trans_5_20.pt',vocab_size=410,bos_id= 0,eos_id = 1,pad_id = 2,max_len = 4000,temperature = 0.9):
+def infer(input_path,output_path,model_name='music_trans_5_20.pt',vocab_size=410,bos_id= 0,eos_id = 1,pad_id = 2,max_len = 4000,temperature = 0.9,target_len=800):
     global my_dict
     global dict_list
     try:
@@ -97,7 +122,7 @@ def infer(input_path,output_path,model_name='music_trans_5_20.pt',vocab_size=410
         # ========== 3. 生成左手 ==========
         try:
             generated_tokens = sample_generate(model, src_tensor, bos_id=bos_id, eos_id=eos_id,
-                                            pad_id=pad_id, max_len=max_len, temperature=temperature)
+                                            pad_id=pad_id, max_len=max_len, temperature=temperature,target_len=target_len)
             print(f"左手生成成功，生成了 {len(generated_tokens)} 个音符事件")
         except Exception as e:
             print(f"左手生成失败: {str(e)}")
