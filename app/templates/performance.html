@@ -265,6 +265,9 @@
 {% endblock %}
 
 {% block scripts %}
+    <!-- 导入配置管理脚本 -->
+    <script src="{{ url_for('static', filename='js/config.js') }}"></script>
+    
     <!-- 导入模块化JS文件 -->
     <script type="module">
         import { Notes } from "{{ url_for('static', filename='js/lib/notes.js') }}";

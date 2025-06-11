@@ -17,6 +17,10 @@ class Config:
     MUSESCORE_PATH_LINUX = os.path.join(APP_DIR, 'utils/MuseScoreLinux/bin/mscore4portable')
 
     MODEL_PATH=os.path.join(APP_DIR, 'utils','model')
+    
+    # MIDI播放器音量配置
+    LEFT_HAND_VOLUME_RATIO = 0.8  # 左手音量相对于右手的比例 (80%)
+    
     # 确保必要的目录存在
     @staticmethod
     def init_app():

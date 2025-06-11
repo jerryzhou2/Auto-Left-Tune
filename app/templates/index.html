@@ -125,6 +125,23 @@
                                     <button class="speed-option" data-speed="3">3x</button>
                                 </div>
                             </div>
+                            
+                            <!-- 左右手音量设置 -->
+                            <div class="hand-volume-control-wrapper">
+                                <button id="hand-volume-btn" class="control-btn hand-volume-btn" title="左右手音量">
+                                    🤲
+                                </button>
+                                <div id="hand-volume-panel" class="hand-volume-panel hidden">
+                                    <div class="hand-volume-item">
+                                        <label>左手音量比例:</label>
+                                        <input type="range" id="left-hand-volume-slider" min="0" max="100" value="80" class="hand-volume-slider">
+                                        <span id="left-hand-volume-value">80%</span>
+                                    </div>
+                                    <div class="hand-volume-item">
+                                        <button id="reset-hand-volume-btn" class="btn btn-small">重置默认</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div id="midi-status" class="status"></div>
@@ -257,6 +274,9 @@
 {% endblock %}
 
 {% block scripts %}
+    <!-- 导入配置管理脚本 -->
+    <script src="{{ url_for('static', filename='js/config.js') }}"></script>
+    
     <!-- 导入模块化JS文件 -->
     <script type="module">
         import { Notes } from "{{ url_for('static', filename='js/lib/notes.js') }}";
