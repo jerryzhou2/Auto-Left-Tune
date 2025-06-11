@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    initScrollHandlers();
+    // initScrollHandlers();
 });
 
 let midiData = null;
@@ -43,7 +43,8 @@ const timeScale = 200;
 const pitchBase = 21; // A0
 const visibleRange = 88;
 
-const allNotes = [];        // 用于存储所有音符对象，在对音符进行操作时使用
+// 自定义哈希表
+const allNotes = new Map();        // 用于存储所有音符对象，在对音符进行操作时使用
 let isDragging = false;
 let draggedNote = null;
 let startX = 0;
@@ -64,6 +65,12 @@ let initDurationValue = -1; // 初始化值为选中音符的持续时间
 let durationInput = -1;
 let initWidth = -1;
 const tolerance = 3;
+
+// 滚动相关变量
+let scrollX = 0;
+let scrollY = 0;
+let viewportWidth = canvas.clientWidth;
+let viewportHeight = canvas.clientHeight;
 
 const menu = document.getElementById('context-menu');
 
@@ -102,6 +109,11 @@ const resetBtn = document.getElementById('reset-add');
 
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
+
+// 捕获未处理的异常
+window.addEventListener('error', (error) => {
+    console.error('Global hidden error:', error.message);
+});
 
 addBtn.addEventListener('click', (e) => {
     if (!currentMidi) return;
@@ -179,6 +191,8 @@ function updatePreview() {
 
     ctx.fillStyle = getColor(noteObj.trackIndex);
     ctx.fillRect(noteObj.x, noteObj.y, noteObj.width, noteObj.height);
+
+    ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
 }
 
 function isValidNoteName(name) {
@@ -210,7 +224,7 @@ nameInput_add.addEventListener('input', () => {
 });
 
 confirmBtn.addEventListener('click', () => {
-    let noteObj;
+    let noteObj = null;
 
     const trackIndex = parseInt(trackInput_add.value, 10);
     const newTime = parseFloat(timeInput_add.value);
@@ -245,7 +259,9 @@ confirmBtn.addEventListener('click', () => {
             trackIndex
         };
 
-        allNotes.push(noteObj); // 添加到全局音符数组
+        // 添加到全局音符数组
+        const key = `${noteObj.trackIndex}-${noteObj.note.time}-${noteObj.note.midi}`;  // 自定义哈希键
+        allNotes.set(key, noteObj);  // 存入哈希表 
     }
     else {
         alert("请确保输入的时间、持续时间和音符名称有效！");
@@ -259,6 +275,7 @@ confirmBtn.addEventListener('click', () => {
     }
 
     // 只绘制该音符即可
+    ctx.fillStyle = getColor(noteObj.trackIndex);
     ctx.fillRect(noteObj.x, noteObj.y, noteObj.width, noteObj.height);
 
     // // ✅ 添加历史记录：添加音符
@@ -287,6 +304,7 @@ function noteNameToMidi(noteName) {
     return (octave + 1) * 12 + base + accidentalOffset;
 }
 
+// 尽量少使用，容易降低性能
 function redrawCanvas(midi) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
     ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
@@ -306,6 +324,40 @@ function redrawCanvas(midi) {
     });
 }
 
+// 封装的异步版本
+function redrawCanvasAsync(midi) {
+    return new Promise((resolve) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
+        ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
+
+        console.log("redrawCanvas triggered");
+
+        midi.tracks.forEach((track, trackIndex) => {
+            if (!trackVisibility[trackIndex]) return;
+            track.notes.forEach(note => {
+                const x = note.time * timeScale;
+                const y = canvas.height - ((note.midi - pitchBase + 1) * noteHeight);
+                const width = note.duration * timeScale;
+                const height = noteHeight - 1;
+                ctx.fillStyle = getColor(trackIndex);
+                ctx.fillRect(x, y, width, height);
+            });
+        });
+
+        // 等下一帧绘制完成后再 resolve，保证视觉一致性
+        requestAnimationFrame(() => resolve());
+    });
+}
+
+// 这样传入是否可以更改？？？ --> 只有对象传引用
+function locate(x, y, noteInAllNotes) {
+    for (const [key, note] of allNotes.entries()) {
+        if (x >= note.x - tolerance && x < note.x + note.width + tolerance && y >= note.y - tolerance && y < note.y + note.height + tolerance) {
+            return note;
+        }
+    }
+    return null;
+}
 // 显示菜单
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault(); // 阻止默认菜单
@@ -313,9 +365,13 @@ canvas.addEventListener('contextmenu', (e) => {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
     const y = e.clientY - rect.top;
-    choosedNote = allNotes.find(note => {
-        return x >= note.x - tolerance && x < note.x + note.width + tolerance && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
-    });
+    // choosedNote = allNotes.find(note => {
+    //     return x >= note.x - tolerance && x < note.x + note.width + tolerance && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
+    // });
+
+    // 传引用获取目标choosedNote
+    choosedNote = locate(x, y, choosedNote);
+    console.log(choosedNote);
 
     if (choosedNote) {
         // 展示menu时隐藏add相关的元素
@@ -392,6 +448,26 @@ confirmTime.addEventListener('click', () => {
     timeInputBox.style.display = 'none';
 });
 
+export function deleteByNoteInAll(noteInAllNotes) {
+    const key = `${noteInAllNotes.trackIndex}-${noteInAllNotes.note.time}-${noteInAllNotes.note.midi}`;  // 自定义哈希键
+    if (allNotes.get(key)) {
+        allNotes.delete(key);
+        return true;
+    }
+    return false;
+}
+
+export function deleteByNoteInTrack(allNotesMap, noteInTrack) {
+    // 这里也可以做直接映射
+    for (const [key, value] of allNotesMap.entries()) {
+        if (value.note === noteInTrack) {
+            allNotesMap.delete(key);
+            return true;
+        }
+    }
+    return false;
+}
+
 const deleteBtn = document.getElementById('delete');
 
 deleteBtn.addEventListener('click', (e) => {
@@ -412,9 +488,17 @@ deleteBtn.addEventListener('click', (e) => {
         track.notes.splice(noteIndex, 1); // 删除选中的音符
     }
 
-    const choosedIndex = allNotes.findIndex(note => note === choosedNote.note);
 
-    allNotes.splice(choosedIndex, 1); // 删除选中的音符
+    // 有问题???
+    // const choosedIndex = allNotes.findIndex(note => note === choosedNote.note);
+
+    // allNotes.splice(choosedIndex, 1); // 删除选中的音符
+
+    let flag = deleteByNoteInAll(choosedNote);
+    if (!flag) {
+        console.warn("Note deletion fails");
+        return;
+    }
 
     // redrawCanvas(currentMidi);
 
@@ -426,7 +510,8 @@ deleteBtn.addEventListener('click', (e) => {
     menu.style.display = 'none';
 
     // 部分网格被连同音符一起消去，需要重绘
-    ctx.drawImage(offscreenCanvas, 0, 0);
+    // 绘制可见区域内的网格
+    ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
 });
 
 export function showMidi(midi) {
@@ -494,6 +579,7 @@ resetSliderValue.addEventListener('click', () => {
     }
 });
 
+let isDraggingContainer = false;
 let dragCount = 0;
 let noteBeforeDrag = null;
 canvas.addEventListener('mousedown', (e) => {
@@ -502,18 +588,22 @@ canvas.addEventListener('mousedown', (e) => {
     }
     if (e.button !== 0) return; // 只处理左键点击
 
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;                // 网页左上角为原点
+    const y = e.clientY - rect.top;
+
     // 点击任意地方鼠标隐藏
     addBtnContainer.style.display = 'none';
     menu.style.display = 'none';
     addNoteContainer.style.display = 'none';
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;                // 网页左上角为原点
-    const y = e.clientY - rect.top;
-    draggedNote = allNotes.find(note => {
-        return x >= note.x - tolerance && x < note.x + note.width + tolerance
-            && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
-    });
+    // draggedNote = allNotes.find(note => {
+    //     return x >= note.x - tolerance && x < note.x + note.width + tolerance
+    //         && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
+    // });
+
+    draggedNote = locate(x, y, draggedNote);
+
     if (draggedNote) {
         isDragging = true;
         startX = x;
@@ -535,6 +625,12 @@ canvas.addEventListener('mousedown', (e) => {
         }
     }
 });
+
+// 辅助函数：检查点是否在元素内
+function isPointInElement(x, y, element) {
+    const rect = element.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
 
 let oldNote = null;
 canvas.addEventListener('mousemove', (e) => {
@@ -558,7 +654,8 @@ canvas.addEventListener('mousemove', (e) => {
         }
 
         ctx.clearRect(oldNote.x, oldNote.y, oldNote.width, oldNote.height);
-        ctx.drawImage(offscreenCanvas, 0, 0);
+        // 绘制可见区域内的网格
+        ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
         ctx.fillStyle = getColor(draggedNote.trackIndex);
         ctx.fillRect(draggedNote.x, draggedNote.y, draggedNote.width, draggedNote.height);
 
@@ -569,6 +666,7 @@ canvas.addEventListener('mousemove', (e) => {
 // 鼠标抬起后，更新note的性质
 canvas.addEventListener('mouseup', (e) => {
     if (e.button !== 0) return;
+
     if (isDragging) {
         isDragging = false;
         oldNote = { ...draggedNote };
@@ -595,7 +693,7 @@ canvas.addEventListener('mouseup', (e) => {
             draggedNote.note = draggedNoteInNotes;
         }
 
-        track.notes.sort((a, b) => a.time - b.time); // 不需要allNotes和其顺序一致
+        track.notes.sort((a, b) => a.time - b.time);
 
         // ✅ 添加历史记录：记录拖拽前后的音符状态
         historyManager.recordNoteDrag(
@@ -610,16 +708,6 @@ canvas.addEventListener('mouseup', (e) => {
         // 性能还能提高
         // 重新绘制自动挪移的音符
 
-        // ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布
-        // ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
-
-        // allNotes.forEach(thisNote => {
-        //     if (trackVisibility[thisNote.trackIndex]) {
-        //         ctx.fillStyle = getColor(thisNote.trackIndex);
-        //         ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-        //     }
-        // });
-
         if (!oldNote) {
             console.warn("old note not defined");
             return;
@@ -628,7 +716,8 @@ canvas.addEventListener('mouseup', (e) => {
         ctx.fillStyle = getColor(draggedNote.trackIndex);
         ctx.fillRect(draggedNote.x, draggedNote.y, draggedNote.width, draggedNote.height);
         // 还可以优化
-        ctx.drawImage(offscreenCanvas, 0, 0); // 绘制网格
+        // 绘制可见区域内的网格
+        ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
 
         if (dragCount === 1) {
             historyManager.endBatch(); // 结束批量操作
@@ -678,6 +767,7 @@ function initHistoryUI() {
     undoBtn.addEventListener('click', () => historyManager.undo());
     redoBtn.addEventListener('click', () => historyManager.redo());
 
+    // 只重新绘制视口元素，优化性能
     historyManager.on('UNDO', (data) => {
         updateTrackControls(data);
         redrawCanvas(data);
@@ -719,7 +809,7 @@ function updateTrackControls(midi) {
         trackToggle.checked = trackVisibility[trackIndex];
         trackToggle.addEventListener("change", () => {
             trackVisibility[trackIndex] = trackToggle.checked;
-            drawPianoRoll(midiData);
+            redrawCanvas(midiData);
         });
 
         trackControl.appendChild(colorIndicator);
@@ -763,6 +853,8 @@ playPauseBtn.addEventListener("click", async () => {
             });
 
             hasScheduled = true;
+            await redrawCanvasAsync(currentMidi); // 等待绘图完成
+
             Tone.Transport.start();
             if (Tone.Transport.state === 'started') {
                 requestAnimationFrame(animatePlayhead);
@@ -812,42 +904,83 @@ function onPlaybackEnd() {
     cancelAnimationFrame(animatePlayhead.id); // 需记录动画ID
 }
 
+function timeToX(timeInSeconds) {
+    return timeInSeconds * timeScale;
+}
+
+let lastPlayheadX = null;
+
+function drawPlayheadLine(x, height) {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+    ctx.restore();
+}
+
+// 只清除旧进度线影响的区域 + 重绘音符
+function eraseOldPlayhead(x, height) {
+    const lineWidth = 2;
+    const padding = 1;
+    const clearX = x - lineWidth / 2 - padding;
+    const clearWidth = lineWidth + 2 * padding;
+
+    ctx.clearRect(clearX, 0, clearWidth, height);
+
+    // 重新绘制这个竖条区域内的音符
+    for (const thisNote of allNotes.values()) {
+        if (!trackVisibility[thisNote.trackIndex]) continue;
+        const noteX = thisNote.x;
+        const noteRight = thisNote.x + thisNote.width;
+        if (noteRight >= clearX && noteX <= clearX + clearWidth) {
+            ctx.fillStyle = getColor(thisNote.trackIndex);
+            ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+        }
+    }
+
+    // 绘制可见区域内的网格
+    ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
+}
 
 function animatePlayhead() {
-    const currentTime = Tone.Transport.seconds; // 或你的播放时间
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // 先清空画布
-    // ctx.drawImage(offscreenCanvas, 0, 0); // 重绘音符网格背景
-    drawPlayheadLine(currentTime, canvas.height);
+    const currentTime = Tone.Transport.seconds;
+    const scrollContainer = document.getElementById('canvasWrapper');
+    const centerX = canvas.width / 2;
+    const playheadX = timeToX(currentTime);
 
-    // currentMidi.tracks.forEach((track, trackIndex) => {
-    //     if (!trackVisibility[trackIndex]) return;
-    //     track.notes.forEach(note => {
-    //         const thisNote = allNotes.find(n => n.note === note);
-    //         ctx.fillStyle = getColor(trackIndex);
-    //         ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-    //     });
-    // });
+    const scrollTarget = Math.max(0, playheadX - centerX);
+    scrollContainer.scrollLeft = scrollTarget;
 
-    redrawCanvas(currentMidi);
+    // 擦除上一次的进度线及其影响范围
+    if (lastPlayheadX !== null) {
+        eraseOldPlayhead(lastPlayheadX, canvas.height);
+    }
+
+    const playheadScreenX = playheadX - scrollContainer.scrollLeft;
+    drawPlayheadLine(playheadScreenX, canvas.height);
+    lastPlayheadX = playheadScreenX;
+
+    // // 高亮当前播放音符（如果你希望这样）
     // highlightPlayingNotes(currentTime);
 
-    let playheadAnimationId;
-    // 播放未结束则继续动画
     if (currentTime < currentMidi.duration) {
-        playheadAnimationId = requestAnimationFrame(animatePlayhead);
+        animatePlayhead.id = requestAnimationFrame(animatePlayhead);
     } else {
-        // 停止播放并执行清理
         Tone.Transport.stop();
-        cancelAnimationFrame(playheadAnimationId);
+        cancelAnimationFrame(animatePlayhead.id);
         onPlaybackEnd();
-        // 用于清除进度线
         redrawCanvas(currentMidi);
+        lastPlayheadX = null;
     }
 }
 
+// 使用时改进
 function highlightPlayingNotes(currentTime) {
     // 遍历所有音符，找出正在播放的音符并高亮显示
-    allNotes.forEach(thisNote => {
+    for (const thisNote of allNotes.values()) {
         if (trackVisibility[thisNote.trackIndex]) {
             if (thisNote.note.time <= currentTime && thisNote.note.time + thisNote.note.duration >= currentTime) {
                 ctx.clearRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
@@ -855,20 +988,7 @@ function highlightPlayingNotes(currentTime) {
                 ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
             }
         }
-    });
-}
-
-function drawPlayheadLine(currentTime, canvasHeight) {
-    const x = currentTime * timeScale;
-
-    ctx.save();
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvasHeight);
-    ctx.stroke();
-    ctx.restore();
+    }
 }
 
 document.getElementById("exportBtn").addEventListener("click", () => {
@@ -885,12 +1005,6 @@ document.getElementById("exportBtn").addEventListener("click", () => {
     // 提供粗粒度的回溯功能
     historyManager.setSavePoint();
 });
-
-// 滚动相关变量
-let scrollX = 0;
-let scrollY = 0;
-let viewportWidth = canvas.clientWidth;
-let viewportHeight = canvas.clientHeight;
 
 // 初始化滚动事件监听
 function initScrollHandlers() {
@@ -930,15 +1044,22 @@ function getVisibleNotes() {
     const startY = scrollY;
     const endY = scrollY + viewportHeight;
 
-    return allNotes.filter(note => {
-        // 检查音符是否在可见区域内
-        return (
+    const visibleNotes = [];
+
+    for (const note of allNotes.values()) {
+        if (
             note.x + note.width >= startX &&
             note.x <= endX &&
             note.y + note.height >= startY &&
             note.y <= endY
-        );
-    });
+        ) {
+            visibleNotes.push(note);
+        }
+    }
+
+    console.log(`Get ${visibleNotes.length} visible notes`);
+
+    return visibleNotes;
 }
 
 // 只渲染可见区域内的音符
@@ -952,33 +1073,13 @@ function renderVisibleNotes() {
     // 获取可见音符
     const visibleNotes = getVisibleNotes();
 
+    console.log("Render visible notes");
+
     // 绘制可见音符
     visibleNotes.forEach(note => {
         ctx.fillStyle = getColor(note.trackIndex);
         ctx.fillRect(note.x, note.y, note.width, note.height);
     });
-
-    // 绘制进度线（如果需要）
-    if (isPlaying) {
-        drawPlayheadLine(Tone.Transport.seconds, canvas.height);
-    }
-}
-
-// 更新音符位置时，确保滚动到可见区域
-function scrollToNote(note) {
-    const scrollContainer = document.getElementById('canvasWrapper');
-    if (!scrollContainer) {
-        console.warn("Cannot find wrapper");
-        return;
-    }
-
-    // 计算音符在视口中的位置（中心）
-    const noteCenterX = note.x + note.width / 2;
-    const noteCenterY = note.y + note.height / 2;
-
-    // 滚动到音符位置，也即让音符中心处于视口中心
-    scrollContainer.scrollLeft = noteCenterX - viewportWidth / 2;
-    scrollContainer.scrollTop = noteCenterY - viewportHeight / 2;
 }
 
 function smoothScrollToNote(note, duration = 300) {
@@ -1028,7 +1129,7 @@ function drawPianoRoll(midi) {
     // ✅ 绘制网格在底层
     drawGrid();     // 画在离屏画布上
 
-    // ctx.drawImage(offscreenCanvas, 0, 0); // 将离屏画布绘制到主画布上
+    ctx.drawImage(offscreenCanvas, 0, 0); // 将离屏画布绘制到主画布上
 
     midi.tracks.forEach((track, trackIndex) => {
         if (!trackVisibility[trackIndex]) return;
@@ -1037,9 +1138,6 @@ function drawPianoRoll(midi) {
             const y = canvas.height - ((note.midi - pitchBase + 1) * noteHeight);
             const width = note.duration * timeScale;
             const height = noteHeight - 1;
-            // 不进行全部的绘制
-            // ctx.fillStyle = getColor(trackIndex);       // track通过颜色区分
-            // ctx.fillRect(x, y, width, height);
             const noteObj = {
                 note,
                 x,
@@ -1048,11 +1146,28 @@ function drawPianoRoll(midi) {
                 height,
                 trackIndex
             };
-            allNotes.push(noteObj);
+            // allNotes.push(noteObj);
+
+            // 添加到全局音符数组
+            const key = `${trackIndex}-${note.time}-${note.midi}`;  // 自定义哈希键
+            allNotes.set(key, noteObj);  // 存入哈希表 
         });
     });
 
-    renderVisibleNotes();
+    // drawPianoRoll中绘制全部音符和网格
+    midi.tracks.forEach((track, trackIndex) => {
+        if (!trackVisibility[trackIndex]) return;
+        track.notes.forEach(note => {
+            const x = note.time * timeScale;
+            const y = canvas.height - ((note.midi - pitchBase + 1) * noteHeight);
+            const width = note.duration * timeScale;
+            const height = noteHeight - 1;
+            ctx.fillStyle = getColor(trackIndex);
+            ctx.fillRect(x, y, width, height);
+        });
+    });
+
+    // renderVisibleNotes();
 }
 
 function getColor(index) {
@@ -1234,20 +1349,6 @@ window.addEventListener('resize', () => {
         sheetMusicRenderer.resize();
     }
 });
-
-export function compareRecord(allNotes, currentMidi) {
-    console.log("----------------------------------------------");
-
-    allNotes.forEach(_note => {
-        console.log(`In allNotes, name: ${_note.note.name}, width: ${_note.width}`);
-    })
-
-    currentMidi.tracks[0].notes.forEach(note => {
-        console.log(`In currentMidi, name: ${note.name}, width: ${note.duration * timeScale}`);
-    })
-
-    console.log("----------------------------------------------");
-}
 
 // 找到历史记录列表容器
 const historyList = document.getElementById('historyList');

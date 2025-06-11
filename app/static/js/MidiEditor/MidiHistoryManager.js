@@ -2,7 +2,7 @@
  * MIDI 历史管理器 - 提供类似 VSCode 的撤销/重做功能
  */
 
-import { showMidi } from "./pianoRoll.js";
+import { deleteByNoteInAll, deleteByNoteInTrack } from "./pianoRoll.js";
 
 const canvas = document.getElementById("pianoRoll");
 const ctx = canvas.getContext("2d");
@@ -159,6 +159,7 @@ export class MidiHistoryManager {
 
         // 添加新记录
         this.history.push(safeEntry);
+        // 直接在最后添加
         this.pointer = this.history.length - 1;
 
         while (this.history.length > this.maxHistorySize) {
@@ -286,8 +287,13 @@ export class MidiHistoryManager {
 
     // 重做操作
     redo() {
-        if (this.pointer >= this.history.length - 1 || this.history.length === 0) {
-            console.log("history error");
+        // 需要先有undo，才能有redo
+        if (this.pointer >= this.history.length - 1) {
+            console.warn(`Pointer error, history length = ${this.history.length}, pointer = ${this.pointer}`);
+            return false;
+        }
+        else if (this.history.length === 0) {
+            console.warn("no history");
             return false;
         }
 
@@ -395,7 +401,15 @@ export class MidiHistoryManager {
             return;
         }
 
-        const noteInAll = this.allNotes.find(thisNote => thisNote.note.midi === change.note.midi && thisNote.note.time === change.note.time);
+        // const noteInAll = this.allNotes.find(thisNote => thisNote.note.midi === change.note.midi && thisNote.note.time === change.note.time);
+        let noteInAll;
+        for (const thisNote of this.allNotes.values) {
+            if (thisNote.note.midi === change.note.midi && thisNote.note.time === change.note.time) {
+                noteInAll = thisNote;
+                break;
+            }
+        }
+
         if (!noteInAll) {
             console.warn("noteInAll not found");
             return;
@@ -431,7 +445,9 @@ export class MidiHistoryManager {
         track.notes.splice(0, 0, change.changedNote.note);
         track.notes.sort((a, b) => a.time - b.time);
 
-        this.allNotes.push(change.changedNote);
+        // this.allNotes.push(change.changedNote);
+        const key = `${change.trackIndex}-${change.changedNote.note.time}-${change.changedNote.note.midi}`;  // 自定义哈希键
+        this.allNotes.set(key, change.changedNote);  // 存入哈希表 
     }
 
     // 应用删除操作
@@ -451,12 +467,14 @@ export class MidiHistoryManager {
         }
         track.notes.splice(index1, 1);
 
-        const index2 = this.allNotes.findIndex(thisNote => thisNote.note === change.changedNote.note);
-        if (index2 < 0) {
-            console.log("index2 not found");
-            return;
-        }
-        this.allNotes.splice(index2, 1);
+        // const index2 = this.allNotes.findIndex(thisNote => thisNote.note === change.changedNote.note);
+        // if (index2 < 0) {
+        //     console.log("index2 not found");
+        //     return;
+        // }
+        // this.allNotes.splice(index2, 1);
+
+        deleteByNoteInAll(change.changedNote);
     }
 
     // 应用修改时间操作
@@ -484,7 +502,15 @@ export class MidiHistoryManager {
             }
 
             // originNote最初来自allNotes -- 修改为使用newValue寻找
-            const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.newValue.note.midi && thisNote.note.duration === change.newValue.note.duration);
+            // const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.newValue.note.midi && thisNote.note.duration === change.newValue.note.duration);
+
+            let note2;
+            for (const thisNote of this.allNotes.values) {
+                if (thisNote.note.midi === change.newValue.note.midi && thisNote.note.duration === change.newValue.note.duration) {
+                    note2 = thisNote;
+                    break;
+                }
+            }
 
             if (!note2) {
                 console.warn("Cannot find the note in allNotes");
@@ -504,7 +530,15 @@ export class MidiHistoryManager {
             }
 
             // originNote最初来自allNotes
-            const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration);
+            // const note2 = this.allNotes.find(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration);
+
+            let note2;
+            for (const thisNote of this.allNotes.values) {
+                if (thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration) {
+                    note2 = thisNote;
+                    break;
+                }
+            }
 
             if (!note2) {
                 console.warn("Cannot find the note in allNotes");
@@ -541,16 +575,16 @@ export class MidiHistoryManager {
                 return;
             }
 
-            const draggedNoteInAllIndex = this.allNotes.findIndex(thisNote => thisNote.note.midi === change.newNote.note.midi && thisNote.note.duration === change.newNote.note.duration)
-
-            if (draggedNoteInAllIndex < 0) {
-                console.warn("Cannot find in allNotes");
-                return;
-            }
-
             track.notes.splice(draggedNoteInTrackIndex, 1);
             track.notes.push(change.originalNote.note);
             track.notes.sort((a, b) => a.time - b.time);
+
+            // const draggedNoteInAllIndex = this.allNotes.findIndex(thisNote => thisNote.note.midi === change.newNote.note.midi && thisNote.note.duration === change.newNote.note.duration)
+
+            // if (draggedNoteInAllIndex < 0) {
+            //     console.warn("Cannot find in allNotes");
+            //     return;
+            // }
 
             // showMidi(this.currentMidi);
 
@@ -563,10 +597,10 @@ export class MidiHistoryManager {
             draggedNoteInAll.trackIndex = change.originalNote.trackIndex;
 
             draggedNoteInAll.note = change.originalNote.note;
-            this.allNotes.push(draggedNoteInAll);
+            // this.allNotes.push(draggedNoteInAll);
+            const key = `${draggedNoteInAll.trackIndex}-${draggedNoteInAll.note.time}-${draggedNoteInAll.note.midi}`;  // 自定义哈希键
+            this.allNotes.set(key, draggedNoteInAll);  // 存入哈希表 
 
-            // console.log(`draggedNoteInAll restore to ${draggedNoteInAll.note.name}`);
-            // console.log("-----------------------------------------------");
         }
         else if (direction == 'redo') {
             console.log("drag note redo");
@@ -579,12 +613,12 @@ export class MidiHistoryManager {
                 return;
             }
 
-            const draggedNoteInAllIndex = this.allNotes.findIndex(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration)
+            // const draggedNoteInAllIndex = this.allNotes.findIndex(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration)
 
-            if (draggedNoteInAllIndex < 0) {
-                console.warn("Cannot find in allNotes");
-                return;
-            }
+            // if (draggedNoteInAllIndex < 0) {
+            //     console.warn("Cannot find in allNotes");
+            //     return;
+            // }
 
             // 使用新的信息修改音符
             track.notes.splice(draggedNoteInTrackIndex, 1);
@@ -599,7 +633,9 @@ export class MidiHistoryManager {
             draggedNoteInAll.trackIndex = change.newNote.trackIndex;
 
             draggedNoteInAll.note = change.newNote.note;
-            this.allNotes.push(draggedNoteInAll);
+            // this.allNotes.push(draggedNoteInAll);
+            const key = `${draggedNoteInAll.trackIndex}-${draggedNoteInAll.note.time}-${draggedNoteInAll.note.midi}`;  // 自定义哈希键
+            this.allNotes.set(key, noteObj);  // 存入哈希表 
         }
     }
 
