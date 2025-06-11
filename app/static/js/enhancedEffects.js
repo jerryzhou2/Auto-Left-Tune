@@ -261,12 +261,12 @@ class EnhancedEffects {
 
     addHoverGlow(element) {
         element.style.filter = 'brightness(1.1) saturate(1.2)';
-        element.style.transform = 'translateY(-8px) scale(1.02)';
+        // 移除transform浮起效果以提升性能
     }
 
     removeHoverGlow(element) {
         element.style.filter = '';
-        element.style.transform = '';
+        // 移除transform重置
     }
 
     /**

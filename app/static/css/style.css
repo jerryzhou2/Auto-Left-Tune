@@ -125,10 +125,7 @@ body::before {
     border-radius: 15px 15px 0 0;
 }
 
-.grid-item:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--hover-shadow);
-}
+/* 移除grid-item的hover放大效果以提升性能 */
 
 /* PDF查看区域 - 改进的伸缩性 */
 .top-left {

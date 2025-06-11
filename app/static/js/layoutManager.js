@@ -240,15 +240,7 @@ style.textContent = `
         min-height: 400px !important;
     }
 
-    /* 增强的悬停效果 */
-    .grid-item:hover {
-        transform: translateY(-8px) !important;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
-    }
-
-    .grid-item:hover::before {
-        background: linear-gradient(135deg, var(--accent-color), var(--primary-color)) !important;
-    }
+    /* 移除grid-item的hover浮起效果以提升性能 */
 
     /* 按钮组的改进布局 */
     .buttons {

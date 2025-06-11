@@ -47,7 +47,7 @@ def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperatur
 
     return generated
 @torch.no_grad()
-def infer(input_path,output_path,model_name='music_trans_5_20.pt',vocab_size=410,bos_id= 0,eos_id = 1,pad_id = 2,max_len = 4000,temperature = 0.9,target_len=800):
+def infer(input_path,output_path,model_name='model1.pt',vocab_size=410,bos_id= 0,eos_id = 1,pad_id = 2,max_len = 4000,temperature = 0.9,target_len=800):
     global my_dict
     global dict_list
     try:
