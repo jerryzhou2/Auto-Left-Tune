@@ -27,15 +27,22 @@
         box-sizing: border-box;
     }
 
-    /* 使用与导航栏一致的黑色背景主题 */
+    /* 现代科技风格的渐变背景主题 */
     body {
         font-family: 'Roboto', 'Microsoft YaHei', Arial, sans-serif;
         line-height: 1.6;
         margin: 0;
         padding: 20px;
-        background: linear-gradient(135deg, #1f47ab 0%, #2c3e50 50%, #34495e 100%);
+        background: linear-gradient(
+            135deg,
+            #667eea 0%,
+            #764ba2 25%,
+            #f093fb 50%,
+            #f5576c 75%,
+            #4ecdc4 100%
+        );
         background-size: 400% 400%;
-        animation: gradientShift 15s ease infinite;
+        animation: gradientShift 20s ease infinite;
         color: #fff;
         min-height: 100vh;
         position: relative;
@@ -48,7 +55,7 @@
         100% { background-position: 0% 50%; }
     }
 
-    /* 添加粒子效果背景 */
+    /* 添加动态粒子效果背景 */
     body::before {
         content: '';
         position: fixed;
@@ -57,11 +64,12 @@
         width: 100%;
         height: 100%;
         background-image: 
-            radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-            radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.02) 0.5px, transparent 0.5px);
-        background-size: 120px 120px, 180px 180px, 90px 90px;
-        animation: particleFloat 25s linear infinite;
+            radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+            radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px),
+            radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+            radial-gradient(circle at 60% 60%, rgba(102, 126, 234, 0.05) 1px, transparent 1px);
+        background-size: 100px 100px, 150px 150px, 80px 80px, 120px 120px;
+        animation: particleFloat 30s linear infinite;
         pointer-events: none;
         z-index: -1;
     }
@@ -70,12 +78,35 @@
         0% { transform: translateY(0px) rotate(0deg); }
         100% { transform: translateY(-100px) rotate(360deg); }
     }
+
+    /* 添加额外的光晕效果 */
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(ellipse at top left, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at top right, rgba(245, 87, 108, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom left, rgba(240, 147, 251, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(78, 205, 196, 0.1) 0%, transparent 50%);
+        animation: auraShift 25s ease-in-out infinite;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    @keyframes auraShift {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
+    }
     .about-container {
         max-width: 1200px;
         margin: 40px auto;
         padding: 0 20px;
         line-height: 1.8;
-        color: #fff;
+        color: #333;
         font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
     }
     
@@ -169,10 +200,11 @@
     
     .innovation-description {
         font-size: 1.2em;
-        color: #495057;
+        color: #2c3e50;
         line-height: 1.8;
         max-width: 800px;
         margin: 0 auto 30px;
+        font-weight: 500;
     }
     
     .ai-features {
@@ -183,10 +215,11 @@
     }
     
     .ai-feature {
-        background: rgba(255,255,255,0.8);
+        background: rgba(255,255,255,0.9);
         padding: 25px;
         border-radius: 15px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: #2c3e50;
     }
     
     .ai-feature-icon {
@@ -217,6 +250,7 @@
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        color: #333;
     }
     
     .feature-card::before {
@@ -248,7 +282,7 @@
     }
     
     .feature-description {
-        color: #666;
+        color: #555;
         line-height: 1.7;
         font-size: 1.05em;
     }
@@ -260,13 +294,19 @@
         margin: 50px 0;
     }
     
+    .workflow-section .section-title {
+        color: #2c3e50;
+        text-shadow: none;
+    }
+    
     .section-title {
         font-size: 2.2em;
         font-weight: 700;
-        color: #35cccf;
+        color: #fff;
         text-align: center;
         margin-bottom: 50px;
         position: relative;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     
     .section-title::after {
@@ -296,6 +336,7 @@
         text-align: center;
         position: relative;
         transition: transform 0.3s ease;
+        color: #333;
     }
     
     .workflow-step:hover {
@@ -324,7 +365,7 @@
     }
     
     .step-description {
-        color: #666;
+        color: #555;
         line-height: 1.6;
     }
     
@@ -399,13 +440,14 @@
     
     .footer-section {
         text-align: center;
-        padding: 50px 0;
-        border-top: 2px solid #f0f0f0;
+        padding: 50px 40px;
+        border-top: 2px solid rgba(255,255,255,0.2);
         margin-top: 60px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        background-clip: text;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        color: #fff;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     
     .footer-title {
@@ -593,12 +635,19 @@
                 <div class="step-title">上传旋律文件</div>
                 <div class="step-description">
                     拖拽或选择您的右手旋律MIDI文件<br>
-                    支持自定义时间区间截取
                 </div>
             </div>
             
             <div class="workflow-step">
                 <div class="step-number">2</div>
+                <div class="step-title">选择生成参数</div>
+                <div class="step-description">
+                    选择生成伴奏的参数，包括<br>
+                    长度、时间区间截取等
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number">3</div>
                 <div class="step-title">AI智能分析</div>
                 <div class="step-description">
                     深度学习模型自动分析旋律的<br>
@@ -607,7 +656,7 @@
             </div>
             
             <div class="workflow-step">
-                <div class="step-number">3</div>
+                <div class="step-number">4</div>
                 <div class="step-title">生成左手伴奏</div>
                 <div class="step-description">
                     基于音乐理论和风格特征<br>
@@ -616,7 +665,7 @@
             </div>
             
             <div class="workflow-step">
-                <div class="step-number">4</div>
+                <div class="step-number">5</div>
                 <div class="step-title">完整作品输出</div>
                 <div class="step-description">
                     自动合成双手完整MIDI文件<br>
@@ -667,8 +716,8 @@
         <div class="footer-title">Auto Left Tune - 让AI为您的音乐插上翅膀</div>
         <div class="footer-subtitle">开创钢琴伴奏自动生成的新时代</div>
         <div class="footer-info">
-            版本 1.0 | 基于深度学习的序列到序列模型 | 支持Windows 10+ 系统<br>
-            © 2024 Auto Left Tune. 创新改变音乐，技术成就梦想。
+            版本 1.0 | 基于深度学习的序列到序列模型 | 支持Windows 10+ Ubuntu20.04+系统<br>
+            © 2025 Auto Left Tune. 创新改变音乐，技术成就梦想。
         </div>
     </section>
 </div>
