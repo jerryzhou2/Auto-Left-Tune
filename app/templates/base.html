@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AutoLeftPiano{% endblock %}</title>
+    <title>{% block title %}Auto Left Tune{% endblock %}</title>
     
     <!-- 通用样式 -->
     <style>
@@ -13,7 +13,7 @@
             top: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #191f32 0%);
             padding: 15px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             z-index: 1000;
@@ -30,13 +30,24 @@
         }
         
         .navbar-brand {
-            font-family: 'Orbitron', monospace;
+            font-family: 'Microsoft YaHei', 'SimHei', 'Helvetica Neue', Arial, sans-serif;
             font-size: 24px;
-            font-weight: 500;
+            font-weight: 900;
             color: white;
             text-decoration: none;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: -300px;
+        }
+        
+        .navbar-brand-icon {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
         }
         
         .navbar-brand:hover {
@@ -141,10 +152,13 @@
     <!-- 导航栏 -->
     <nav class="navbar">
         <div class="navbar-content">
-            <a href="{{ url_for('main.index') }}" class="navbar-brand">AutoLeftPiano</a>
+            <a href="{{ url_for('main.main_app') }}" class="navbar-brand">
+                <img src="{{ url_for('static', filename='pic/icon.png') }}" alt="ALT Logo" class="navbar-brand-icon">
+                Auto Left Tune - 让AI为您的音乐插上翅膀
+            </a>
             <ul class="navbar-nav">
                 <li>
-                    <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+                    <a href="{{ url_for('main.main_app') }}" class="nav-link {% if request.endpoint == 'main.main_app' %}active{% endif %}">
                         🏠 首页
                     </a>
                 </li>

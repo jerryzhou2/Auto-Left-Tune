@@ -1,11 +1,108 @@
 {% extends "base.html" %}
 
-{% block title %}关于 - AutoLeftPiano{% endblock %}
+{% block title %}关于 - Auto Left Tune{% endblock %}
 
 {% block head %}
+<!-- 导入Google Fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap">
+
 <style>
+    /* CSS变量定义 */
+    :root {
+        --primary-color: #667eea;
+        --secondary-color: #764ba2;
+        --accent-color: #f093fb;
+        --success-color: #4ecdc4;
+        --warning-color: #ffe066;
+        --danger-color: #ff6b6b;
+        --dark-color: #2c3e50;
+        --light-color: #ecf0f1;
+        --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        --hover-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    /* 全局盒模型 */
+    * {
+        box-sizing: border-box;
+    }
+
+    /* 现代科技风格的渐变背景主题 */
+    body {
+        font-family: 'Roboto', 'Microsoft YaHei', Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(
+            135deg,
+            #667eea 0%,
+            #764ba2 25%,
+            #f093fb 50%,
+            #f5576c 75%,
+            #4ecdc4 100%
+        );
+        background-size: 400% 400%;
+        animation: gradientShift 20s ease infinite;
+        color: #fff;
+        min-height: 100vh;
+        position: relative;
+    }
+
+    /* 动态背景动画 */
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* 添加动态粒子效果背景 */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+            radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08) 1.5px, transparent 1.5px),
+            radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+            radial-gradient(circle at 60% 60%, rgba(102, 126, 234, 0.05) 1px, transparent 1px);
+        background-size: 100px 100px, 150px 150px, 80px 80px, 120px 120px;
+        animation: particleFloat 30s linear infinite;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    @keyframes particleFloat {
+        0% { transform: translateY(0px) rotate(0deg); }
+        100% { transform: translateY(-100px) rotate(360deg); }
+    }
+
+    /* 添加额外的光晕效果 */
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(ellipse at top left, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at top right, rgba(245, 87, 108, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom left, rgba(240, 147, 251, 0.1) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(78, 205, 196, 0.1) 0%, transparent 50%);
+        animation: auraShift 25s ease-in-out infinite;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    @keyframes auraShift {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
+    }
     .about-container {
-        max-width: 1000px;
+        max-width: 1200px;
         margin: 40px auto;
         padding: 0 20px;
         line-height: 1.8;
@@ -17,158 +114,358 @@
         text-align: center;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 60px 40px;
-        border-radius: 15px;
-        margin-bottom: 40px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        padding: 80px 40px;
+        border-radius: 20px;
+        margin-bottom: 50px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="piano" patternUnits="userSpaceOnUse" width="10" height="10"><rect width="10" height="10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23piano)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
     }
     
     .hero-title {
-        font-size: 3em;
-        font-weight: 700;
+        font-size: 3.5em;
+        font-weight: 800;
         margin-bottom: 20px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
     }
     
     .hero-subtitle {
-        font-size: 1.3em;
-        opacity: 0.9;
-        margin-bottom: 0;
+        font-size: 1.4em;
+        opacity: 0.95;
+        margin-bottom: 30px;
+        font-weight: 300;
     }
     
-    .feature-grid {
+    .hero-innovation {
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 30px;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .innovation-badge {
+        display: inline-block;
+        background: linear-gradient(45deg, #ff6b6b, #ffa500);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-size: 0.9em;
+        font-weight: 600;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .core-innovation {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        padding: 50px 40px;
+        border-radius: 20px;
+        margin: 50px 0;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(255,154,158,0.3);
+    }
+    
+    .innovation-title {
+        font-size: 2.2em;
+        font-weight: 700;
+        color: #d63384;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .innovation-description {
+        font-size: 1.2em;
+        color: #2c3e50;
+        line-height: 1.8;
+        max-width: 800px;
+        margin: 0 auto 30px;
+        font-weight: 500;
+    }
+    
+    .ai-features {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+    
+    .ai-feature {
+        background: rgba(255,255,255,0.9);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: #2c3e50;
+    }
+    
+    .ai-feature-icon {
+        font-size: 2.5em;
+        margin-bottom: 15px;
+        display: block;
+    }
+    
+    .ai-feature-title {
+        font-weight: 600;
+        color: #d63384;
+        margin-bottom: 10px;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         gap: 30px;
-        margin: 40px 0;
+        margin: 50px 0;
     }
     
     .feature-card {
         background: white;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        padding: 35px;
+        border-radius: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         border: 1px solid #f0f0f0;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        color: #333;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
     }
     
     .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
     }
     
     .feature-icon {
-        font-size: 3em;
+        font-size: 3.5em;
         margin-bottom: 20px;
         display: block;
     }
     
     .feature-title {
-        font-size: 1.4em;
-        font-weight: 600;
-        color: #333;
+        font-size: 1.5em;
+        font-weight: 700;
+        color: #2c3e50;
         margin-bottom: 15px;
     }
     
     .feature-description {
-        color: #666;
-        line-height: 1.6;
-    }
-    
-    .tech-section {
-        background: #f8f9fa;
-        padding: 40px;
-        border-radius: 15px;
-        margin: 40px 0;
-    }
-    
-    .tech-title {
-        font-size: 1.8em;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 25px;
-        text-align: center;
-    }
-    
-    .tech-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-    }
-    
-    .tech-item {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    
-    .tech-category {
-        font-weight: 600;
-        color: #667eea;
-        margin-bottom: 10px;
-    }
-    
-    .tech-details {
-        color: #666;
-        font-size: 0.9em;
+        color: #555;
+        line-height: 1.7;
+        font-size: 1.05em;
     }
     
     .workflow-section {
-        margin: 40px 0;
+        background: #f8f9fa;
+        padding: 60px 40px;
+        border-radius: 20px;
+        margin: 50px 0;
     }
     
-    .workflow-title {
-        font-size: 1.8em;
-        font-weight: 600;
-        color: #333;
-        margin-bottom: 30px;
+    .workflow-section .section-title {
+        color: #2c3e50;
+        text-shadow: none;
+    }
+    
+    .section-title {
+        font-size: 2.2em;
+        font-weight: 700;
+        color: #fff;
         text-align: center;
+        margin-bottom: 50px;
+        position: relative;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 2px;
     }
     
     .workflow-steps {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
     }
     
     .workflow-step {
-        display: flex;
-        align-items: center;
         background: white;
-        padding: 25px;
+        padding: 30px;
         border-radius: 15px;
-        box-shadow: 0 3px 15px rgba(0,0,0,0.08);
-        border-left: 5px solid #667eea;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        text-align: center;
+        position: relative;
+        transition: transform 0.3s ease;
+        color: #333;
+    }
+    
+    .workflow-step:hover {
+        transform: translateY(-5px);
     }
     
     .step-number {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 600;
-        margin-right: 20px;
-        flex-shrink: 0;
-    }
-    
-    .step-content {
-        flex: 1;
+        font-weight: 700;
+        font-size: 1.2em;
+        margin: 0 auto 20px;
     }
     
     .step-title {
         font-weight: 600;
-        color: #333;
-        margin-bottom: 8px;
+        color: #2c3e50;
+        margin-bottom: 12px;
+        font-size: 1.1em;
     }
     
     .step-description {
-        color: #666;
+        color: #555;
+        line-height: 1.6;
+    }
+    
+    .audience-section {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 60px 40px;
+        border-radius: 20px;
+        text-align: center;
+        margin: 50px 0;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .audience-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="80" cy="30" r="1.5" fill="rgba(255,255,255,0.08)"/></svg>') repeat;
+        animation: float 20s infinite linear;
+    }
+    
+    @keyframes float {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        100% { transform: translate(-50px, -50px) rotate(360deg); }
+    }
+    
+    .audience-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .audience-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+    }
+    
+    .audience-card {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        padding: 30px 20px;
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+        transition: transform 0.3s ease;
+    }
+    
+    .audience-card:hover {
+        transform: scale(1.05);
+        background: rgba(255,255,255,0.2);
+    }
+    
+    .audience-icon {
+        font-size: 3em;
+        margin-bottom: 15px;
+    }
+    
+    .audience-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 1.1em;
+    }
+    
+    .audience-desc {
+        opacity: 0.9;
+        font-size: 0.95em;
+    }
+    
+    .footer-section {
+        text-align: center;
+        padding: 50px 40px;
+        border-top: 2px solid rgba(255,255,255,0.2);
+        margin-top: 60px;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        color: #fff;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    
+    .footer-title {
+        font-size: 1.4em;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    
+    .footer-subtitle {
+        font-size: 1.1em;
+        opacity: 0.8;
+        margin-bottom: 20px;
+    }
+    
+    .footer-info {
+        font-size: 0.95em;
+        opacity: 0.7;
+        line-height: 1.6;
     }
     
     @media (max-width: 768px) {
@@ -177,29 +474,34 @@
         }
         
         .hero-section {
-            padding: 40px 20px;
+            padding: 50px 20px;
         }
         
         .hero-title {
-            font-size: 2em;
+            font-size: 2.2em;
+            flex-direction: column;
+            gap: 10px;
         }
         
         .hero-subtitle {
             font-size: 1.1em;
         }
         
-        .tech-section {
-            padding: 30px 20px;
+        .core-innovation,
+        .workflow-section,
+        .audience-section {
+            padding: 40px 20px;
         }
         
-        .workflow-step {
-            flex-direction: column;
-            text-align: center;
+        .features-grid,
+        .workflow-steps,
+        .audience-grid {
+            grid-template-columns: 1fr;
         }
         
-        .step-number {
-            margin-right: 0;
-            margin-bottom: 15px;
+        .innovation-title,
+        .section-title {
+            font-size: 1.8em;
         }
     }
 </style>
@@ -209,72 +511,116 @@
 <div class="about-container">
     <!-- 英雄区域 -->
     <div class="hero-section">
-        <h1 class="hero-title">🎹 AutoLeftPiano</h1>
-        <p class="hero-subtitle">智能钢琴左手伴奏生成软件</p>
+        <div class="hero-content">
+            <h1 class="hero-title">
+                🎹 Auto Left Tune
+                <span style="font-size: 0.4em; opacity: 0.8;">AI</span>
+            </h1>
+            <p class="hero-subtitle">全球首款AI驱动的钢琴左手伴奏智能生成软件</p>
+            
+            <div class="hero-innovation">
+                <div class="innovation-badge">🚀 核心创新</div>
+                <p style="font-size: 1.1em; margin: 0; line-height: 1.6;">
+                    革命性AI技术 • 仅需右手旋律 • 一键生成专业左手伴奏
+                </p>
+            </div>
+        </div>
     </div>
     
-    <!-- 软件简介 -->
-    <section>
-        <p style="font-size: 1.2em; text-align: center; color: #555; margin-bottom: 40px;">
-            AutoLeftPiano 是一款专为钢琴爱好者和音乐学习者设计的智能音乐软件。
-            它能够自动为您的钢琴旋律生成专业的左手伴奏，让您的演奏更加丰富多彩。
+    <!-- 核心创新功能 -->
+    <section class="core-innovation">
+        <h2 class="innovation-title">
+            🧠 AI核心技术突破
+        </h2>
+        <p class="innovation-description">
+            <strong>Auto Left Tune</strong> 搭载了我们自主研发的深度学习模型，基于Transformer架构的序列到序列网络。
+            该模型经过大量专业钢琴作品训练，能够深度理解音乐的和声规律、节奏模式和风格特征，
+            <strong>仅需输入右手旋律MIDI文件，即可智能生成与之完美匹配的左手伴奏</strong>。
         </p>
+        
+        <div class="ai-features">
+            <div class="ai-feature">
+                <span class="ai-feature-icon">🎯</span>
+                <div class="ai-feature-title">智能分析</div>
+                <div>自动识别调性、节奏型、和声进行</div>
+            </div>
+            <div class="ai-feature">
+                <span class="ai-feature-icon">🎼</span>
+                <div class="ai-feature-title">风格适配</div>
+                <div>根据旋律特点匹配最适合的伴奏风格</div>
+            </div>
+            <div class="ai-feature">
+                <span class="ai-feature-icon">⚡</span>
+                <div class="ai-feature-title">实时生成</div>
+                <div>几秒内完成专业级左手伴奏创作</div>
+            </div>
+            <div class="ai-feature">
+                <span class="ai-feature-icon">🎨</span>
+                <div class="ai-feature-title">个性定制</div>
+                <div>支持生成长度控制，满足不同需求</div>
+            </div>
+        </div>
     </section>
     
-    <!-- 主要功能 -->
+    <!-- 主要功能特色 -->
     <section>
-        <div class="feature-grid">
-            <div class="feature-card">
-                <span class="feature-icon">🎼</span>
-                <h3 class="feature-title">智能伴奏生成</h3>
-                <p class="feature-description">
-                    上传您的MIDI文件，软件将自动分析旋律结构，运用先进的音乐理论算法，
-                    为您生成和谐优美的左手伴奏，让单调的旋律瞬间变得丰富立体。
-                </p>
-            </div>
-            
+        <h2 class="section-title">💎 功能特色</h2>
+        <div class="features-grid">
             <div class="feature-card">
                 <span class="feature-icon">🎹</span>
-                <h3 class="feature-title">虚拟钢琴演奏</h3>
+                <h3 class="feature-title">沉浸式虚拟钢琴</h3>
                 <p class="feature-description">
-                    内置专业的虚拟钢琴界面，支持鼠标点击和键盘按键演奏。
-                    独特的卷帘窗动画效果让每个音符都充满视觉美感，提供沉浸式的演奏体验。
+                    专业88键虚拟钢琴，支持鼠标和键盘双重操作。独创的音符瀑布流视觉效果，
+                    左右手音符以不同颜色区分显示，让每次弹奏都充满视觉美感。
+                    内置真实钢琴音色采样，提供音乐厅级别的听觉体验。
                 </p>
             </div>
             
             <div class="feature-card">
-                <span class="feature-icon">📋</span>
-                <h3 class="feature-title">乐谱导出</h3>
+                <span class="feature-icon">🎵</span>
+                <h3 class="feature-title">智能录制与回放</h3>
                 <p class="feature-description">
-                    一键将处理后的音乐导出为标准PDF乐谱格式，支持打印和分享。
-                    生成的乐谱布局清晰，符合专业排版标准，便于阅读和练习。
+                    一键开始录制您的演奏，系统会精确记录每个音符的时值和力度。
+                    录制完成后自动生成MIDI文件并可立即进行AI伴奏生成，
+                    让您的创作灵感瞬间变成完整的音乐作品。
                 </p>
             </div>
             
             <div class="feature-card">
-                <span class="feature-icon">✏️</span>
-                <h3 class="feature-title">创作区</h3>
+                <span class="feature-icon">📊</span>
+                <h3 class="feature-title">可视化乐谱系统</h3>
                 <p class="feature-description">
-                    内置强大的MIDI编辑功能，支持音符编辑、节拍调整、音色修改等操作。
-                    让您可以精确控制每一个音符，打造完美的音乐作品。
+                    内置MuseScore引擎，自动将MIDI文件转换为标准五线谱PDF格式。
+                    支持原始旋律和AI生成伴奏的对比查看，帮助您更好地理解和学习音乐理论，
+                    所有生成的乐谱均可下载打印。
                 </p>
             </div>
             
             <div class="feature-card">
-                <span class="feature-icon">🎨</span>
-                <h3 class="feature-title">精美界面</h3>
+                <span class="feature-icon">✂️</span>
+                <h3 class="feature-title">精准MIDI编辑器</h3>
                 <p class="feature-description">
-                    采用现代化的渐变设计和流畅的动画效果，界面美观且易用。
-                    响应式布局适配各种设备，无论是电脑还是平板都能获得出色体验。
+                    专业级MIDI编辑功能，支持音轨分离、音符精确编辑、时值调整。
+                    提供撤销重做、检查点保存等高级功能，让您能够精雕细琢每一个音符，
+                    打造完美的音乐作品。
                 </p>
             </div>
             
             <div class="feature-card">
-                <span class="feature-icon">⚡</span>
-                <h3 class="feature-title">快速处理</h3>
+                <span class="feature-icon">🎓</span>
+                <h3 class="feature-title">演奏学习中心</h3>
                 <p class="feature-description">
-                    基于高效的算法和优化的代码架构，能够快速处理MIDI文件。
-                    支持多种音乐格式，兼容性强，处理速度快，让您的创作更加高效。
+                    内置丰富的钢琴学习资源，包含经典曲目的演奏指导、技巧讲解和示范演奏。
+                    通过可视化钢琴界面进行互动学习，让钢琴学习变得更加直观和有趣。
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <span class="feature-icon">⚙️</span>
+                <h3 class="feature-title">智能参数调节</h3>
+                <p class="feature-description">
+                    支持AI生成参数的精细调节，包括生成长度控制、时间区间截取等功能。
+                    用户可以根据具体需求定制化生成结果，确保每次生成都能满足个性化要求。
                 </p>
             </div>
         </div>
@@ -282,113 +628,97 @@
     
     <!-- 使用流程 -->
     <section class="workflow-section">
-        <h2 class="workflow-title">💡 使用流程</h2>
+        <h2 class="section-title">🚀 AI伴奏生成流程</h2>
         <div class="workflow-steps">
             <div class="workflow-step">
                 <div class="step-number">1</div>
-                <div class="step-content">
-                    <div class="step-title">上传MIDI文件</div>
-                    <div class="step-description">选择您的钢琴旋律MIDI文件上传到系统</div>
+                <div class="step-title">上传旋律文件</div>
+                <div class="step-description">
+                    拖拽或选择您的右手旋律MIDI文件<br>
                 </div>
             </div>
             
             <div class="workflow-step">
                 <div class="step-number">2</div>
-                <div class="step-content">
-                    <div class="step-title">智能分析</div>
-                    <div class="step-description">系统自动分析旋律的调性、节奏和和声进行</div>
+                <div class="step-title">选择生成参数</div>
+                <div class="step-description">
+                    选择生成伴奏的参数，包括<br>
+                    长度、时间区间截取等
                 </div>
             </div>
-            
             <div class="workflow-step">
                 <div class="step-number">3</div>
-                <div class="step-content">
-                    <div class="step-title">生成伴奏</div>
-                    <div class="step-description">运用音乐理论算法生成适合的左手伴奏</div>
+                <div class="step-title">AI智能分析</div>
+                <div class="step-description">
+                    深度学习模型自动分析旋律的<br>
+                    调性、节奏、和声走向等特征
                 </div>
             </div>
             
             <div class="workflow-step">
                 <div class="step-number">4</div>
-                <div class="step-content">
-                    <div class="step-title">导出作品</div>
-                    <div class="step-description">下载完整的MIDI文件或PDF乐谱，开始您的演奏</div>
+                <div class="step-title">生成左手伴奏</div>
+                <div class="step-description">
+                    基于音乐理论和风格特征<br>
+                    智能生成专业级左手伴奏
+                </div>
+            </div>
+            
+            <div class="workflow-step">
+                <div class="step-number">5</div>
+                <div class="step-title">完整作品输出</div>
+                <div class="step-description">
+                    自动合成双手完整MIDI文件<br>
+                    并生成对应的五线谱PDF
                 </div>
             </div>
         </div>
     </section>
     
-    <!-- 技术栈 -->
-    <section class="tech-section">
-        <h2 class="tech-title">🔧 技术特色</h2>
-        <div class="tech-grid">
-            <div class="tech-item">
-                <div class="tech-category">前端技术</div>
-                <div class="tech-details">HTML5 + CSS3 + JavaScript<br>响应式设计</div>
-            </div>
-            
-            <div class="tech-item">
-                <div class="tech-category">后端框架</div>
-                <div class="tech-details">Flask (Python)<br>高性能Web服务</div>
-            </div>
-            
-            <div class="tech-item">
-                <div class="tech-category">音频处理</div>
-                <div class="tech-details">Tone.js 音频引擎<br>实时音频合成</div>
-            </div>
-            
-            <div class="tech-item">
-                <div class="tech-category">动画效果</div>
-                <div class="tech-details">CSS3 变换<br>流畅过渡动画</div>
-            </div>
-            
-            <div class="tech-item">
-                <div class="tech-category">MIDI处理</div>
-                <div class="tech-details">专业音乐算法<br>智能和声分析</div>
-            </div>
-            
-            <div class="tech-item">
-                <div class="tech-category">乐谱生成</div>
-                <div class="tech-details">PDF导出<br>标准乐谱格式</div>
-            </div>
-        </div>
-    </section>
-    
     <!-- 适用人群 -->
-    <section style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 40px; border-radius: 15px; text-align: center; margin: 40px 0;">
-        <h2 style="margin-bottom: 30px; font-size: 1.8em;">🎯 适用人群</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-            <div style="padding: 20px;">
-                <div style="font-size: 2em; margin-bottom: 10px;">🎓</div>
-                <div style="font-weight: 600; margin-bottom: 5px;">音乐学习者</div>
-                <div style="opacity: 0.9;">学习钢琴伴奏技巧</div>
-            </div>
-            <div style="padding: 20px;">
-                <div style="font-size: 2em; margin-bottom: 10px;">🎵</div>
-                <div style="font-weight: 600; margin-bottom: 5px;">钢琴爱好者</div>
-                <div style="opacity: 0.9;">丰富演奏内容</div>
-            </div>
-            <div style="padding: 20px;">
-                <div style="font-size: 2em; margin-bottom: 10px;">🎼</div>
-                <div style="font-weight: 600; margin-bottom: 5px;">音乐创作者</div>
-                <div style="opacity: 0.9;">快速生成伴奏灵感</div>
-            </div>
-            <div style="padding: 20px;">
-                <div style="font-size: 2em; margin-bottom: 10px;">👨‍🏫</div>
-                <div style="font-weight: 600; margin-bottom: 5px;">音乐教师</div>
-                <div style="opacity: 0.9;">教学演示工具</div>
+    <section class="audience-section">
+        <div class="audience-content">
+            <h2 class="section-title" style="color: white; margin-bottom: 30px;">🎯 为您而创</h2>
+            <p style="font-size: 1.2em; margin-bottom: 40px; opacity: 0.95;">
+                无论您是音乐创作者、学习者还是爱好者，Auto Left Tune都能为您提供专业的音乐创作支持
+            </p>
+            
+            <div class="audience-grid">
+                <div class="audience-card">
+                    <div class="audience-icon">🎼</div>
+                    <div class="audience-title">音乐制作人</div>
+                    <div class="audience-desc">快速生成伴奏demo<br>提升创作效率</div>
+                </div>
+                
+                <div class="audience-card">
+                    <div class="audience-icon">🎓</div>
+                    <div class="audience-title">钢琴学习者</div>
+                    <div class="audience-desc">学习伴奏编配技巧<br>提升演奏水平</div>
+                </div>
+                
+                <div class="audience-card">
+                    <div class="audience-icon">🎵</div>
+                    <div class="audience-title">音乐爱好者</div>
+                    <div class="audience-desc">丰富个人演奏<br>享受音乐乐趣</div>
+                </div>
+                
+                <div class="audience-card">
+                    <div class="audience-icon">👨‍🏫</div>
+                    <div class="audience-title">音乐教师</div>
+                    <div class="audience-desc">教学演示工具<br>课堂互动利器</div>
+                </div>
             </div>
         </div>
     </section>
     
-    <!-- 版本信息 -->
-    <section style="text-align: center; padding: 40px 0; border-top: 1px solid #eee; margin-top: 40px; color: #666;">
-        <p style="font-size: 1.1em; margin-bottom: 10px;">
-            <strong>AutoLeftPiano</strong> - 让每个人都能演奏出美妙的钢琴伴奏
-        </p>
-        <p style="margin: 0; opacity: 0.8;">
-            版本: 1.0 | 开发平台: Python + Flask | 支持平台: Windows 10+, Ubuntu 20.04+
-        </p>
+    <!-- 版权信息 -->
+    <section class="footer-section">
+        <div class="footer-title">Auto Left Tune - 让AI为您的音乐插上翅膀</div>
+        <div class="footer-subtitle">开创钢琴伴奏自动生成的新时代</div>
+        <div class="footer-info">
+            版本 1.0 | 基于深度学习的序列到序列模型 | 支持Windows 10+ Ubuntu20.04+系统<br>
+            © 2025 Auto Left Tune. 创新改变音乐，技术成就梦想。
+        </div>
     </section>
 </div>
 {% endblock %} 
