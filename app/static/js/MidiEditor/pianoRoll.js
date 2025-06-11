@@ -908,6 +908,8 @@ function timeToX(timeInSeconds) {
     return timeInSeconds * timeScale;
 }
 
+let lastPlayheadX = null;
+
 function drawPlayheadLine(x, height) {
     ctx.save();
     ctx.strokeStyle = 'red';
@@ -919,27 +921,51 @@ function drawPlayheadLine(x, height) {
     ctx.restore();
 }
 
+// 只清除旧进度线影响的区域 + 重绘音符
+function eraseOldPlayhead(x, height) {
+    const lineWidth = 2;
+    const padding = 1;
+    const clearX = x - lineWidth / 2 - padding;
+    const clearWidth = lineWidth + 2 * padding;
+
+    ctx.clearRect(clearX, 0, clearWidth, height);
+
+    // 重新绘制这个竖条区域内的音符
+    for (const thisNote of allNotes.values()) {
+        if (!trackVisibility[thisNote.trackIndex]) continue;
+        const noteX = thisNote.x;
+        const noteRight = thisNote.x + thisNote.width;
+        if (noteRight >= clearX && noteX <= clearX + clearWidth) {
+            ctx.fillStyle = getColor(thisNote.trackIndex);
+            ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
+        }
+    }
+
+    // 绘制可见区域内的网格
+    ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
+}
+
 function animatePlayhead() {
     const currentTime = Tone.Transport.seconds;
     const scrollContainer = document.getElementById('canvasWrapper');
-
-    // 将播放进度换算为对应的 X 坐标（以 px 为单位）
-    const playheadX = timeToX(currentTime); // 你需要已有这个函数
     const centerX = canvas.width / 2;
+    const playheadX = timeToX(currentTime);
 
-    // 自动滚动视口，让当前播放位置对准 canvas 中心
-    // 只有在超过中间时才会向左滚动
     const scrollTarget = Math.max(0, playheadX - centerX);
     scrollContainer.scrollLeft = scrollTarget;
 
-    // 清空并重绘
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    renderVisibleNotes();
+    // 擦除上一次的进度线及其影响范围
+    if (lastPlayheadX !== null) {
+        eraseOldPlayhead(lastPlayheadX, canvas.height);
+    }
 
-    // 在画布中央绘制播放进度线
-    drawPlayheadLine(centerX, canvas.height);
+    const playheadScreenX = playheadX - scrollContainer.scrollLeft;
+    drawPlayheadLine(playheadScreenX, canvas.height);
+    lastPlayheadX = playheadScreenX;
 
-    // 循环动画
+    // // 高亮当前播放音符（如果你希望这样）
+    // highlightPlayingNotes(currentTime);
+
     if (currentTime < currentMidi.duration) {
         animatePlayhead.id = requestAnimationFrame(animatePlayhead);
     } else {
@@ -947,14 +973,14 @@ function animatePlayhead() {
         cancelAnimationFrame(animatePlayhead.id);
         onPlaybackEnd();
         redrawCanvas(currentMidi);
+        lastPlayheadX = null;
     }
 }
-
 
 // 使用时改进
 function highlightPlayingNotes(currentTime) {
     // 遍历所有音符，找出正在播放的音符并高亮显示
-    allNotes.forEach(thisNote => {
+    for (const thisNote of allNotes.values()) {
         if (trackVisibility[thisNote.trackIndex]) {
             if (thisNote.note.time <= currentTime && thisNote.note.time + thisNote.note.duration >= currentTime) {
                 ctx.clearRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
@@ -962,7 +988,7 @@ function highlightPlayingNotes(currentTime) {
                 ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
             }
         }
-    });
+    }
 }
 
 document.getElementById("exportBtn").addEventListener("click", () => {
