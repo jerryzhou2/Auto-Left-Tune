@@ -21,7 +21,11 @@ def contains_chinese(text):
     return match is not None
 
 @main.route('/')
-def index():
+def startup():
+    return render_template('startup.html')
+
+@main.route('/app')
+def main_app():
     return render_template('index.html')
 
 @main.route('/MidiEditor')

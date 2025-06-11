@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎使用 Auto Left Tune</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .startup-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-image: url("{{ url_for('static', filename='pic/background.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 75vh;
+        }
+
+        .startup-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+
+        .startup-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: white;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+
+
+        .get-started-btn {
+            /* background: linear-gradient(135deg, #697ed8 0%, #764ba2 100%); */
+            background: linear-gradient(135deg, #3c54bd 0%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .get-started-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .get-started-btn:active {
+            transform: translateY(-1px);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .floating-notes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .note {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 2rem;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-20px) rotate(180deg);
+                opacity: 0.3;
+            }
+        }
+
+        .note:nth-child(1) { top: 15%; left: 10%; animation-delay: 0s; }
+        .note:nth-child(2) { top: 25%; right: 15%; animation-delay: 1s; }
+        .note:nth-child(3) { bottom: 30%; left: 20%; animation-delay: 2s; }
+        .note:nth-child(4) { bottom: 20%; right: 10%; animation-delay: 3s; }
+        .note:nth-child(5) { top: 50%; left: 5%; animation-delay: 4s; }
+        .note:nth-child(6) { top: 40%; right: 8%; animation-delay: 5s; }
+    </style>
+</head>
+<body>
+    <div class="startup-container">
+        <div class="startup-overlay"></div>
+        
+        <!-- 浮动音符装饰 -->
+        <div class="floating-notes">
+            <div class="note">♪</div>
+            <div class="note">♫</div>
+            <div class="note">♬</div>
+            <div class="note">♭</div>
+            <div class="note">♯</div>
+            <div class="note">♩</div>
+        </div>
+        
+        <div class="startup-content">
+            <button class="get-started-btn" onclick="openMainApp()">Get Started</button>
+        </div>
+    </div>
+
+    <script>
+        function openMainApp() {
+            // 添加淡出效果
+            document.querySelector('.startup-container').style.transition = 'opacity 0.5s ease-out';
+            document.querySelector('.startup-container').style.opacity = '0';
+            
+            // 延迟跳转以显示淡出效果
+            setTimeout(() => {
+                // 使用location.assign替代location.href以确保可以回退
+                window.location.assign("{{ url_for('main.main_app') }}");
+            }, 500);
+        }
+
+        // 页面加载动画
+        window.addEventListener('load', function() {
+            document.body.style.opacity = '1';
+        });
+
+        // 确保浏览器回退正常工作
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                // 如果页面是从缓存中恢复的，重置透明度
+                document.querySelector('.startup-container').style.opacity = '1';
+                document.querySelector('.startup-container').style.transition = '';
+            }
+        });
+    </script>
+</body>
+</html> 

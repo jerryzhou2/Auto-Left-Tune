@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AutoLeftPiano{% endblock %}</title>
+    <title>{% block title %}Auto Left Tune{% endblock %}</title>
     
     <!-- 通用样式 -->
     <style>
@@ -141,10 +141,10 @@
     <!-- 导航栏 -->
     <nav class="navbar">
         <div class="navbar-content">
-            <a href="{{ url_for('main.index') }}" class="navbar-brand">AutoLeftPiano</a>
+            <a href="{{ url_for('main.main_app') }}" class="navbar-brand">Auto Left Tune</a>
             <ul class="navbar-nav">
                 <li>
-                    <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+                    <a href="{{ url_for('main.main_app') }}" class="nav-link {% if request.endpoint == 'main.main_app' %}active{% endif %}">
                         🏠 首页
                     </a>
                 </li>
