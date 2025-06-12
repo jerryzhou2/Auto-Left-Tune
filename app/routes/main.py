@@ -49,6 +49,10 @@ def upload_file():
     if file.filename == '':
         return jsonify({'error': '没有选择文件'}), 400
     
+    # 获取左手文件参数（可选）
+    left_hand_file = request.files.get('left_hand_file')
+    has_left_hand_file = left_hand_file and left_hand_file.filename != ''
+    
     # 获取时间区间参数（可选）
     start_time = request.form.get('start_time')
     end_time = request.form.get('end_time')
@@ -70,6 +74,14 @@ def upload_file():
     if contains_chinese(file.filename):
         return jsonify({'error': '文件名不能包含中文'}), 400
     
+    # 如果有左手文件，也检查左手文件名
+    if has_left_hand_file and contains_chinese(left_hand_file.filename):
+        return jsonify({'error': '左手文件名不能包含中文'}), 400
+    
+    # 验证左手文件格式
+    if has_left_hand_file and not (left_hand_file.filename.endswith('.mid') or left_hand_file.filename.endswith('.midi')):
+        return jsonify({'error': '左手文件必须是MIDI格式'}), 400
+    
     if file and file.filename.endswith('.mid'):
         # 生成会话ID并保存文件
         session_id = str(uuid.uuid4())
@@ -78,8 +90,18 @@ def upload_file():
         output_midi_path = os.path.join(Config.OUTPUT_FOLDER, f"{session_id}_output.mid")
         output_pdf_path = os.path.join(Config.OUTPUT_FOLDER, f"{session_id}_output.pdf")
         
+        # 左手文件路径（如果有的话）
+        left_input_path = None
+        if has_left_hand_file:
+            left_hand_filename = secure_filename(left_hand_file.filename)
+            left_input_path = os.path.join(Config.UPLOAD_FOLDER, f"{session_id}_left_{left_hand_filename}")
+        
         try:
             file.save(input_path)
+            
+            # 保存左手文件（如果有的话）
+            if has_left_hand_file:
+                left_hand_file.save(left_input_path)
             
             # 如果指定了时间区间，先截取文件
             process_input_path = input_path
@@ -90,10 +112,14 @@ def upload_file():
             
             # 处理MIDI文件
             print(f"开始处理MIDI文件: {process_input_path}，目标生成序列长度: {target_len}")
-            if not infer(process_input_path, output_midi_path, target_len=target_len):
+            if has_left_hand_file:
+                print(f"使用左手伴奏文件: {left_input_path}")
+            if not infer(right_input_path=process_input_path, output_path=output_midi_path, left_input_path=left_input_path,target_len=target_len):
                 # 清理已上传的文件
                 if os.path.exists(input_path):
                     os.remove(input_path)
+                if has_left_hand_file and os.path.exists(left_input_path):
+                    os.remove(left_input_path)
                 if has_time_interval and os.path.exists(process_input_path):
                     os.remove(process_input_path)
                 return jsonify({'error': 'MIDI处理失败，可能是文件格式不正确或模型加载失败'}), 500
@@ -102,6 +128,8 @@ def upload_file():
             if not os.path.exists(output_midi_path):
                 if os.path.exists(input_path):
                     os.remove(input_path)
+                if has_left_hand_file and os.path.exists(left_input_path):
+                    os.remove(left_input_path)
                 if has_time_interval and os.path.exists(process_input_path):
                     os.remove(process_input_path)
                 return jsonify({'error': 'MIDI处理失败，输出文件未生成'}), 500
@@ -120,6 +148,11 @@ def upload_file():
                         os.remove(temp_file)
                     except:
                         pass
+            if has_left_hand_file and os.path.exists(left_input_path):
+                try:
+                    os.remove(left_input_path)
+                except:
+                    pass
             if has_time_interval and os.path.exists(process_input_path):
                 try:
                     os.remove(process_input_path)
@@ -135,14 +168,25 @@ def upload_file():
             'output_pdf_path': output_pdf_path
         }
         
+        # 如果有左手文件，保存相关信息
+        if has_left_hand_file:
+            session_data['left_input_path'] = left_input_path
+            session_data['left_hand_filename'] = left_hand_filename
+        
         # 如果有时间区间，保存相关信息
         if has_time_interval:
             session_data['sliced_path'] = process_input_path
             session_data['start_time'] = start_time
             session_data['end_time'] = end_time
-            message = f'左手伴奏生成成功（时间区间：{start_time}-{end_time}，目标生成序列长度：{target_len}）'
+            if has_left_hand_file:
+                message = f'左手伴奏生成成功（使用左手伴奏文件，时间区间：{start_time}-{end_time}，目标生成序列长度：{target_len}）'
+            else:
+                message = f'左手伴奏生成成功（时间区间：{start_time}-{end_time}，目标生成序列长度：{target_len}）'
         else:
-            message = f'左手伴奏生成成功（目标生成序列长度：{target_len}）'
+            if has_left_hand_file:
+                message = f'左手伴奏生成成功（使用左手伴奏文件，目标生成序列长度：{target_len}）'
+            else:
+                message = f'左手伴奏生成成功（目标生成序列长度：{target_len}）'
         
         # 保存target_len到会话数据
         session_data['target_len'] = target_len

@@ -763,6 +763,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 左手伴奏模态框相关元素
+    const leftHandModal = document.getElementById('left-hand-modal');
+    const closeLeftHandModalBtn = document.getElementById('close-left-hand-modal');
+    const cancelLeftHandBtn = document.getElementById('cancel-left-hand-btn');
+    const confirmLeftHandBtn = document.getElementById('confirm-left-hand-btn');
+    const uploadLeftHandYesBtn = document.getElementById('upload-left-hand-yes');
+    const uploadLeftHandNoBtn = document.getElementById('upload-left-hand-no');
+    const leftHandUploadSection = document.getElementById('left-hand-upload-section');
+    const leftHandFileInput = document.getElementById('left-hand-file-input');
+    const selectLeftHandFileBtn = document.getElementById('select-left-hand-file-btn');
+    const selectedLeftHandFileText = document.getElementById('selected-left-hand-file');
+    const leftHandDropArea = document.getElementById('left-hand-drop-area');
+    const leftHandTargetLenInput = document.getElementById('left-hand-target-len');
+
     // 时间区间模态框相关元素
     const timeRangeModal = document.getElementById('time-range-modal');
     const closeTimeModal = document.getElementById('close-time-modal');
@@ -773,8 +787,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 存储待处理的文件
     let pendingFile = null;
+    let pendingLeftHandFile = null;
 
-    // 上传按钮点击处理 - 显示时间区间选择模态框
+    // 上传按钮点击处理 - 显示左手伴奏选择模态框
     uploadBtn.addEventListener('click', () => {
         let file;
         if (droppedFile) {
@@ -785,10 +800,233 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // 存储文件并显示模态框
+        // 存储文件并显示左手伴奏选择模态框
         pendingFile = file;
-        showTimeRangeModal();
+        showLeftHandModal();
     });
+
+    // 显示左手伴奏选择模态框
+    function showLeftHandModal() {
+        leftHandModal.style.display = 'block';
+        
+        // 重置状态
+        leftHandUploadSection.style.display = 'none';
+        confirmLeftHandBtn.style.display = 'none';
+        pendingLeftHandFile = null;
+        selectedLeftHandFileText.textContent = '未选择文件';
+        
+        // 重置按钮状态
+        uploadLeftHandYesBtn.className = 'btn btn-primary option-btn';
+        uploadLeftHandNoBtn.className = 'btn btn-secondary option-btn';
+    }
+
+    // 隐藏左手伴奏选择模态框
+    function hideLeftHandModal() {
+        leftHandModal.style.display = 'none';
+    }
+
+    // 左手伴奏模态框事件处理
+    if (closeLeftHandModalBtn) {
+        closeLeftHandModalBtn.addEventListener('click', hideLeftHandModal);
+    }
+    
+    if (cancelLeftHandBtn) {
+        cancelLeftHandBtn.addEventListener('click', hideLeftHandModal);
+    }
+    
+    // 选择"是"的按钮事件
+    if (uploadLeftHandYesBtn) {
+        uploadLeftHandYesBtn.addEventListener('click', () => {
+            uploadLeftHandYesBtn.className = 'btn btn-primary option-btn';
+            uploadLeftHandNoBtn.className = 'btn btn-secondary option-btn';
+            leftHandUploadSection.style.display = 'block';
+            confirmLeftHandBtn.style.display = 'none'; // 隐藏确认按钮，直到文件上传
+        });
+    }
+    
+    // 选择"否"的按钮事件
+    if (uploadLeftHandNoBtn) {
+        uploadLeftHandNoBtn.addEventListener('click', () => {
+            uploadLeftHandNoBtn.className = 'btn btn-primary option-btn';
+            uploadLeftHandYesBtn.className = 'btn btn-secondary option-btn';
+            leftHandUploadSection.style.display = 'none';
+            confirmLeftHandBtn.style.display = 'inline-block';
+            pendingLeftHandFile = null;
+        });
+    }
+    
+    // 左手文件选择按钮事件
+    if (selectLeftHandFileBtn) {
+        selectLeftHandFileBtn.addEventListener('click', () => {
+            leftHandFileInput.click();
+        });
+    }
+    
+    // 左手文件输入变化事件
+    if (leftHandFileInput) {
+        leftHandFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleLeftHandFileSelect(file);
+            }
+        });
+    }
+    
+    // 左手文件拖拽事件
+    if (leftHandDropArea) {
+        leftHandDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            leftHandDropArea.classList.add('dragover');
+        });
+        
+        leftHandDropArea.addEventListener('dragleave', () => {
+            leftHandDropArea.classList.remove('dragover');
+        });
+        
+        leftHandDropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            leftHandDropArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                handleLeftHandFileSelect(file);
+            }
+        });
+    }
+    
+    // 处理左手文件选择
+    function handleLeftHandFileSelect(file) {
+        if (file && (file.name.endsWith('.mid') || file.name.endsWith('.midi'))) {
+            pendingLeftHandFile = file;
+            selectedLeftHandFileText.textContent = `已选择: ${file.name}`;
+            selectedLeftHandFileText.style.color = '#2d5a27';
+            confirmLeftHandBtn.style.display = 'inline-block';
+        } else {
+            alert('请选择有效的MIDI文件 (.mid 或 .midi)');
+        }
+    }
+    
+    // 确认左手伴奏选择
+    if (confirmLeftHandBtn) {
+        confirmLeftHandBtn.addEventListener('click', () => {
+            // 验证target_len参数
+            const targetLen = parseInt(leftHandTargetLenInput.value);
+            
+            if (isNaN(targetLen) || targetLen < 100 || targetLen > 4000) {
+                alert('请输入有效的目标生成序列长度 (100-4000)');
+                leftHandTargetLenInput.focus();
+                return;
+            }
+            
+            // 根据选择进行处理
+            if (pendingLeftHandFile) {
+                // 有左手文件，处理完整文件（带左手伴奏）
+                hideLeftHandModal();
+                processFileWithLeftHand(pendingFile, pendingLeftHandFile, targetLen);
+            } else {
+                // 没有左手文件，跳转到原来的逻辑
+                hideLeftHandModal();
+                showTimeRangeModal();
+            }
+        });
+    }
+    
+    // 处理带左手伴奏的文件
+    function processFileWithLeftHand(rightHandFile, leftHandFile, targetLen) {
+        const formData = new FormData();
+        formData.append('file', rightHandFile);
+        formData.append('left_hand_file', leftHandFile);
+        formData.append('target_len', targetLen);
+
+        uploadBtn.disabled = true;
+        uploadProgress.style.width = '0%';
+        uploadStatus.textContent = `正在处理文件（使用左手伴奏）... (目标生成序列长度: ${targetLen})`;
+        uploadStatus.className = 'status';
+
+        // 显示加载动画和按钮效果
+        let loadingOverlay = null;
+        if (window.visualEnhancements) {
+            loadingOverlay = window.visualEnhancements.showLoadingAnimation();
+            window.visualEnhancements.triggerUploadButtonEffects();
+        }
+
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                uploadProgress.style.width = '100%';
+                return response.json();
+            })
+            .then(data => {
+                // 隐藏加载动画
+                if (loadingOverlay && window.visualEnhancements) {
+                    window.visualEnhancements.hideLoadingAnimation(loadingOverlay);
+                }
+                
+                if (data.success) {
+                    localStorage.setItem('midi_session_id', data.session_id);
+
+                    uploadStatus.textContent = data.message;
+                    uploadStatus.className = 'status status-success';
+
+                    document.getElementById('result-container').style.display = 'block';
+
+                    // 更新转换后的文件名显示
+                    document.getElementById('converted-midi-filename').textContent = data.converted_midi_name;
+                    document.getElementById('converted-pdf-filename').textContent = data.converted_pdf_name;
+
+                    // 启用所有功能按钮
+                    if (playConvertedMidiBtn) playConvertedMidiBtn.disabled = false;
+                    if (playOriginalMidiBtn) playOriginalMidiBtn.disabled = false;
+                    
+                    // 启用下载和查看按钮
+                    if (downloadMidiBtn) downloadMidiBtn.disabled = false;
+                    if (viewPdfBtn) viewPdfBtn.disabled = false;
+                    
+                    // 设置按钮点击事件
+                    if (downloadMidiBtn) downloadMidiBtn.onclick = () => downloadFile('midi', data.session_id);
+                    if (viewPdfBtn) viewPdfBtn.onclick = () => viewPdf(data.session_id);
+
+                    // 显示和启用原始PDF按钮
+                    if (viewOriginalPdfBtn) {
+                        viewOriginalPdfBtn.style.display = 'inline-block';
+                        viewOriginalPdfBtn.disabled = false;
+                        viewOriginalPdfBtn.onclick = () => viewOriginalPdf(data.session_id);
+                    }
+
+                    // 自动导出并显示原始MIDI文件的PDF
+                    exportOriginalPDF(data.session_id);
+                    
+                    // 获取处理后的MIDI文件并设置到播放器
+                    fetch(`/download/original-midi/${data.session_id}`)
+                        .then(response => response.blob())
+                        .then(blob => {
+                            processedMidiBlob = blob;
+                            midiStatus.textContent = '文件已处理完成，可以播放';
+                            midiStatus.className = 'status status-success';
+                            console.log('带左手伴奏的MIDI文件已准备播放');
+                        })
+                        .catch(error => {
+                            console.error('获取处理后的MIDI文件失败:', error);
+                        });
+                } else {
+                    uploadStatus.textContent = data.error || '上传失败';
+                    uploadStatus.className = 'status status-error';
+                    uploadBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                // 隐藏加载动画
+                if (loadingOverlay && window.visualEnhancements) {
+                    window.visualEnhancements.hideLoadingAnimation(loadingOverlay);
+                }
+                
+                console.error('Error:', error);
+                uploadStatus.textContent = '上传失败: ' + error.message;
+                uploadStatus.className = 'status status-error';
+                uploadBtn.disabled = false;
+            });
+    }
 
     // 显示时间区间选择模态框
     function showTimeRangeModal() {
@@ -1101,6 +1339,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     formatTimeInput(startTimeInput);
     formatTimeInput(endTimeInput);
+
+    // 左手模态框键盘快捷键支持
+    if (leftHandModal) {
+        leftHandModal.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideLeftHandModal();
+            } else if (e.key === 'Enter' && confirmLeftHandBtn.style.display !== 'none') {
+                confirmLeftHandBtn.click();
+            }
+        });
+    }
 
     // 键盘快捷键支持
     timeRangeModal.addEventListener('keydown', (e) => {

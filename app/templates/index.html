@@ -195,6 +195,59 @@
         </div>
     </div>
     
+    <!-- 左手伴奏选择模态框 -->
+    <div id="left-hand-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎹 左手伴奏设置</h3>
+                <span class="close-btn" id="close-left-hand-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px;">是否需要上传已有的部分左手伴奏？</p>
+                
+                <div class="left-hand-options">
+                    <button type="button" class="btn btn-primary option-btn" id="upload-left-hand-yes" style="margin-right: 15px;">
+                        ✅ 是，我有部分左手伴奏
+                    </button>
+                    <button type="button" class="btn btn-secondary option-btn" id="upload-left-hand-no">
+                        ❌ 否，完全重新生成
+                    </button>
+                </div>
+                
+                <!-- 左手文件上传区域（默认隐藏） -->
+                <div id="left-hand-upload-section" style="display: none; margin-top: 20px;">
+                    <div class="upload-section">
+                        <h4>📁 上传左手伴奏文件</h4>
+                        <div class="left-hand-upload-area" id="left-hand-drop-area">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">🎹</div>
+                            <p>将左手MIDI文件拖放到此处，或</p>
+                            <input type="file" id="left-hand-file-input" class="file-input" accept=".mid,.midi">
+                            <button class="btn btn-primary" id="select-left-hand-file-btn">📂 选择左手文件</button>
+                            <p id="selected-left-hand-file" style="margin-top: 10px; font-weight: 500;">未选择文件</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 生成参数设置 -->
+                    <div class="generation-params" style="margin-top: 20px;">
+                        <h4>🎼 生成参数设置</h4>
+                        <div class="param-input-group">
+                            <div class="param-input-item">
+                                <label for="left-hand-target-len">目标生成序列长度:</label>
+                                <input type="number" id="left-hand-target-len" min="100" max="4000" value="800" placeholder="800">
+                                <small>生成的音符事件数量 (100-4000，默认800)</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-buttons" style="margin-top: 20px;">
+                    <button class="btn btn-secondary" id="cancel-left-hand-btn">取消</button>
+                    <button class="btn btn-primary" id="confirm-left-hand-btn" style="display: none;">确认并处理</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 时间区间选择模态框 -->
     <div id="time-range-modal" class="modal" style="display: none;">
         <div class="modal-content">

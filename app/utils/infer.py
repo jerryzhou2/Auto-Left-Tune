@@ -23,11 +23,15 @@ def temperature_sample(logits, temperature=1.0):
     return token.item()
 
 @torch.no_grad()
-def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperature=1.0,target_len=800):
+def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperature=1.0,target_len=800,left_prefix=None):
     model.eval()
     memory = model.encoder(model.src_pos_encoder(model.src_embedding(src)))
-    ys = torch.tensor([[bos_id]], dtype=torch.long).to(src.device)
-    generated = []
+    if left_prefix is not None:
+        ys = torch.tensor([[bos_id] + left_prefix], dtype=torch.long).to(src.device)
+        generated = list(left_prefix)
+    else:
+        ys = torch.tensor([[bos_id]], dtype=torch.long).to(src.device)
+        generated = []
 
     for _ in range(max_len):
         if target_len is not None and len(generated) >= target_len:
@@ -45,9 +49,9 @@ def sample_generate(model, src, bos_id, eos_id, pad_id, max_len=8000, temperatur
             break
         generated.append(next_token)
 
-    return generated
+    return generated    
 @torch.no_grad()
-def infer(input_path,output_path,model_name='model1.pt',vocab_size=410,bos_id= 0,eos_id = 1,pad_id = 2,max_len = 4000,temperature = 0.9,target_len=800):
+def infer(right_input_path,output_path,left_input_path=None,model_name='model1.pt',vocab_size=410,bos_id= 0,eos_id = 1,pad_id = 2,max_len = 4000,temperature = 0.8,target_len=800):
     global my_dict
     global dict_list
     try:
@@ -76,7 +80,7 @@ def infer(input_path,output_path,model_name='model1.pt',vocab_size=410,bos_id= 0
 
         # ========== 2. 加载右手 MIDI ==========
         try:
-            midi_file = mido.MidiFile(input_path)
+            midi_file = mido.MidiFile(right_input_path)
             if len(midi_file.tracks) == 0:
                 print("错误: MIDI文件没有音轨")
                 return False
@@ -93,11 +97,18 @@ def infer(input_path,output_path,model_name='model1.pt',vocab_size=410,bos_id= 0
         except Exception as e:
             print(f"MIDI文件处理失败: {str(e)}")
             return False
+        # ========== 2. 加载左手 MIDI ==========
+        left_tokens=None
+        if left_input_path is not None:
+            lmidi_file = mido.MidiFile(left_input_path)
+            left_events = midi_to_event(lmidi_file.tracks[0])
+            left_tokens = event_to_num(left_events, mydict=my_dict)[:300]
+
+
 
         # ========== 3. 生成左手 ==========
         try:
-            generated_tokens = sample_generate(model, src_tensor, bos_id=bos_id, eos_id=eos_id,
-                                            pad_id=pad_id, max_len=max_len, temperature=temperature,target_len=target_len)
+            generated_tokens = sample_generate(model, src_tensor, bos_id=bos_id, eos_id=eos_id,pad_id=pad_id, max_len=max_len, temperature=temperature,target_len=target_len,left_prefix=left_tokens)
             print(f"左手生成成功，生成了 {len(generated_tokens)} 个音符事件")
         except Exception as e:
             print(f"左手生成失败: {str(e)}")

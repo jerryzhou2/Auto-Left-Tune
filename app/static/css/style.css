@@ -1517,3 +1517,112 @@ body::before {
         gap: 10px;
     }
 }
+
+/* 左手伴奏模态框样式 */
+.left-hand-options {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.left-hand-options .option-btn {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 50px;
+}
+
+#left-hand-upload-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 10px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+#left-hand-upload-section h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.left-hand-upload-area {
+    border: 2px dashed rgba(102, 126, 234, 0.4);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+}
+
+.left-hand-upload-area:hover {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+}
+
+.left-hand-upload-area.dragover {
+    border-color: var(--success-color);
+    background: rgba(78, 205, 196, 0.1);
+    transform: scale(1.02);
+}
+
+.left-hand-upload-area p {
+    margin: 10px 0;
+    color: #666;
+    font-size: 1.1em;
+}
+
+#selected-left-hand-file {
+    font-weight: 500;
+    padding: 8px 15px;
+    background: rgba(78, 205, 196, 0.1);
+    border-radius: 5px;
+    border: 1px solid rgba(78, 205, 196, 0.3);
+}
+
+/* 左手伴奏模态框按钮样式 */
+#left-hand-modal .modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 25px;
+}
+
+#left-hand-modal .modal-buttons .btn {
+    min-width: 120px;
+}
+
+/* 响应式设计 - 左手伴奏模态框 */
+@media (max-width: 768px) {
+    .left-hand-options {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .left-hand-options .option-btn {
+        min-width: 100%;
+        height: 45px;
+        font-size: 0.9em;
+    }
+    
+    .left-hand-upload-area {
+        padding: 20px;
+    }
+    
+    #left-hand-modal .modal-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    #left-hand-modal .modal-buttons .btn {
+        width: 100%;
+        min-width: auto;
+    }
+}
