@@ -38,6 +38,19 @@ export let trackVisibility = []; // 全局轨道可见性控制数组
 
 const canvas = document.getElementById("pianoRoll");
 const ctx = canvas.getContext("2d");
+
+const overlayCanvas = document.createElement("canvas");
+overlayCanvas.style.position = "absolute";
+overlayCanvas.style.top = "0";
+// 会导致从父容器的最左边开始绘制
+// overlayCanvas.style.left = "0";
+overlayCanvas.style.pointerEvents = "none"; // 🔒 不遮挡鼠标事件
+overlayCanvas.style.backgroundColor = "transparent"; // ⬅ 可省略，默认就是透明
+// 为父容器添加子元素，也即为canvas的兄弟元素
+canvas.parentNode.appendChild(overlayCanvas);
+overlayCanvas.style.zIndex = "100"; // 🔝 叠在上层
+const overlayCtx = overlayCanvas.getContext("2d");
+
 const noteHeight = 18;
 const timeScale = 200;
 const pitchBase = 21; // A0
@@ -51,6 +64,7 @@ let startX = 0;
 let startY = 0;
 
 canvas.height = noteHeight * visibleRange;
+overlayCanvas.height = canvas.height;
 
 const offscreenCanvas = document.createElement('canvas');
 const offCtx = offscreenCanvas.getContext('2d');
@@ -823,7 +837,16 @@ function updateTrackControls(midi) {
 const playPauseBtn = document.getElementById("playBtn");
 let hasScheduled = false;
 
+let isTransitioning = false;
+let parts = [];
 playPauseBtn.addEventListener("click", async () => {
+    if (isTransitioning) {
+        console.warn("播放键被锁定");
+        return;
+    }
+    isTransitioning = true;
+    setTimeout(() => isTransitioning = false, 100); // 防止短时间重复点击
+
     if (!currentMidi) {
         console.log("currentMidi not defined");
         return;
@@ -835,44 +858,71 @@ playPauseBtn.addEventListener("click", async () => {
 
         if (Tone.Transport.state === "stopped" || !hasScheduled || hasModified) {
             Tone.Transport.stop();
-            Tone.Transport.cancel();
+            Tone.Transport.cancel(); // 清除旧 scheduleOnce 调度
+
+            // 清除旧 Part 实例
+            clearParts();
+
             Tone.Transport.bpm.value = 120;
 
             let maxTime = 0;
 
             currentMidi.tracks.forEach((track, trackIndex) => {
                 if (!trackVisibility[trackIndex]) return;
-                track.notes.forEach(note => {
-                    Tone.Transport.scheduleOnce((time) => {
-                        synth.triggerAttackRelease(note.name, note.duration, time);
-                        setTimeout(() => {
-                            piano.triggerKeyByName(note.name, note.duration);
-                        }, 10);
-                    }, note.time);
-                    maxTime = Math.max(maxTime, note.time + note.duration);
-                });
+
+                const part = new Tone.Part((time, note) => {
+                    synth.triggerAttackRelease(note.name, note.duration, time);
+                    piano.triggerKeyByName(note.name, note.duration);
+                }, track.notes.map(n => [n.time, n]));
+
+                part.start(0); // 让所有 part 从 Transport 时间 0 开始
+                parts.push(part);
+
+                // 直接计算maxTime
+                if (track.notes.length > 0) {
+                    const lastNote = track.notes[track.notes.length - 1];
+                    maxTime = Math.max(maxTime, lastNote.time + lastNote.duration);
+                }
             });
 
-            hasScheduled = true;
-            await redrawCanvasAsync(currentMidi); // 等待绘图完成
+            // 可选方案
+            // currentMidi.tracks.forEach((track, trackIndex) => {
+            //     if (!trackVisibility[trackIndex]) return;
+            //     track.notes.forEach(note => {
+            //         Tone.Transport.scheduleOnce((time) => {
+            //             synth.triggerAttackRelease(note.name, note.duration, time);
+            //             // setTimeout(() => {
+            //             //     piano.triggerKeyByName(note.name, note.duration);
+            //             // }, 10);
+            //         }, note.time);
+            //         maxTime = Math.max(maxTime, note.time + note.duration);
+            //     });
+            // });
 
+            hasScheduled = true;
             Tone.Transport.start();
+
             if (Tone.Transport.state === 'started') {
                 requestAnimationFrame(animatePlayhead);
             }
 
-            // 播放结束后重置按钮状态
+            // 播放结束重置状态
             Tone.Transport.scheduleOnce(() => {
                 isPlaying = false;
                 playPauseBtn.textContent = "播放";
-                hasScheduled = false; // 允许再次调度
-            }, maxTime + 0.1); // 加一点偏移避免截断
+                hasScheduled = false;
 
-            hasModified = false; // 重置修改标记
+                // 释放资源
+                clearParts();
+            }, maxTime + 0.1);
+
+            hasModified = false;
 
         } else {
             // 继续播放
             Tone.Transport.start();
+            // // 恢复所有Part实例的播放
+            // parts.forEach(part => part.start());
             if (Tone.Transport.state === 'started') {
                 requestAnimationFrame(animatePlayhead);
             }
@@ -881,10 +931,20 @@ playPauseBtn.addEventListener("click", async () => {
     } else {
         // 暂停播放
         Tone.Transport.pause();
+        // 会彻底停止所有Part实例
+        // parts.forEach(part => part.stop());
         isPlaying = false;
         playPauseBtn.textContent = "播放";
     }
 });
+
+function clearParts() {
+    parts.forEach(p => {
+        p.stop();
+        p.dispose();
+    });
+    parts = [];
+}
 
 const globalReset = document.getElementById("resetBtn");
 
@@ -912,14 +972,14 @@ function timeToX(timeInSeconds) {
 let lastPlayheadX = null;
 
 function drawPlayheadLine(x, height) {
-    ctx.save();
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-    ctx.stroke();
-    ctx.restore();
+    overlayCtx.save();
+    overlayCtx.strokeStyle = 'red';
+    overlayCtx.lineWidth = 2;
+    overlayCtx.beginPath();
+    overlayCtx.moveTo(x, 0);
+    overlayCtx.lineTo(x, height);
+    overlayCtx.stroke();
+    overlayCtx.restore();
 }
 
 // 只清除旧进度线影响的区域 + 重绘音符
@@ -929,21 +989,7 @@ function eraseOldPlayhead(x, height) {
     const clearX = x - lineWidth / 2 - padding;
     const clearWidth = lineWidth + 2 * padding;
 
-    ctx.clearRect(clearX, 0, clearWidth, height);
-
-    // 重新绘制这个竖条区域内的音符
-    for (const thisNote of allNotes.values()) {
-        if (!trackVisibility[thisNote.trackIndex]) continue;
-        const noteX = thisNote.x;
-        const noteRight = thisNote.x + thisNote.width;
-        if (noteRight >= clearX && noteX <= clearX + clearWidth) {
-            ctx.fillStyle = getColor(thisNote.trackIndex);
-            ctx.fillRect(thisNote.x, thisNote.y, thisNote.width, thisNote.height);
-        }
-    }
-
-    // 绘制可见区域内的网格
-    ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
+    overlayCtx.clearRect(clearX, 0, clearWidth, height);
 }
 
 function animatePlayhead() {
@@ -957,10 +1003,12 @@ function animatePlayhead() {
 
     // 擦除上一次的进度线及其影响范围
     if (lastPlayheadX !== null) {
+        // 在分层画布上擦除
         eraseOldPlayhead(lastPlayheadX, canvas.height);
     }
 
     const playheadScreenX = playheadX - scrollContainer.scrollLeft;
+    // 在分层画布上绘制
     drawPlayheadLine(playheadScreenX, canvas.height);
     lastPlayheadX = playheadScreenX;
 
@@ -973,7 +1021,8 @@ function animatePlayhead() {
         Tone.Transport.stop();
         cancelAnimationFrame(animatePlayhead.id);
         onPlaybackEnd();
-        redrawCanvas(currentMidi);
+        // 不需要再重绘画布，删除最后一帧的进度线即可
+        eraseOldPlayhead(lastPlayheadX, canvas.height);
         lastPlayheadX = null;
     }
 }
@@ -1119,6 +1168,7 @@ function drawPianoRoll(midi) {
     // 计算需要的canvas宽度（例如：1秒 = 150像素）
     const canvasWidth = maxTime * timeScale + 3000;     // 留一些富余的位置
     canvas.width = canvasWidth;
+    overlayCanvas.width = canvasWidth;
 
     offscreenCanvas.width = canvas.width;
     // 极其关键！！！
@@ -1409,7 +1459,14 @@ historyList.addEventListener('mousedown', () => {
 function handleDelete(entry) {
     console.log("Delete choosed history !");
     const index = historyManager.history.findIndex(_entry => _entry === entry);
+    if (index == historyManager.history.length - 1) {
+        alert("无法删除当前位置");
+        console.log(historyManager.history);
+        console.log(`pointer = ${historyManager.pointer}`);
+        return;
+    }
     historyManager.history.splice(index, 1);
+    historyManager.pointer = historyManager.history.length - 1;
     updateHistoryList(historyManager);
 }
 
