@@ -23,10 +23,25 @@ class DemoMidiPlayer {
         this.lastPlayedTime = 0;
         this.playbackSpeed = 1;
         
+        // 左右手音量控制配置 - 从全局配置获取
+        this.leftHandVolumeRatio = window.midiPlayerConfig ? 
+            window.midiPlayerConfig.getLeftHandVolumeRatio() : 0.8;
+        
         this.currentFileId = null;
         this.isConvertedFile = false;
         
         this.checkMidiLibrary();
+        
+        // 监听配置变化事件
+        document.addEventListener('midi-config-change', (e) => {
+            const config = e.detail.config;
+            if (config.leftHandVolumeRatio !== undefined) {
+                this.leftHandVolumeRatio = config.leftHandVolumeRatio;
+                if (this.debug) {
+                    console.log(`演奏示例播放器已更新左手音量比例: ${(this.leftHandVolumeRatio * 100).toFixed(0)}%`);
+                }
+            }
+        });
     }
 
     // 检查Midi库是否可用
@@ -344,6 +359,14 @@ class DemoMidiPlayer {
             // 获取左右手信息
             const hand = note.hand || 'unknown';
             
+            // 根据左右手调整音量
+            if (hand === 'left') {
+                velocity = velocity * this.leftHandVolumeRatio;
+                if (this.debug) {
+                    console.log(`左手音符音量调整: ${noteName}, 原始力度: ${note.velocity || 0.7}, 调整后力度: ${velocity} (${(this.leftHandVolumeRatio * 100).toFixed(0)}%)`);
+                }
+            }
+            
             if (this.debug) {
                 console.log(`播放音符: ${noteName}, 手部: ${hand}, 轨道: ${note.trackIndex}, 持续时间: ${duration}, 力度: ${velocity}`);
             }
@@ -593,6 +616,19 @@ class DemoMidiPlayer {
             container.style.display = 'none';
             demoListView.style.display = 'block';
         }
+    }
+
+    // 设置左手音量比例
+    setLeftHandVolumeRatio(ratio) {
+        this.leftHandVolumeRatio = Math.max(0, Math.min(1, ratio));
+        if (this.debug) {
+            console.log(`设置左手音量比例为: ${(this.leftHandVolumeRatio * 100).toFixed(0)}%`);
+        }
+    }
+
+    // 获取左手音量比例
+    getLeftHandVolumeRatio() {
+        return this.leftHandVolumeRatio;
     }
 }
 

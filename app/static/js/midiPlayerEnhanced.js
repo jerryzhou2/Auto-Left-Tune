@@ -8,6 +8,7 @@ class MidiPlayerEnhanced {
         this.isDragging = false;
         this.isVolumeOpen = false;
         this.isSpeedOpen = false;
+        this.isHandVolumeOpen = false; // 左右手音量面板状态
         this.pauseProgressUpdates = false; // 控制是否暂停进度更新
         
         // 添加节流相关属性
@@ -42,6 +43,13 @@ class MidiPlayerEnhanced {
         this.speedPanel = document.getElementById('speed-panel');
         this.speedOptions = document.querySelectorAll('.speed-option');
         
+        // 左右手音量控制相关元素
+        this.handVolumeBtn = document.getElementById('hand-volume-btn');
+        this.handVolumePanel = document.getElementById('hand-volume-panel');
+        this.leftHandVolumeSlider = document.getElementById('left-hand-volume-slider');
+        this.leftHandVolumeValue = document.getElementById('left-hand-volume-value');
+        this.resetHandVolumeBtn = document.getElementById('reset-hand-volume-btn');
+        
         // 时间显示元素
         this.currentTimeDisplay = document.getElementById('current-time');
         this.totalTimeDisplay = document.getElementById('total-time');
@@ -51,6 +59,7 @@ class MidiPlayerEnhanced {
         this.bindProgressEvents();
         this.bindVolumeEvents();
         this.bindSpeedEvents();
+        this.bindHandVolumeEvents();
         this.bindDocumentEvents();
     }
     
@@ -167,6 +176,36 @@ class MidiPlayerEnhanced {
         });
     }
     
+    // 左右手音量控制事件绑定
+    bindHandVolumeEvents() {
+        if (!this.handVolumeBtn || !this.handVolumePanel) return;
+        
+        // 左右手音量按钮点击
+        this.handVolumeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleHandVolumePanel();
+        });
+        
+        // 左手音量滑块变化
+        this.leftHandVolumeSlider.addEventListener('input', (e) => {
+            this.handleLeftHandVolumeChange(e.target.value);
+        });
+        
+        // 重置按钮点击
+        this.resetHandVolumeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.resetHandVolumeToDefault();
+        });
+        
+        // 阻止面板点击事件冒泡
+        this.handVolumePanel.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // 初始化左手音量显示
+        this.initHandVolumeDisplay();
+    }
+
     // 文档事件绑定
     bindDocumentEvents() {
         // 点击其他地方关闭面板
@@ -483,6 +522,7 @@ class MidiPlayerEnhanced {
     closeAllPanels() {
         this.closeVolumePanel();
         this.closeSpeedPanel();
+        this.closeHandVolumePanel();
     }
     
     // 更新播放进度（供外部调用）
@@ -544,6 +584,64 @@ class MidiPlayerEnhanced {
             this.totalTimeDisplay.textContent = '00:00';
         }
         this.closeAllPanels();
+    }
+
+    // 初始化左右手音量显示
+    initHandVolumeDisplay() {
+        if (window.midiPlayerConfig && this.leftHandVolumeSlider && this.leftHandVolumeValue) {
+            const currentRatio = window.midiPlayerConfig.getLeftHandVolumeRatioPercent();
+            this.leftHandVolumeSlider.value = currentRatio;
+            this.leftHandVolumeValue.textContent = `${currentRatio}%`;
+        }
+    }
+
+    // 切换左右手音量面板
+    toggleHandVolumePanel() {
+        this.isHandVolumeOpen = !this.isHandVolumeOpen;
+        
+        if (this.isHandVolumeOpen) {
+            this.handVolumePanel.classList.remove('hidden');
+            // 关闭其他面板
+            this.closeVolumePanel();
+            this.closeSpeedPanel();
+        } else {
+            this.handVolumePanel.classList.add('hidden');
+        }
+    }
+
+    // 处理左手音量变化
+    handleLeftHandVolumeChange(value) {
+        const percent = parseInt(value);
+        this.leftHandVolumeValue.textContent = `${percent}%`;
+        
+        // 更新全局配置
+        if (window.midiPlayerConfig) {
+            window.midiPlayerConfig.setLeftHandVolumeRatioFromPercent(percent);
+        }
+        
+        console.log(`左手音量比例设置为: ${percent}%`);
+    }
+
+    // 重置左手音量为默认值
+    resetHandVolumeToDefault() {
+        const defaultPercent = 80;
+        this.leftHandVolumeSlider.value = defaultPercent;
+        this.leftHandVolumeValue.textContent = `${defaultPercent}%`;
+        
+        // 更新全局配置
+        if (window.midiPlayerConfig) {
+            window.midiPlayerConfig.setLeftHandVolumeRatioFromPercent(defaultPercent);
+        }
+        
+        console.log('左手音量比例已重置为默认值: 80%');
+    }
+
+    // 关闭左右手音量面板
+    closeHandVolumePanel() {
+        this.isHandVolumeOpen = false;
+        if (this.handVolumePanel) {
+            this.handVolumePanel.classList.add('hidden');
+        }
     }
 }
 
