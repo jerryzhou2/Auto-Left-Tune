@@ -391,6 +391,7 @@ canvas.addEventListener('contextmenu', (e) => {
 
         // 给历史记录按键一同隐藏
         const contextMenu = document.getElementById('history-context-menu');
+        contextMenu.classList.remove('show');
         contextMenu.style.display = 'none';
 
         return; // 没有选中音符
@@ -1372,14 +1373,24 @@ historyList.addEventListener('contextmenu', (e) => {
     const contextMenu = document.getElementById('history-context-menu');
     if (contextMenu) {
         // 定位：基于鼠标位置显示
+        contextMenu.classList.add('show');
         contextMenu.style.top = `${e.pageY}px`;
         contextMenu.style.left = `${e.pageX}px`;
-        contextMenu.style.display = 'block';
+        contextMenu.style.display = 'flex';
 
         // 绑定按键逻辑（如删除该历史记录、还原历史记录等）
         const deleteHistoryBtn = contextMenu.querySelector('#delete-history');
         deleteHistoryBtn?.addEventListener('click', () => {
             handleDelete(historyEntry);
+            contextMenu.classList.remove('show');
+            contextMenu.style.display = 'none';
+        });
+
+        // 绑定按键逻辑（如删除该历史记录、还原历史记录等）
+        const restoreHistoryBtn = contextMenu.querySelector('#restore-history');
+        restoreHistoryBtn?.addEventListener('click', () => {
+            handleRestore(historyEntry);
+            contextMenu.classList.remove('show');
             contextMenu.style.display = 'none';
         });
     }
@@ -1391,6 +1402,7 @@ historyList.addEventListener('contextmenu', (e) => {
 
 historyList.addEventListener('mousedown', () => {
     const contextMenu = document.getElementById('history-context-menu');
+    contextMenu.classList.remove('show');
     contextMenu.style.display = 'none';
 })
 
@@ -1410,3 +1422,13 @@ const restoreSavePointBtn = document.getElementById("restoreSavePointBtn");
 restoreSavePointBtn.addEventListener('click', () => {
     historyManager.restoreToSavePoint();
 });
+
+function handleRestore(entry) {
+    const index = historyManager.history.findIndex(_entry => _entry === entry);
+    const flag = historyManager.restoreToHistory(index);
+    if (!flag) {
+        alert("还原历史记录失败");
+    }
+    historyManager.history.splice(index, 1);
+    updateHistoryList(historyManager);
+}

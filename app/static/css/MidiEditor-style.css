@@ -602,31 +602,39 @@ button {
 
 #history-context-menu {
     display: none;
+    /* 保持初始隐藏 */
     position: absolute;
-    /* ✅ 必须添加这一行 */
     z-index: 9999;
-    /* 防止被其他元素遮住 */
-    gap: 0.5rem;
-    padding: 1rem;
+    padding: 0.5rem;
     background-color: #ffffff;
     border: 1px solid #e5e7eb;
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     max-width: 200px;
     font-family: 'Segoe UI', sans-serif;
 }
 
-/* 通用按钮样式 */
-#history-context-menu button {
-    padding: 0.5rem 1rem;
-    font-weight: 600;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+/* 使用辅助类设置垂直布局 */
+#history-context-menu.show {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-/* 删除按钮样式（红色） */
+/* 通用按钮样式 */
+#history-context-menu button {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    text-align: center;
+}
+
+/* 删除按钮样式 */
 #delete-history {
     background-color: #ef4444;
     color: white;
@@ -635,4 +643,24 @@ button {
 #delete-history:hover {
     background-color: #dc2626;
     transform: scale(1.02);
+}
+
+/* 恢复按钮样式 */
+#restore-history {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#restore-history:hover {
+    background-color: #45a049;
+    transform: scale(1.02);
+}
+
+#restore-history:active {
+    transform: scale(0.97);
+}
+
+#restore-history:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
 }

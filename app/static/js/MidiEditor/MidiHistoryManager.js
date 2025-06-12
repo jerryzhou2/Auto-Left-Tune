@@ -245,6 +245,32 @@ export class MidiHistoryManager {
         this._trigger(this.EVENTS.CHANGE, this.getStatus());
     }
 
+    restoreToHistory(index) {
+        if (index < 0) {
+            console.warn("Cannot find aimed history");
+            return;
+        }
+        console.log(`Restore ${this.pointer} to corresponding history, index = ${index}`);
+
+        if (index >= this.pointer) {
+            console.warn("只能还原到历史");
+            return;
+        }
+
+        try {
+            // 撤销/重做操作直到到达保存点
+            while (this.pointer > index) {
+                this.undo();
+            }
+
+            this._trigger(this.EVENTS.CHANGE, this.getStatus());
+            return true;
+        } catch (error) {
+            console.error("还原到历史记录失败:", error);
+            return false;
+        }
+    }
+
     // 恢复到最近的保存点
     restoreToSavePoint() {
         if (this.savePoints.size === 0) {
@@ -315,11 +341,15 @@ export class MidiHistoryManager {
     undo() {
         if (this.pointer < 0 || this.history.length === 0) {
             console.warn(`undo操作异常, pointer = ${this.pointer}, history.length = ${this.history.length}`);
+            // 重置指针到有效位置
+            this.pointer = Math.max(0, this.pointer);
             return false;
         }
 
+        console.log("Undo triggered!");
+        console.log(`Undo! pointer = ${this.pointer}`);
+
         try {
-            console.log("Undo triggered!");
             const entry = this.history[this.pointer];
 
             this._applyChanges(entry.changes.reverse(), 'undo');        // reverse确保撤销按照正确顺序回滚
@@ -431,7 +461,10 @@ export class MidiHistoryManager {
     // 应用添加操作
     _applyAdd(change, direction) {
         const track = this.currentMidi.tracks[change.trackIndex];
-        if (!track) return;
+        if (!track) {
+            console.warn("Track not found");
+            return;
+        }
 
         console.log("Apply add invoked.");
 
