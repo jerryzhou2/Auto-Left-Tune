@@ -1,7 +1,6 @@
 import SampleLibrary from '../lib/ToneInstruments.js';
 import Piano from '/static/js/MidiEditor/piano.js';
 import { MidiHistoryManager } from './MidiHistoryManager.js';
-import sheetMusicRenderer from './sheetMusic.js';
 
 const piano = new Piano();
 // 页面加载完成后初始化钢琴
@@ -16,8 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
             historyManager.handleShortcut(event);
         }
     });
-
-    // initScrollHandlers();
 });
 
 let midiData = null;
@@ -40,16 +37,19 @@ const canvas = document.getElementById("pianoRoll");
 const ctx = canvas.getContext("2d");
 
 const overlayCanvas = document.createElement("canvas");
+// 会导致从父容器的最左边开始绘制，还有画布覆盖问题
 overlayCanvas.style.position = "absolute";
 overlayCanvas.style.top = "0";
-// 会导致从父容器的最左边开始绘制
-// overlayCanvas.style.left = "0";
+overlayCanvas.style.left = "0";
 overlayCanvas.style.pointerEvents = "none"; // 🔒 不遮挡鼠标事件
 overlayCanvas.style.backgroundColor = "transparent"; // ⬅ 可省略，默认就是透明
 // 为父容器添加子元素，也即为canvas的兄弟元素
 canvas.parentNode.appendChild(overlayCanvas);
+// canvas.parentNode.insertBefore(overlayCanvas, canvas.nextSibling);
 overlayCanvas.style.zIndex = "100"; // 🔝 叠在上层
 const overlayCtx = overlayCanvas.getContext("2d");
+// overlayCanvas.style.border = "2px solid red";
+overlayCanvas.style.minWidth = "3000px";
 
 const noteHeight = 18;
 const timeScale = 200;
@@ -123,6 +123,12 @@ const resetBtn = document.getElementById('reset-add');
 
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
+
+
+document.getElementById("canvasWrapper").addEventListener("scroll", (e) => {
+    const scrollLeft = e.target.scrollLeft;
+    overlayCanvas.style.transform = `translateX(${-scrollLeft}px)`;
+});
 
 // 捕获未处理的异常
 window.addEventListener('error', (error) => {
@@ -770,10 +776,6 @@ document.getElementById("midiFileInput").addEventListener("change", async (e) =>
     // 初始化历史管理器
     historyManager = new MidiHistoryManager(currentMidi, allNotes, trackVisibility);
     initHistoryUI();
-
-    // // 渲染五线谱
-    // console.log("Begin to render midi");
-    // sheetMusicRenderer.renderMidi(midiData);
 });
 
 // 新增：初始化历史记录UI的函数
@@ -980,6 +982,7 @@ function drawPlayheadLine(x, height) {
     overlayCtx.lineTo(x, height);
     overlayCtx.stroke();
     overlayCtx.restore();
+    console.log("Draw play line");
 }
 
 // 只清除旧进度线影响的区域 + 重绘音符
@@ -1173,6 +1176,8 @@ function drawPianoRoll(midi) {
     offscreenCanvas.width = canvas.width;
     // 极其关键！！！
     canvas.style.width = canvasWidth + "px";
+    overlayCanvas.style.width = canvasWidth + "px";
+    overlayCanvas.style.height = canvas.style.height;
     offCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height); // 白色背景
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1392,14 +1397,6 @@ function formatTimeAgo(timestamp) {
         return `${Math.floor(diff / (60 * 60 * 1000))}小时前`;
     }
 }
-
-// 添加窗口大小改变事件监听器
-window.addEventListener('resize', () => {
-    if (currentMidi) {
-        console.log("Renderer resizes");
-        sheetMusicRenderer.resize();
-    }
-});
 
 // 找到历史记录列表容器
 const historyList = document.getElementById('historyList');

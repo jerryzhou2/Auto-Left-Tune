@@ -243,12 +243,15 @@ class Piano {
         console.log("Turn to end state.");
         this.recordBegin();
         toggleButton.textContent = '结束记录';
+        toggleButton.style.background = 'red';  // 设置背景为红色
+        toggleButton.style.color = 'white';          // 可选：让文字更清晰
         isRecording = true;
       } else {
         // 结束记录并生成MIDI
         console.log("Turn to begin state.");
         await this.generateMidiFromStorage();
         toggleButton.textContent = '开始记录';
+        toggleButton.style.background = 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)';
         isRecording = false;
       }
     });
@@ -407,21 +410,21 @@ class Piano {
   // 创建钢琴卷帘窗容器
   createPianoRollContainer() {
     console.log('开始创建钢琴卷帘窗容器');
-    
+
     // 将卷帘窗容器添加到body，而不是pianoKeyWrap
     let rollContainer = document.getElementById('piano-roll-container');
     if (rollContainer) {
       rollContainer.remove(); // 如果已存在，先移除
     }
-    
+
     // 创建空的卷帘窗容器
     rollContainer = document.createElement('div');
     rollContainer.className = 'piano-roll-container';
     rollContainer.id = 'piano-roll-container';
-    
+
     // 容器为空，矩形条将在按键时动态创建
     document.body.appendChild(rollContainer);
-    
+
     console.log('钢琴卷帘窗容器已创建并添加到body');
   }
 
@@ -512,12 +515,12 @@ class Piano {
 
     const keyName = key.getAttribute('data-name');
     const keyCode = key.getAttribute('data-keycode');
-    
+
     // 同时更新左右手按键显示框
     if (hand === 'left' || hand === 'right') {
       this.addHandKeyDisplay(keyName, hand, 300);
     }
-    
+
     // 检查卷帘窗容器是否存在
     let rollContainer = document.getElementById('piano-roll-container');
     if (!rollContainer) return;
@@ -525,11 +528,11 @@ class Piano {
     // 为每次按键创建一个新的临时矩形条
     const rollStrip = document.createElement('div');
     rollStrip.className = 'piano-roll-strip';
-    
+
     // 判断按键类型并添加对应样式
     const keyType = key.classList.contains('wkey') ? 'white-key' : 'black-key';
     rollStrip.classList.add(keyType);
-    
+
     // 根据左右手添加对应的样式类
     if (hand === 'left') {
       rollStrip.classList.add('left-hand');
@@ -538,7 +541,7 @@ class Piano {
     } else {
       rollStrip.classList.add('unknown-hand');
     }
-    
+
     // 设置矩形条属性
     rollStrip.setAttribute('data-name', keyName);
     rollStrip.setAttribute('data-keycode', keyCode);
@@ -546,7 +549,7 @@ class Piano {
 
     // 获取钢琴键在视口中的绝对位置
     const keyRect = key.getBoundingClientRect();
-    
+
     // 设置矩形条的初始位置和尺寸
     rollStrip.style.position = 'absolute';
     rollStrip.style.left = `${keyRect.left}px`;
@@ -555,18 +558,18 @@ class Piano {
     rollStrip.style.height = '25px';
     rollStrip.style.opacity = '0';
     rollStrip.style.transform = 'translateY(0)';
-    
+
     // 将矩形条添加到容器中
     rollContainer.appendChild(rollStrip);
 
     // 强制重排以确保样式应用
     rollStrip.offsetHeight;
-    
+
     // 添加激活类开始动画
     rollStrip.classList.add('active');
-    
+
     console.log(`创建${hand}手矩形条: ${keyName}, 类名: ${rollStrip.className}`);
-    
+
     // 动画结束后移除这个临时矩形条
     setTimeout(() => {
       if (rollStrip && rollStrip.parentNode) {
@@ -872,15 +875,15 @@ class Piano {
     if (!noteName || !hand) return;
 
     // 确保DOM元素存在
-    const handContainer = hand === 'left' ? 
-      document.getElementById('leftHandKeysList') : 
+    const handContainer = hand === 'left' ?
+      document.getElementById('leftHandKeysList') :
       document.getElementById('rightHandKeysList');
-    
+
     if (!handContainer) return;
 
     // 查找是否已存在相同按键的显示
     let keyItem = handContainer.querySelector(`.key-item[data-note="${noteName}"]`);
-    
+
     if (!keyItem) {
       // 创建新的按键显示项
       keyItem = document.createElement('div');
@@ -903,7 +906,7 @@ class Piano {
     // 设置定时器移除激活状态
     setTimeout(() => {
       keyItem.classList.remove('active');
-      
+
       // 如果按键不再被按下，从集合中移除并删除DOM元素
       setTimeout(() => {
         if (hand === 'left') {
@@ -911,7 +914,7 @@ class Piano {
         } else {
           this.currentRightHandKeys.delete(noteName);
         }
-        
+
         // 移除不活跃的按键显示
         if (!keyItem.classList.contains('active') && keyItem.parentNode) {
           keyItem.parentNode.removeChild(keyItem);
@@ -924,16 +927,16 @@ class Piano {
   removeHandKeyDisplay(noteName, hand) {
     if (!noteName || !hand) return;
 
-    const handContainer = hand === 'left' ? 
-      document.getElementById('leftHandKeysList') : 
+    const handContainer = hand === 'left' ?
+      document.getElementById('leftHandKeysList') :
       document.getElementById('rightHandKeysList');
-    
+
     if (!handContainer) return;
 
     const keyItem = handContainer.querySelector(`.key-item[data-note="${noteName}"]`);
     if (keyItem) {
       keyItem.classList.remove('active');
-      
+
       // 从集合中移除
       if (hand === 'left') {
         this.currentLeftHandKeys.delete(noteName);
@@ -959,7 +962,7 @@ class Piano {
       }
       this.currentLeftHandKeys.clear();
     }
-    
+
     if (!hand || hand === 'right') {
       const rightContainer = document.getElementById('rightHandKeysList');
       if (rightContainer) {

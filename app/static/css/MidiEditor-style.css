@@ -31,6 +31,7 @@ canvas {
     bottom: 0;
     min-width: 3000px;
     flex-shrink: 0;
+    position: absolute;
 }
 
 #canvasContainer {
@@ -52,6 +53,7 @@ canvas {
     flex: 1;
     bottom: 0;
     flex-shrink: 0;
+    position: relative;
 }
 
 #sidebar {
