@@ -1,8 +1,8 @@
 import SampleLibrary from '../lib/ToneInstruments.js';
 import Piano from '/static/js/MidiEditor/piano.js';
 import { MidiHistoryManager } from './MidiHistoryManager.js';
-import { locate, yToPitch, pitchToY, buildNoteIndex, spatialIndex } from './mapAndLocate.js';
-import { allNotes, noteInTrackMap, noteToIndexMap } from './hashTable.js';
+import { locate, buildNoteIndex, removeNoteFromSpatialIndex, addNoteToSpatialIndex } from './mapAndLocate.js';
+import { allNotes, noteInTrackMap, noteToIndexMap, spatialIndex } from './hashTable.js';
 
 const piano = new Piano();
 // 页面加载完成后初始化钢琴
@@ -78,7 +78,7 @@ let choosedNote = null;      // 被选中的音符下标
 let initDurationValue = -1; // 初始化值为选中音符的持续时间
 let durationInput = -1;
 let initWidth = -1;
-const tolerance = 3;
+const tolerance = 3.5;
 
 // 滚动相关变量
 let scrollX = 0;
@@ -284,8 +284,8 @@ confirmBtn.addEventListener('click', () => {
         allNotes.set(key, noteObj);  // 存入哈希表 
         noteInTrackMap.set(key, newNote);
         // 如何优化？
-        const idx = track.notes.findIndex(note === newNote);
-        noteToIndexMap.set(newNote, { trackIndex, idx });
+        const idx = track.notes.findIndex(note => note === newNote);
+        noteToIndexMap.set(key, { trackIndex, idx });
     }
     else {
         alert("请确保输入的时间、持续时间和音符名称有效！");
@@ -455,7 +455,8 @@ confirmTime.addEventListener('click', () => {
     if (!isNaN(newTime)) {
         const track = currentMidi.tracks[choosedNote.trackIndex];
         // const noteInTrack = track.notes.find(note => note === choosedNote.note);
-        const noteIndex = noteToIndexMap.get(choosedNote.note).idx;
+        const key = `${choosedNote.trackIndex}-${choosedNote.note.time}-${choosedNote.note.midi}`;
+        const noteIndex = noteToIndexMap.get(key).idx;
         const noteInTrack = track.notes[noteIndex];
 
         // 修改choosedNote之前进行保存
@@ -512,11 +513,14 @@ deleteBtn.addEventListener('click', (e) => {
 
     const track = currentMidi.tracks[choosedNote.trackIndex];
     // const noteIndex = track.notes.findIndex(n => n === choosedNote.note);
-    const noteIndex = noteToIndexMap.get(choosedNote.note).idx;
+    const key = `${choosedNote.trackIndex}-${choosedNote.note.time}-${choosedNote.note.midi}`;
+    const noteIndex = noteToIndexMap.get(key).idx;
     console.log(`delete ${choosedNote.note.name}`);
 
     if (noteIndex > -1) {
         track.notes.splice(noteIndex, 1); // 删除选中的音符
+        noteToIndexMap.delete(key);
+        noteInTrackMap.delete(key);
     }
 
 
@@ -572,7 +576,8 @@ slider.addEventListener('input', () => {
 
     const track = currentMidi.tracks[choosedNote.trackIndex];
     // const choosedNoteInNotes = track.notes.find(note => note === choosedNote.note);
-    const noteIndex = noteToIndexMap.get(choosedNote.note).idx;
+    const key = `${choosedNote.trackIndex}-${choosedNote.note.time}-${choosedNote.note.midi}`;
+    const noteIndex = noteToIndexMap.get(key).idx;
     const choosedNoteInNotes = track.notes[noteIndex];
 
     if (choosedNoteInNotes && choosedNote) {
@@ -619,9 +624,13 @@ let dragCount = 0;
 let noteBeforeDrag = null;
 canvas.addEventListener('mousedown', (e) => {
     if (menu.contains(e.target) || sliderContainer.contains(e.target)) {
+        console.warn("error1");
         return;
     }
-    if (e.button !== 0) return; // 只处理左键点击
+    if (e.button !== 0) {
+        console.warn("error2");
+        return; // 只处理左键点击
+    }
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;                // 网页左上角为原点
@@ -638,8 +647,13 @@ canvas.addEventListener('mousedown', (e) => {
     // });
 
     draggedNote = locate(x, y, tolerance);
+    // locate之后立即删除，反正在mouseup之后还会将新的添加进去
+    // 无法删除？
 
     if (draggedNote) {
+        console.log("Drag begins");
+        removeNoteFromSpatialIndex(draggedNote);
+
         isDragging = true;
         startX = x;
         startY = y;
@@ -658,6 +672,9 @@ canvas.addEventListener('mousedown', (e) => {
         if (!dragCount) {
             historyManager.beginBatch("拖拽音符*1"); // 开始批量操作
         }
+    }
+    else {
+        console.warn("Cannot find draggedNote");
     }
 });
 
@@ -711,24 +728,51 @@ canvas.addEventListener('mouseup', (e) => {
         draggedNote.y = nearestY;
 
         const track = currentMidi.tracks[draggedNote.trackIndex];
-        const draggedNoteInNotes = track.notes.find(note => note === draggedNote.note);
+        // 此时noteInTrackMap还未更新（无法随着mousemove同步更新），无法直接使用
+        // const draggedNoteInNotes = track.notes.find(note => note === draggedNote.note);
 
-        // 两个数组进行同步
-        if (draggedNote && draggedNoteInNotes) {
-            draggedNoteInNotes.time = draggedNote.x / timeScale;        // 时间更新，其在notes数组中的位置也可能更新
+        // // 两个数组进行同步
+        // if (draggedNote && draggedNoteInNotes) {
+        //     draggedNoteInNotes.time = draggedNote.x / timeScale;        // 时间更新，其在notes数组中的位置也可能更新
 
-            // 写入新音高，但是新的音高没办法立刻体现在播放器上
-            const newNote = pitchBase + visibleRange - 1 - draggedNote.y / noteHeight;   // 计算新音高存在问题？canvas.height并非完全对应 --> 网格也占据了px
+        //     // 写入新音高，但是新的音高没办法立刻体现在播放器上
+        //     const newNote = pitchBase + visibleRange - 1 - draggedNote.y / noteHeight;   // 计算新音高存在问题？canvas.height并非完全对应 --> 网格也占据了px
+        //     const clampedMidi = getNoteName(newNote);
+        //     if (newNote)
+        //         draggedNoteInNotes.midi = newNote;
+        //     if (clampedMidi)
+        //         draggedNoteInNotes.name = clampedMidi;      // 播放时使用字符串
+
+        //     draggedNote.note = draggedNoteInNotes;
+        // }
+
+        if (draggedNote) {
+            draggedNote.note.time = draggedNote.x / timeScale;
+            const newNote = pitchBase + visibleRange - 1 - draggedNote.y / noteHeight;
             const clampedMidi = getNoteName(newNote);
             if (newNote)
-                draggedNoteInNotes.midi = newNote;
+                draggedNote.note.midi = newNote;
             if (clampedMidi)
-                draggedNoteInNotes.name = clampedMidi;      // 播放时使用字符串
-
-            draggedNote.note = draggedNoteInNotes;
+                draggedNote.note.name = clampedMidi;      // 播放时使用字符串
         }
 
         track.notes.sort((a, b) => a.time - b.time);
+
+        // 更新映射关系
+        const key = `${draggedNote.trackIndex}-${draggedNote.note.time}-${draggedNote.note.midi}`;
+        allNotes.set(key, draggedNote);
+        noteInTrackMap.set(key, draggedNote.note);
+        // 如何优化？
+        const idx = track.notes.findIndex(note => note === draggedNote.note);
+        const trackIndex = draggedNote.trackIndex;
+        noteToIndexMap.set(key, { trackIndex, idx });
+        // important
+        addNoteToSpatialIndex(draggedNote);
+
+        const key2 = `${noteBeforeDrag.trackIndex}-${noteBeforeDrag.note.time}-${noteBeforeDrag.note.midi}`;
+        allNotes.delete(key2);
+        noteInTrackMap.delete(key2);
+        noteToIndexMap.delete(key2);
 
         // ✅ 添加历史记录：记录拖拽前后的音符状态
         historyManager.recordNoteDrag(
@@ -1193,13 +1237,12 @@ function drawPianoRoll(midi) {
     canvas.style.width = canvasWidth + "px";
     overlayCanvas.style.width = canvasWidth + "px";
     overlayCanvas.style.height = canvas.style.height;
-    offCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height); // 白色背景
 
+    offCtx.fillRect(0, 0, offscreenCanvas.width, offscreenCanvas.height); // 白色背景
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // ✅ 绘制网格在底层
     drawGrid();     // 画在离屏画布上
-
     ctx.drawImage(offscreenCanvas, 0, 0); // 将离屏画布绘制到主画布上
 
     midi.tracks.forEach((track, trackIndex) => {
@@ -1225,7 +1268,7 @@ function drawPianoRoll(midi) {
             const key = `${trackIndex}-${note.time}-${note.midi}`;  // 自定义哈希键
             allNotes.set(key, noteObj);  // 存入哈希表 
             noteInTrackMap.set(key, note);
-            noteToIndexMap.set(note, { trackIndex, idx });
+            noteToIndexMap.set(key, { trackIndex, idx });
         });
     });
 

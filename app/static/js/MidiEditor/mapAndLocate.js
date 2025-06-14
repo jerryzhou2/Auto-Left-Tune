@@ -74,5 +74,56 @@ export function pitchToY(pitch) {
     return canvas.height - row * noteHeight;
 }
 
+export function removeNoteFromSpatialIndex(note) {
+    const pitch = note.note.midi;
+    const startBlock = Math.floor(note.x / cellWidth);
+    const endBlock = Math.floor((note.x + note.width) / cellWidth);
+
+    const xMap = spatialIndex.get(pitch);
+    if (!xMap) {
+        console.warn("Cannot find corresponding xMap");
+        return;
+    }
+
+    for (let i = startBlock; i <= endBlock; i++) {
+        const noteSet = xMap.get(i);
+        if (noteSet) {
+            // 可能产生大问题
+            noteSet.delete(note);
+            // 可选：若该 Set 清空，则从 xMap 中删除该 block
+            if (noteSet.size === 0) {
+                xMap.delete(i);
+            }
+        }
+    }
+
+    // 可选：若该 pitch 已无 block，移除整个 pitch 层级
+    if (xMap.size === 0) {
+        spatialIndex.delete(pitch);
+    }
+}
+
+export function addNoteToSpatialIndex(note) {
+    const pitch = note.note.midi;
+    const startBlock = Math.floor(note.x / cellWidth);
+    const endBlock = Math.floor((note.x + note.width) / cellWidth);
+
+    // 若当前 pitch 尚不存在，先初始化一层 map
+    if (!spatialIndex.has(pitch)) {
+        spatialIndex.set(pitch, new Map());
+    }
+
+    const xMap = spatialIndex.get(pitch);
+
+    for (let i = startBlock; i <= endBlock; i++) {
+        if (!xMap.has(i)) {
+            xMap.set(i, new Set());
+        }
+        xMap.get(i).add(note);
+    }
+}
+
+
+
 
 
