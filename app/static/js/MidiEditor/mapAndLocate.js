@@ -81,7 +81,7 @@ export function removeNoteFromSpatialIndex(note) {
 
     const xMap = spatialIndex.get(pitch);
     if (!xMap) {
-        console.warn("Cannot find corresponding xMap");
+        console.error("Cannot find corresponding xMap");
         return;
     }
 

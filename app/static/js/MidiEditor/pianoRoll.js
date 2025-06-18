@@ -78,7 +78,7 @@ let choosedNote = null;      // 被选中的音符下标
 let initDurationValue = -1; // 初始化值为选中音符的持续时间
 let durationInput = -1;
 let initWidth = -1;
-const tolerance = 3.5;
+const tolerance = 5;
 
 // 滚动相关变量
 let scrollX = 0;
@@ -483,9 +483,11 @@ export function deleteByNoteInAll(noteInAllNotes) {
     const key = `${noteInAllNotes.trackIndex}-${noteInAllNotes.note.time}-${noteInAllNotes.note.midi}`;  // 自定义哈希键
     if (allNotes.get(key)) {
         allNotes.delete(key);
-        return true;
+        console.log("Delete note from allNotes");
+        return;
     }
-    return false;
+    console.error("Cannot find note in allNotes");
+    return;
 }
 
 export function deleteByNoteInTrack(allNotesMap, noteInTrack) {
@@ -529,11 +531,7 @@ deleteBtn.addEventListener('click', (e) => {
 
     // allNotes.splice(choosedIndex, 1); // 删除选中的音符
 
-    let flag = deleteByNoteInAll(choosedNote);
-    if (!flag) {
-        console.warn("Note deletion fails");
-        return;
-    }
+    deleteByNoteInAll(choosedNote);
 
     // ✅ 添加历史记录：删除音符
     historyManager.deleteNote(choosedNote.trackIndex, backupNote);
@@ -702,7 +700,12 @@ canvas.addEventListener('mousemove', (e) => {
 
         const track = currentMidi.tracks[draggedNote.trackIndex];
         if (draggedNote) {
-            track.notes.find(note => note === draggedNote.note).time = draggedNote.x / timeScale; // 更新时间 --> 影响接下来的绘制
+            // track.notes.find(note => note === draggedNote.note).time = draggedNote.x / timeScale; // 更新时间 --> 影响接下来的绘制
+            let key = `${draggedNote.trackIndex}-${draggedNote.note.time}-${draggedNote.note.midi}`;
+            const noteInTrack = noteInTrackMap.get(key);
+            if (noteInTrack) {
+                noteInTrack.time = draggedNote.x / timeScale; // 更新时间
+            }
         }
 
         ctx.clearRect(oldNote.x, oldNote.y, oldNote.width, oldNote.height);
@@ -728,23 +731,11 @@ canvas.addEventListener('mouseup', (e) => {
         draggedNote.y = nearestY;
 
         const track = currentMidi.tracks[draggedNote.trackIndex];
+
         // 此时noteInTrackMap还未更新（无法随着mousemove同步更新），无法直接使用
-        // const draggedNoteInNotes = track.notes.find(note => note === draggedNote.note);
-
-        // // 两个数组进行同步
-        // if (draggedNote && draggedNoteInNotes) {
-        //     draggedNoteInNotes.time = draggedNote.x / timeScale;        // 时间更新，其在notes数组中的位置也可能更新
-
-        //     // 写入新音高，但是新的音高没办法立刻体现在播放器上
-        //     const newNote = pitchBase + visibleRange - 1 - draggedNote.y / noteHeight;   // 计算新音高存在问题？canvas.height并非完全对应 --> 网格也占据了px
-        //     const clampedMidi = getNoteName(newNote);
-        //     if (newNote)
-        //         draggedNoteInNotes.midi = newNote;
-        //     if (clampedMidi)
-        //         draggedNoteInNotes.name = clampedMidi;      // 播放时使用字符串
-
-        //     draggedNote.note = draggedNoteInNotes;
-        // }
+        // draggedNote.note和track.notes引用断开
+        const keyForSearch = `${noteBeforeDrag.trackIndex}-${noteBeforeDrag.note.time}-${noteBeforeDrag.note.midi}`;
+        const oldNoteInTrack = noteInTrackMap.get(keyForSearch);
 
         if (draggedNote) {
             draggedNote.note.time = draggedNote.x / timeScale;
@@ -754,6 +745,12 @@ canvas.addEventListener('mouseup', (e) => {
                 draggedNote.note.midi = newNote;
             if (clampedMidi)
                 draggedNote.note.name = clampedMidi;      // 播放时使用字符串
+
+            oldNoteInTrack.time = draggedNote.note.time; // 更新时间
+            oldNoteInTrack.midi = draggedNote.note.midi; // 更新音高
+            oldNoteInTrack.name = draggedNote.note.name; // 更新音符名称
+
+            console.log(`Dragged note updated to ${draggedNote.note.name} at time ${draggedNote.note.time}`);
         }
 
         track.notes.sort((a, b) => a.time - b.time);
@@ -763,7 +760,11 @@ canvas.addEventListener('mouseup', (e) => {
         allNotes.set(key, draggedNote);
         noteInTrackMap.set(key, draggedNote.note);
         // 如何优化？
-        const idx = track.notes.findIndex(note => note === draggedNote.note);
+        console.log(track.notes);
+        console.log(draggedNote.note);
+        // 使用这种方式稳定 ！！！不需要被引用困扰
+        const idx = track.notes.findIndex(note => note.time === draggedNote.note.time && note.midi === draggedNote.note.midi && note.duration === draggedNote.note.duration);
+        console.log(`In drag note, get idx = ${idx}`);
         const trackIndex = draggedNote.trackIndex;
         noteToIndexMap.set(key, { trackIndex, idx });
         // important
@@ -782,11 +783,8 @@ canvas.addEventListener('mouseup', (e) => {
             draggedNote // 新值（拖拽后）
         );
 
-        console.log(`Drag note from ${noteBeforeDrag.note.name} to ${draggedNote.note.name}`);
-
         // 性能还能提高
         // 重新绘制自动挪移的音符
-
         if (!oldNote) {
             console.warn("old note not defined");
             return;
@@ -933,7 +931,6 @@ playPauseBtn.addEventListener("click", async () => {
 
                 const part = new Tone.Part((time, note) => {
                     synth.triggerAttackRelease(note.name, note.duration, time);
-                    piano.triggerKeyByName(note.name, note.duration);
                 }, track.notes.map(n => [n.time, n]));
 
                 part.start(0); // 让所有 part 从 Transport 时间 0 开始
@@ -1063,16 +1060,23 @@ function animatePlayhead() {
     const scrollTarget = Math.max(0, playheadX - centerX);
     scrollContainer.scrollLeft = scrollTarget;
 
-    // 擦除上一次的进度线及其影响范围
-    if (lastPlayheadX !== null) {
-        // 在分层画布上擦除
-        eraseOldPlayhead(lastPlayheadX, canvas.height);
-    }
+    // // 擦除上一次的进度线及其影响范围
+    // if (lastPlayheadX !== null) {
+    //     // 在分层画布上擦除
+    //     eraseOldPlayhead(lastPlayheadX, canvas.height);
+    // }
 
-    const playheadScreenX = playheadX - scrollContainer.scrollLeft;
-    // 在分层画布上绘制
-    drawPlayheadLine(playheadScreenX, canvas.height);
-    lastPlayheadX = playheadScreenX;
+    // const playheadScreenX = playheadX - scrollContainer.scrollLeft;
+    // // 在分层画布上绘制
+    // drawPlayheadLine(playheadScreenX, canvas.height);
+    // lastPlayheadX = playheadScreenX;
+
+    if (Math.abs(playheadX - lastPlayheadX) > 5) {
+        eraseOldPlayhead(lastPlayheadX, canvas.height);
+        const playheadScreenX = playheadX - scrollContainer.scrollLeft;
+        drawPlayheadLine(playheadScreenX, canvas.height);
+        lastPlayheadX = playheadScreenX;
+    }
 
     // // 高亮当前播放音符（如果你希望这样）
     // highlightPlayingNotes(currentTime);

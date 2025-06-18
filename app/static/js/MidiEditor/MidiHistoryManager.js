@@ -3,7 +3,7 @@
  */
 
 import { deleteByNoteInAll, deleteByNoteInTrack } from "./pianoRoll.js";
-import { noteInTrackMap, noteToIndexMap } from "./hashTable.js";
+import { noteInTrackMap, noteToIndexMap, spatialIndex } from "./hashTable.js";
 import { removeNoteFromSpatialIndex, addNoteToSpatialIndex } from "./mapAndLocate.js";
 
 const canvas = document.getElementById("pianoRoll");
@@ -513,7 +513,8 @@ export class MidiHistoryManager {
         track.notes.splice(index1, 1);
         noteToIndexMap.delete(key);
         noteInTrackMap.delete(key);
-
+        removeNoteFromSpatialIndex(change.changedNote);
+        // 删除的是pianoRoll中的allNotes内容 -- 引用一致
         deleteByNoteInAll(change.changedNote);
     }
 
@@ -607,6 +608,7 @@ export class MidiHistoryManager {
             // newNote如果记录的是最后的位置，那么使用time应当毫无问题 ！！！
             // 将当前的note从数组和映射中删除
             const key1 = `${change.newNote.trackIndex}-${change.newNote.note.time}-${change.newNote.note.midi}`;
+            // 并非找不到，而是idx本身就被设置为了-1
             const draggedNoteInTrackIndex = noteToIndexMap.get(key1).idx;
 
             if (draggedNoteInTrackIndex < 0) {
@@ -614,7 +616,7 @@ export class MidiHistoryManager {
                 return;
             }
             else {
-                console.log(`Get ${draggedNoteInTrackIndex}`);
+                console.log(`In undo, get old index ${draggedNoteInTrackIndex} from track.notes`);
             }
 
             track.notes.splice(draggedNoteInTrackIndex, 1);
@@ -643,6 +645,8 @@ export class MidiHistoryManager {
             noteInTrackMap.set(key, change.originalNote.note);
             // 如何优化？
             const idx = track.notes.findIndex(note => note === change.originalNote.note);
+            console.log(`When undo, set new index ${idx} in track.notes`);
+            console.log(`Dragged note updated to ${draggedNoteInAll.note.name} at time ${draggedNoteInAll.note.time}`);
             const trackIndex = draggedNoteInAll.trackIndex;
             noteToIndexMap.set(key, { trackIndex, idx });
             addNoteToSpatialIndex(draggedNoteInAll);
@@ -654,19 +658,13 @@ export class MidiHistoryManager {
             // const draggedNoteInTrackIndex = track.notes.findIndex(note => note.midi === change.originalNote.note.midi && note.duration === change.originalNote.note.duration);
 
             const key1 = `${change.originalNote.trackIndex}-${change.originalNote.note.time}-${change.originalNote.note.midi}`;  // 自定义哈希键
+            // 查找出现问题
             const draggedNoteInTrackIndex = noteToIndexMap.get(key1).idx;
 
             if (draggedNoteInTrackIndex < 0) {
                 console.warn("Cannot find in track.notes");
                 return;
             }
-
-            // const draggedNoteInAllIndex = this.allNotes.findIndex(thisNote => thisNote.note.midi === change.originalNote.note.midi && thisNote.note.duration === change.originalNote.note.duration)
-
-            // if (draggedNoteInAllIndex < 0) {
-            //     console.warn("Cannot find in allNotes");
-            //     return;
-            // }
 
             // 使用新的信息修改音符
             track.notes.splice(draggedNoteInTrackIndex, 1);
@@ -682,15 +680,15 @@ export class MidiHistoryManager {
             draggedNoteInAll.width = change.newNote.width;
             draggedNoteInAll.height = change.newNote.height;
             draggedNoteInAll.trackIndex = change.newNote.trackIndex;
-
             draggedNoteInAll.note = change.newNote.note;
-            // this.allNotes.push(draggedNoteInAll);
 
             const key = `${draggedNoteInAll.trackIndex}-${draggedNoteInAll.note.time}-${draggedNoteInAll.note.midi}`;  // 自定义哈希键
             this.allNotes.set(key, draggedNoteInAll);  // 存入哈希表 
             noteInTrackMap.set(key, change.newNote.note);
             // 如何优化？
             const idx = track.notes.findIndex(note => note === change.newNote.note);
+            console.log(`When redo, set ${idx} in track.notes`);
+            console.log(`Dragged note updated to ${draggedNoteInAll.note.name} at time ${draggedNoteInAll.note.time}`);
             const trackIndex = draggedNoteInAll.trackIndex;
             noteToIndexMap.set(key, { trackIndex, idx });
         }
