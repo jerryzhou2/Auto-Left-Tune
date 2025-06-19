@@ -30,7 +30,7 @@ export function buildNoteIndex(allNotes) {
 }
 
 export function locate(x, y, tolerance = 3) {
-    const pitch = yToPitch(y);  // 根据 y 坐标反推音高（比如 60 - 108）
+    const pitch = yToPitch(y - 10);  // 根据 y 坐标反推音高（比如 60 - 108）
     const blockIndex = Math.floor(x / cellWidth);
 
     const xMap = spatialIndex.get(pitch);
@@ -52,8 +52,8 @@ export function locate(x, y, tolerance = 3) {
         if (
             x >= note.x - tolerance &&
             x < note.x + note.width + tolerance &&
-            y >= note.y - tolerance &&
-            y < note.y + note.height + tolerance
+            y - 10 >= note.y - tolerance &&
+            y - 10 < note.y + note.height + tolerance
         ) {
             return note;
         }

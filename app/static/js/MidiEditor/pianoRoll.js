@@ -48,7 +48,7 @@ overlayCanvas.style.backgroundColor = "transparent"; // ⬅ 可省略，默认�
 // 为父容器添加子元素，也即为canvas的兄弟元素
 canvas.parentNode.appendChild(overlayCanvas);
 // canvas.parentNode.insertBefore(overlayCanvas, canvas.nextSibling);
-overlayCanvas.style.zIndex = "100"; // 🔝 叠在上层
+overlayCanvas.style.zIndex = "2"; // 🔝 叠在上层
 const overlayCtx = overlayCanvas.getContext("2d");
 // overlayCanvas.style.border = "2px solid red";
 overlayCanvas.style.minWidth = "3000px";
@@ -373,23 +373,15 @@ function redrawCanvasAsync(midi) {
     });
 }
 
-// // 这样传入是否可以更改？？？ --> 只有对象传引用
-// function locate(x, y, noteInAllNotes) {
-//     for (const [key, note] of allNotes.entries()) {
-//         if (x >= note.x - tolerance && x < note.x + note.width + tolerance && y >= note.y - tolerance && y < note.y + note.height + tolerance) {
-//             return note;
-//         }
-//     }
-//     return null;
-// }
-
 // 显示菜单
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault(); // 阻止默认菜单
 
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;                // 网页左上角为原点
-    const y = e.clientY - rect.top;
+    const scrollTop = canvas.scrollTop;   // 获取滚动容器滚动值
+    const scrollLeft = canvas.scrollLeft;
+    const x = e.clientX - rect.left + scrollLeft;                // 网页左上角为原点
+    const y = e.clientY - rect.top + scrollTop;
     // choosedNote = allNotes.find(note => {
     //     return x >= note.x - tolerance && x < note.x + note.width + tolerance && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
     // });
@@ -401,7 +393,8 @@ canvas.addEventListener('contextmenu', (e) => {
         // 展示menu时隐藏add相关的元素
         addBtnContainer.style.display = 'none';
         addNoteContainer.style.display = 'none';
-        console.log(`chooseNote = ${choosedNote.note.name}`);
+        console.log(`x = ${x}, y = ${y}`);
+        console.log(`chooseNote = ${choosedNote.note.name}, x->[${choosedNote.x}, ${choosedNote.x + choosedNote.width}], y->[${choosedNote.y}, ${choosedNote.y + choosedNote.height}]`);
     }
     else {
         console.warn("contextmenu没有选中音符");
@@ -622,11 +615,10 @@ let dragCount = 0;
 let noteBeforeDrag = null;
 canvas.addEventListener('mousedown', (e) => {
     if (menu.contains(e.target) || sliderContainer.contains(e.target)) {
-        console.warn("error1");
+        console.warn("mousedown error");
         return;
     }
     if (e.button !== 0) {
-        console.warn("error2");
         return; // 只处理左键点击
     }
 
@@ -638,11 +630,6 @@ canvas.addEventListener('mousedown', (e) => {
     addBtnContainer.style.display = 'none';
     menu.style.display = 'none';
     addNoteContainer.style.display = 'none';
-
-    // draggedNote = allNotes.find(note => {
-    //     return x >= note.x - tolerance && x < note.x + note.width + tolerance
-    //         && y >= note.y - tolerance && y < note.y + note.height + tolerance;       // 定位选中的音符
-    // });
 
     draggedNote = locate(x, y, tolerance);
     // locate之后立即删除，反正在mouseup之后还会将新的添加进去
