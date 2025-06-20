@@ -63,8 +63,8 @@ def upload_file():
     try:
         target_len = int(target_len)
         # 限制target_len范围
-        if target_len < 100:
-            target_len = 100
+        if target_len < 0:
+            target_len = 0
         elif target_len > 4000:
             target_len = 4000
     except (ValueError, TypeError):

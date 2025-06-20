@@ -911,8 +911,8 @@ document.addEventListener('DOMContentLoaded', function () {
             // 验证target_len参数
             const targetLen = parseInt(leftHandTargetLenInput.value);
             
-            if (isNaN(targetLen) || targetLen < 100 || targetLen > 4000) {
-                alert('请输入有效的目标生成序列长度 (100-4000)');
+            if (isNaN(targetLen) || targetLen < 0 || targetLen > 4000) {
+                alert('请输入有效的目标生成序列长度 (0-4000)');
                 leftHandTargetLenInput.focus();
                 return;
             }
@@ -1382,8 +1382,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const targetLenInput = document.getElementById('target-len');
         const targetLen = parseInt(targetLenInput.value);
         
-        if (isNaN(targetLen) || targetLen < 100 || targetLen > 4000) {
-            alert('请输入有效的目标生成序列长度 (100-4000)');
+        if (isNaN(targetLen) || targetLen < 0 || targetLen > 4000) {
+            alert('请输入有效的目标生成序列长度 (0-4000)');
             targetLenInput.focus();
             return;
         }
