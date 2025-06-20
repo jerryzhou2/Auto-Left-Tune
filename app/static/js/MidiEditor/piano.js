@@ -252,6 +252,7 @@ class Piano {
     document.addEventListener('mouseup', () => {
       isDragging = false;
       piano.classList.remove('dragging');
+      console.log(`Dragging piano to: ${piano.style.left}, ${piano.style.top}`);
     });
   }
 

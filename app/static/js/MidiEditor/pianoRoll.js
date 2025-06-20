@@ -1,23 +1,7 @@
 import SampleLibrary from '../lib/ToneInstruments.js';
-import Piano from '/static/js/MidiEditor/piano.js';
 import { MidiHistoryManager } from './MidiHistoryManager.js';
 import { locate, buildNoteIndex, removeNoteFromSpatialIndex, addNoteToSpatialIndex } from './mapAndLocate.js';
 import { allNotes, noteInTrackMap, noteToIndexMap, spatialIndex } from './hashTable.js';
-
-const piano = new Piano();
-// 页面加载完成后初始化钢琴
-document.addEventListener('DOMContentLoaded', () => {
-    piano.init('#piano-container');
-
-    // ✅ 绑定快捷键处理函数
-    document.addEventListener('keydown', (event) => {
-        // 仅在非输入框/文本区域时处理快捷键
-        const target = event.target;
-        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
-            historyManager.handleShortcut(event);
-        }
-    });
-});
 
 let midiData = null;
 let currentMidi = null;
@@ -124,6 +108,20 @@ const resetBtn = document.getElementById('reset-add');
 const undoBtn = document.getElementById('undoBtn');
 const redoBtn = document.getElementById('redoBtn');
 
+// 页面加载完成后初始化钢琴
+document.addEventListener('DOMContentLoaded', () => {
+    // ✅ 绑定快捷键处理函数
+    document.addEventListener('keydown', (event) => {
+        // 仅在非输入框/文本区域时处理快捷键
+        const target = event.target;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+            historyManager.handleShortcut(event);
+        }
+    });
+
+    makeDraggable(addBtnContainer);
+    makeDraggable(addNoteContainer);
+});
 
 document.getElementById("canvasWrapper").addEventListener("scroll", (e) => {
     const scrollLeft = e.target.scrollLeft;
@@ -930,20 +928,6 @@ playPauseBtn.addEventListener("click", async () => {
                 }
             });
 
-            // 可选方案
-            // currentMidi.tracks.forEach((track, trackIndex) => {
-            //     if (!trackVisibility[trackIndex]) return;
-            //     track.notes.forEach(note => {
-            //         Tone.Transport.scheduleOnce((time) => {
-            //             synth.triggerAttackRelease(note.name, note.duration, time);
-            //             // setTimeout(() => {
-            //             //     piano.triggerKeyByName(note.name, note.duration);
-            //             // }, 10);
-            //         }, note.time);
-            //         maxTime = Math.max(maxTime, note.time + note.duration);
-            //     });
-            // });
-
             hasScheduled = true;
             Tone.Transport.start();
 
@@ -1527,3 +1511,37 @@ function handleRestore(entry) {
     historyManager.history.splice(index, 1);
     updateHistoryList(historyManager);
 }
+
+let currentDragTarget = null;
+let offsetX = 0;
+let offsetY = 0;
+
+// 通用函数：为任意可拖拽容器添加拖拽功能
+function makeDraggable(elem) {
+    elem.addEventListener('mousedown', (e) => {
+        currentDragTarget = elem;
+        // 鼠标点击位置相对于容器的左上角
+        const rect = elem.getBoundingClientRect();
+        // 注意这里使用 client - rect 的偏移 -- 通过视口坐标系实现拖拽
+        offsetX = e.clientX - rect.left; // 👈 关键修正
+        offsetY = e.clientY - rect.top;
+    });
+}
+
+// 全局监听鼠标移动（但仅处理当前拖拽物）
+// 注意可能与其他的mousemove产生冲突
+document.addEventListener('mousemove', (e) => {
+    if (!currentDragTarget) return;
+    // 使用 pageX/pageY，参考的是整个页面
+    const left = e.pageX - offsetX;
+    const top = e.pageY - offsetY;
+
+    currentDragTarget.style.left = `${left}px`;
+    currentDragTarget.style.top = `${top}px`;
+});
+
+document.addEventListener('mouseup', () => {
+    currentDragTarget = null;
+    offsetX = 0;
+    offsetY = 0;
+});

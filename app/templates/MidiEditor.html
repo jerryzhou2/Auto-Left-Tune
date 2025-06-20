@@ -4,14 +4,7 @@
 
 {% block head %}
     <link rel="stylesheet" href="../static/css/MidiEditor-style.css" />
-    <link rel="stylesheet" href='../static/css/editor-piano.css'>
     <link rel="stylesheet" href='../static/css/HistoryManager.css'>
-    <style>
-        #piano-container {
-            display: none; /* 默认隐藏 */
-            opacity: 0.7; /* 半透明, 值越小越透明(0-1) */
-        }
-    </style>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/output.css') }}">
     <!-- 引入Font Awesome -->
@@ -48,7 +41,6 @@
       <button id="playBtn" class="btn-primary">播放</button>
       <button id="resetBtn" class="btn-secondary">重置</button>
       <button id="exportBtn" class="btn-accent">导出MIDI</button>
-      <button id="togglePianoBtn" class="btn-secondary">显示钢琴</button>
     </div>
 
     <div id="historyManager" class="history-manager max-w-2xl mx-auto mt-8 bg-white rounded-xl shadow-card overflow-hidden border border-neutral-200 transition-all duration-300 hover:shadow-card-hover">
@@ -167,31 +159,6 @@
         <input id="timeInput" type="number" step="0.1" min="0" />
         <button id="confirmTime">确定</button>
     </div>
-
-    <!-- 添加80%宽度的容器 -->
-    <div class="piano-wrapper" style="width: 80%; margin: 0 auto; position: relative;">
-        <!-- 钢琴组件将在这里由piano.js动态插入，使用piano-visual.html中的精确参数 -->
-        <div id="piano-container"></div>
-        
-        <!-- 独立的左右手按键显示容器 -->
-        <div class="hands-display-wrapper">
-            <!-- 左手按键显示框 -->
-            <div class="hand-display-container left-hand-display" id="leftHandDisplay">
-                <div class="hand-title">🤚 左手</div>
-                <div class="keys-list" id="leftHandKeysList">
-                    <!-- 左手按键将在这里动态显示 -->
-                </div>
-            </div>
-
-            <!-- 右手按键显示框 -->
-            <div class="hand-display-container right-hand-display" id="rightHandDisplay">
-                <div class="hand-title">✋ 右手</div>
-                <div class="keys-list" id="rightHandKeysList">
-                    <!-- 右手按键将在这里动态显示 -->
-                </div>
-            </div>
-        </div>
-    </div>
 {% endblock %}
 
 {% block scripts %}
@@ -221,27 +188,6 @@
         fileInput.addEventListener('change', (e) => {
           const file = e.target.files[0];
           fileNameSpan.textContent = file ? file.name : '未选择文件';
-        });
-
-        // 钢琴显示按键
-        let pianoVisualized = false;
-        const pianoContainer = document.getElementById('piano-container');
-        let posInit = false;
-        let rect = null;
-
-        document.getElementById('togglePianoBtn').addEventListener('click', () => {
-            const myPiano = document.getElementById('pianoComponent');
-
-            if (!pianoVisualized) {
-                // 显示钢琴
-                pianoContainer.style.display = 'block';
-                pianoVisualized = true;
-            } 
-            else {
-                // 隐藏钢琴
-                pianoContainer.style.display = 'none';
-                pianoVisualized = false;
-            }
         });
 
         const header = document.getElementById('historyHeader');

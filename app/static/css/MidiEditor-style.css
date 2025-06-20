@@ -157,18 +157,6 @@ button {
     box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
 }
 
-/* 切换按钮（中性色） */
-#togglePianoBtn {
-    background: #5f6368;
-    color: white;
-    box-shadow: 0 2px 8px rgba(95, 99, 104, 0.3);
-}
-
-#togglePianoBtn:hover {
-    background: #75797e;
-    box-shadow: 0 4px 12px rgba(95, 99, 104, 0.4);
-}
-
 /* 按钮图标（示例：播放/暂停图标，需配合字体图标或SVG使用） */
 #playBtn::before,
 #pauseBtn::before {
@@ -480,13 +468,24 @@ button {
 #addBtnContainer {
     display: none;
     position: absolute;
-    /* 需要这个，才能用 left/top 定位 */
     z-index: 1000;
-    /* 确保不被 canvas 等遮挡 */
-    background-color: white;
+    background-color: #fff;
     border: 1px solid #ccc;
-    padding: 5px;
+    padding: 10px;
     cursor: pointer;
+
+    /* 🎨 美化部分 */
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    color: #333;
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+#addBtnContainer:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    transform: scale(1.02);
 }
 
 #addOneNote {
