@@ -120,44 +120,79 @@ button {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
     outline: none;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* 主操作按钮（播放/暂停等） */
-#playBtn,
-#pauseBtn,
-#exportBtn {
+/* === 播放按钮（蓝色） === */
+#playBtn {
     background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
     color: white;
     box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
 }
 
-#playBtn:hover,
-#pauseBtn:hover,
-#exportBtn:hover {
+#playBtn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
 }
 
-#playBtn:active,
-#pauseBtn:active,
-#exportBtn:active {
+#playBtn:active {
     transform: translateY(0);
     box-shadow: 0 2px 4px rgba(33, 150, 243, 0.5);
 }
 
-/* 重置按钮（警示色） */
-#resetBtn {
-    background: #ff4444;
+/* === 暂停按钮（橙色） === */
+#pauseBtn {
+    background: linear-gradient(135deg, #FF9800 0%, #EF6C00 100%);
     color: white;
-    box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+#pauseBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+#pauseBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(255, 152, 0, 0.5);
+}
+
+/* === 导出按钮（绿色/青色） === */
+#exportBtn {
+    background: linear-gradient(135deg, #00C853 0%, #2E7D32 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 200, 83, 0.3);
+}
+
+#exportBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 200, 83, 0.4);
+}
+
+#exportBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 200, 83, 0.5);
+}
+
+/* === 重置按钮（红色） === */
+#resetBtn {
+    background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
 }
 
 #resetBtn:hover {
-    background: #ff6b6b;
-    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+    background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
 }
 
-/* 按钮图标（示例：播放/暂停图标，需配合字体图标或SVG使用） */
+#resetBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(244, 67, 54, 0.5);
+}
+
+/* === 图标样式（播放/暂停） === */
 #playBtn::before,
 #pauseBtn::before {
     content: "";
@@ -165,16 +200,18 @@ button {
     width: 16px;
     height: 16px;
     background-size: contain;
+    background-repeat: no-repeat;
     margin-right: 6px;
     filter: brightness(0) invert(1);
+    /* 白色图标 */
 }
 
 #playBtn::before {
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M8 5v14l11-7z"/></svg>');
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>');
 }
 
 #pauseBtn::before {
-    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M6 19h4V5H6v14zm8 0h4V5h-4v14z"/></svg>');
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8 0h4V5h-4v14z"/></svg>');
 }
 
 .title-art {

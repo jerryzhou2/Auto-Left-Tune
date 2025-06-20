@@ -698,8 +698,6 @@ canvas.addEventListener('mousemove', (e) => {
         ctx.drawImage(offscreenCanvas, scrollX, scrollY, viewportWidth, viewportHeight, scrollX, scrollY, viewportWidth, viewportHeight);
         ctx.fillStyle = getColor(draggedNote.trackIndex);
         ctx.fillRect(draggedNote.x, draggedNote.y, draggedNote.width, draggedNote.height);
-
-        // smoothScrollToNote(draggedNote);
     }
 });
 
