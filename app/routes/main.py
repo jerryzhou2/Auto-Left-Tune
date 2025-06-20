@@ -123,7 +123,6 @@ def upload_file():
                 if has_time_interval and os.path.exists(process_input_path):
                     os.remove(process_input_path)
                 return jsonify({'error': 'MIDI处理失败，可能是文件格式不正确或模型加载失败'}), 500
-                
             # 验证输出文件是否创建成功
             if not os.path.exists(output_midi_path):
                 if os.path.exists(input_path):
