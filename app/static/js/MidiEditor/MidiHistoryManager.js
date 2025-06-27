@@ -2,7 +2,7 @@
  * MIDI 历史管理器 - 提供类似 VSCode 的撤销/重做功能
  */
 
-import { deleteByNoteInAll, deleteByNoteInTrack } from "./pianoRoll.js";
+import { deleteByNoteInAll, deleteByNoteInTrack, noteNameToMidi } from "./pianoRoll.js";
 import { noteInTrackMap, noteToIndexMap, spatialIndex } from "./hashTable.js";
 import { removeNoteFromSpatialIndex, addNoteToSpatialIndex } from "./mapAndLocate.js";
 
@@ -183,7 +183,7 @@ export class MidiHistoryManager {
         const isRecent = new Date() - lastEntry.timestamp < this.mergeThreshold;
 
         // 支持修改、添加、删除操作合并
-        const supportedTypes = ['modify', 'add', 'delete', 'modifyTime', 'dragNote'];
+        const supportedTypes = ['modify', 'add', 'delete', 'modifyTime', 'dragNote', 'modifyName'];
         return isSameType && supportedTypes.includes(newEntry.type) && isRecent;
     }
 
@@ -407,6 +407,10 @@ export class MidiHistoryManager {
                 case 'dragNote':
                     this._applyDragNote(change, direction);
                     break;
+                case 'modifyName':
+                    // 目前没有实现
+                    this._applyModifyNoteName(change, direction);
+                    break;
                 case 'toggleTrackVisibility':
                     this._applyTrackVisibility(change, direction);
                     break;
@@ -586,6 +590,93 @@ export class MidiHistoryManager {
         }
     }
 
+    // 应用修改音符名称操作
+    _applyModifyNoteName(change, direction) {
+        if (!change) {
+            console.warn("change为空, 异常退出_applyModifyNoteName");
+            return;
+        }
+
+        const track = this.currentMidi.tracks[change.trackIndex];
+        if (!track) {
+            console.warn("不存在该track, 异常退出_applyModifyNoteName");
+            return;
+        }
+
+        console.log("_applyModifyNoteName triggered");
+
+        let noteKey;
+        let noteInTrack, noteInAllNotes;
+
+        if (direction === 'undo') {
+            // 撤销修改名称，恢复为 initName
+            const newMidi = noteNameToMidi(change.newName);
+            noteKey = `${change.trackIndex}-${change.note.time}-${newMidi}`;
+            noteInTrack = noteInTrackMap.get(noteKey);
+            noteInAllNotes = this.allNotes.get(noteKey);
+
+            if (!noteInTrack) {
+                console.warn("Cannot find the note in track");
+                return;
+            }
+            if (!noteInAllNotes) {
+                console.warn("Cannot find the note in allNotes");
+                return;
+            }
+
+            const initMidi = noteNameToMidi(change.initName);
+
+            console.log("Modify note name undo");
+            noteInTrack.name = change.initName;
+            noteInTrack.midi = initMidi;
+            noteInAllNotes.note.name = change.initName;
+            noteInAllNotes.note.midi = initMidi;
+            noteInAllNotes.y = canvas.height - ((initMidi - pitchBase + 1) * noteHeight); // 更新y坐标
+
+            const newKey = `${change.trackIndex}-${change.note.time}-${initMidi}`;
+
+            noteInTrackMap.delete(noteKey); // 删除旧的键
+            noteInTrackMap.set(newKey, noteInTrack); // 使用新的键存储音符
+            this.allNotes.delete(noteKey);
+            this.allNotes.set(newKey, noteInAllNotes); // 使用新的键存储音符
+
+        } else if (direction === 'redo') {
+            // 重做修改名称，应用 newName
+            const initMidi = noteNameToMidi(change.initName);
+            noteKey = `${change.trackIndex}-${change.note.time}-${initMidi}`;
+            noteInTrack = noteInTrackMap.get(noteKey);
+            noteInAllNotes = this.allNotes.get(noteKey);
+
+            if (!noteInTrack) {
+                console.warn("Cannot find the note in track");
+                console.log("Using key:", noteKey);
+                console.log(noteInTrackMap);
+                return;
+            }
+            if (!noteInAllNotes) {
+                console.warn("Cannot find the note in allNotes");
+                return;
+            }
+
+            const newMidi = noteNameToMidi(change.newName);
+
+            console.log("Modify note name redo");
+            noteInTrack.name = change.newName;
+            noteInTrack.midi = newMidi;
+            noteInAllNotes.note.name = change.newName;
+            noteInAllNotes.note.midi = newMidi;
+            noteInAllNotes.y = canvas.height - ((newMidi - pitchBase + 1) * noteHeight); // 更新y坐标
+
+            const newKey = `${change.trackIndex}-${change.note.time}-${newMidi}`;
+
+            noteInTrackMap.delete(noteKey); // 删除旧的键
+            noteInTrackMap.set(newKey, noteInTrack); // 使用新的键存储音符
+            this.allNotes.delete(noteKey);
+            this.allNotes.set(newKey, noteInAllNotes); // 使用新的键存储音符
+        }
+    }
+
+
     // 应用拖拽音符操作
     _applyDragNote(change, direction) {
         if (!change) {
@@ -728,6 +819,39 @@ export class MidiHistoryManager {
             this._addHistoryEntry({
                 type: 'modify',
                 label: `修改音符 (轨道 ${trackIndex + 1}, 音符 ${change.note.name})`,
+                changes: [change],
+                timestamp: new Date(),
+            });
+        }
+
+        return true;
+    }
+
+    // 修改音符名称
+    modifyNoteName(trackIndex, newNote, initName, newName) {
+        if (!this.currentMidi.tracks[trackIndex] || !newNote || !initName || !newName) {
+            console.warn("Invalid function input !");
+            return;
+        }
+
+        // 记录变更
+        const change = {
+            type: 'modifyName',
+            trackIndex,
+            // 引用track.notes中的新信息
+            note: newNote,
+            initName,
+            newName,
+            timestamp: new Date()
+        };
+
+        // 添加到历史记录
+        if (this.batchGroup) {
+            this.batchGroup.changes.push(change);
+        } else {
+            this._addHistoryEntry({
+                type: 'modifyName',
+                label: `修改音符名称 (轨道 ${trackIndex + 1}, 从 ${initName} 到 ${newName})`,
                 changes: [change],
                 timestamp: new Date(),
             });

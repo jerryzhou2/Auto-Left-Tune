@@ -77,13 +77,17 @@ const timeInputBox = document.getElementById('timeInputBox');
 const timeInput = document.getElementById('timeInput');
 const confirmTime = document.getElementById('confirmTime');
 
+const nameInput = document.getElementById('nameInput');
+const nameInputBox = document.getElementById('nameInputBox');
+const nameInputRec = document.getElementById('nameInputRec');
+const confirmName = document.getElementById('confirmName');
+
 const showSliderBtn = document.getElementById('setDuration');
 const sliderContainer = document.getElementById('sliderContainer');
 const slider = document.getElementById('slider');
 const valueDisplay = document.getElementById('valueDisplay');
 const setSliderValue = document.getElementById('setSliderValue');
 const resetSliderValue = document.getElementById('resetSlider');
-
 
 const addBtn = document.getElementById('addOneNote');
 const addBtnContainer = document.getElementById('addBtnContainer');
@@ -312,10 +316,13 @@ resetBtn.addEventListener('click', () => {
     redrawCanvas(currentMidi);
 });
 
-function noteNameToMidi(noteName) {
+export function noteNameToMidi(noteName) {
     const noteRegex = /^([A-Ga-g])(#|b)?(\d+)$/;
     const match = noteName.match(noteRegex);
-    if (!match) throw new Error("Invalid note name: " + noteName);
+    if (!match) {
+        console.warn("Invalid note name: " + noteName);
+        return;
+    }
 
     const [, letter, accidental, octaveStr] = match;
     const semitones = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -422,6 +429,7 @@ canvas.addEventListener('contextmenu', (e) => {
 
     slider.value = initDurationValue; // 设置滑块初始值
     valueDisplay.textContent = slider.value;
+    nameInputRec.value = choosedNote.note.name; // 设置音符名称初始值
 
     initWidth = choosedNote.width; // 记录初始宽度
 });
@@ -607,6 +615,87 @@ resetSliderValue.addEventListener('click', () => {
 
     sliderContainer.style.display = 'none';
 });
+
+nameInput.addEventListener('click', (e) => {
+    e.stopPropagation(); // 阻止事件冒泡，避免触发canvas的contextmenu事件
+    nameInputBox.style.top = `${e.pageY}px`;
+    nameInputBox.style.left = `${e.pageX}px`;
+    nameInputBox.style.display = 'block';
+
+    menu.style.display = 'none'; // 隐藏右键菜单
+});
+
+nameInputBox.addEventListener('input', () => {
+    const newName = nameInputRec.value.trim();
+    const newMidi = noteNameToMidi(newName);
+    if (isValidNoteName(newName)) {
+        ctx.clearRect(choosedNote.x, choosedNote.y, choosedNote.width, choosedNote.height); // 清除选中的音符
+        let newY = canvas.height - ((newMidi - pitchBase + 1) * noteHeight);
+        if (newY < 0) {
+            newY = 0; // 确保不超出画布上边界
+            console.warn("Out of range, auto changed 1");
+        } else if (newY + choosedNote.height > canvas.height) {
+            newY = canvas.height - choosedNote.height; // 确保不超出画布下边界
+            console.warn("Out of range, auto changed 2");
+        }
+        ctx.fillStyle = getColor(choosedNote.trackIndex);
+        ctx.fillRect(choosedNote.x, newY, choosedNote.width, choosedNote.height); // 绘制新的音符
+    }
+});
+
+confirmName.addEventListener('click', () => {
+    const newName = nameInputRec.value.trim();
+    const newMidi = noteNameToMidi(newName);
+    const initName = choosedNote.note.name; // 保存原始名称
+    console.log("newName = " + newName);
+    console.log("newMidi = " + newMidi);
+    console.log(typeof newMidi);
+
+    const key = `${choosedNote.trackIndex}-${choosedNote.note.time}-${choosedNote.note.midi}`;
+    const newKey = `${choosedNote.trackIndex}-${choosedNote.note.time}-${newMidi}`; // 更新后的键
+    const noteInTrack = noteInTrackMap.get(key);
+    if (noteInTrack) {
+        noteInTrack.name = newName; // 更新音符名称
+        noteInTrack.midi = newMidi; // 更新音符的 MIDI 值
+
+        noteInTrackMap.delete(key); // 删除旧的键
+        noteInTrackMap.set(newKey, noteInTrack); // 使用新的键存储音符
+    }
+    else {
+        console.error("Cannot find name-modified note in noteInTrackMap");
+        return;
+    }
+
+    const noteInAll = allNotes.get(key);
+    if (noteInAll) {
+        noteInAll.note.name = newName; // 更新音符名称
+        noteInAll.note.midi = newMidi; // 更新音符的 MIDI 值
+        noteInAll.y = canvas.height - ((newMidi - pitchBase + 1) * noteHeight); // 更新y坐标
+
+        allNotes.delete(key);
+        allNotes.set(newKey, noteInAll); // 使用新的键存储音符
+    }
+    else {
+        console.error("Cannot find name-modified note in allNotes");
+        return;
+    }
+
+    console.log(noteInTrack);
+
+    choosedNote.note.name = newName; // 更新choosedNote的名称
+    choosedNote.note.midi = newMidi; // 更新choosedNote的 MIDI 值
+    choosedNote.y = canvas.height - ((newMidi - pitchBase + 1) * noteHeight); // 更新y坐标
+
+    const newNote = {
+        time: choosedNote.note.time,
+        duration: choosedNote.note.duration,
+    }
+
+    nameInputBox.style.display = 'none';
+    // ✅ 添加历史记录：修改音符名称
+    // 还未定义
+    historyManager.modifyNoteName(choosedNote.trackIndex, newNote, initName, newName); // 在修改前记录下来
+})
 
 
 let dragCount = 0;

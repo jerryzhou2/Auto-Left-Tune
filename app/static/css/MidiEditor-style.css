@@ -426,6 +426,10 @@ button {
     color: crimson;
 }
 
+#nameInput::before {
+    content: "🎵";
+}
+
 /* 出现时淡入动画 */
 @keyframes fadeIn {
     from {
@@ -479,6 +483,34 @@ button {
 }
 
 #timeInputBox input[type="number"]:focus {
+    border-color: #4A90E2;
+    outline: none;
+}
+
+#nameInputBox {
+    position: absolute;
+    display: none;
+    padding: 12px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    transition: opacity 0.2s ease;
+    font-family: Arial, sans-serif;
+}
+
+#nameInputBox input[type="text"] {
+    width: 100px;
+    padding: 6px 10px;
+    font-size: 14px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    margin-right: 8px;
+    transition: border 0.2s;
+}
+
+#nameInputBox input[type="text"]:focus {
     border-color: #4A90E2;
     outline: none;
 }
