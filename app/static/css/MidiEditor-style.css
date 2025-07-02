@@ -490,7 +490,7 @@ button {
 #nameInputBox {
     position: absolute;
     display: none;
-    padding: 12px;
+    padding: 9px;
     background-color: #fff;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -513,6 +513,43 @@ button {
 #nameInputBox input[type="text"]:focus {
     border-color: #4A90E2;
     outline: none;
+}
+
+#confirmName {
+    background-color: #e5e7eb;
+    /* 蓝色 */
+    color: #374151;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#confirmName:hover {
+    background-color: #446ee1;
+    /* 深一点蓝 */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+#resetName {
+    background-color: #e5e7eb;
+    /* 淡灰色 */
+    color: #374151;
+    /* 深灰字 */
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#resetName:hover {
+    background-color: #e21616;
+    /* 深一点灰 */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 #confirmTime,
@@ -582,12 +619,17 @@ button {
     border-radius: 10px;
     z-index: 1000;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-
-    display: none;
     flex-direction: column;
     gap: 12px;
     min-width: 200px;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#addNoteContainer:hover {
+    border-color: #2563eb;
+    /* 悬停时加深边框颜色 */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    /* 悬停时增强阴影 */
 }
 
 /* 输入框容器统一样式 */

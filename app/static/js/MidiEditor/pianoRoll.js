@@ -81,6 +81,7 @@ const nameInput = document.getElementById('nameInput');
 const nameInputBox = document.getElementById('nameInputBox');
 const nameInputRec = document.getElementById('nameInputRec');
 const confirmName = document.getElementById('confirmName');
+const resetName = document.getElementById('resetName');
 
 const showSliderBtn = document.getElementById('setDuration');
 const sliderContainer = document.getElementById('sliderContainer');
@@ -138,7 +139,10 @@ window.addEventListener('error', (error) => {
 });
 
 addBtn.addEventListener('click', (e) => {
-    if (!currentMidi) return;
+    if (!currentMidi) {
+        alert("当前还未传入文件");
+        return;
+    }
 
     addBtnContainer.style.display = 'none'; // 隐藏添加按钮容器
 
@@ -625,6 +629,7 @@ nameInput.addEventListener('click', (e) => {
     menu.style.display = 'none'; // 隐藏右键菜单
 });
 
+let tmpObj = null; // 临时对象用于存储音符信息
 nameInputBox.addEventListener('input', () => {
     const newName = nameInputRec.value.trim();
     const newMidi = noteNameToMidi(newName);
@@ -640,6 +645,13 @@ nameInputBox.addEventListener('input', () => {
         }
         ctx.fillStyle = getColor(choosedNote.trackIndex);
         ctx.fillRect(choosedNote.x, newY, choosedNote.width, choosedNote.height); // 绘制新的音符
+
+        tmpObj = {
+            x: choosedNote.x,
+            y: newY,
+            width: choosedNote.width,
+            height: choosedNote.height,
+        }
     }
 });
 
@@ -697,6 +709,12 @@ confirmName.addEventListener('click', () => {
     historyManager.modifyNoteName(choosedNote.trackIndex, newNote, initName, newName); // 在修改前记录下来
 })
 
+resetName.addEventListener('click', () => {
+    nameInputBox.style.display = 'none';
+    ctx.clearRect(tmpObj.x, tmpObj.y, tmpObj.width, tmpObj.height); // 清除临时对象绘制的音符
+    ctx.fillStyle = getColor(choosedNote.trackIndex);
+    ctx.fillRect(choosedNote.x, choosedNote.y, choosedNote.width, choosedNote.height); // 恢复原始音符
+});
 
 let dragCount = 0;
 let noteBeforeDrag = null;
@@ -717,6 +735,9 @@ canvas.addEventListener('mousedown', (e) => {
     addBtnContainer.style.display = 'none';
     menu.style.display = 'none';
     addNoteContainer.style.display = 'none';
+    sliderContainer.style.display = 'none';
+    timeInputBox.style.display = 'none';
+    nameInputBox.style.display = 'none';
 
     draggedNote = locate(x, y, tolerance);
     // locate之后立即删除，反正在mouseup之后还会将新的添加进去
