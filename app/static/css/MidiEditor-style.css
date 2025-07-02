@@ -553,8 +553,7 @@ button {
 }
 
 #confirmTime,
-#setSliderValue,
-#resetSlider {
+#setSliderValue {
     padding: 6px 14px;
     font-size: 14px;
     background-color: #4A90E2;
@@ -565,10 +564,26 @@ button {
     transition: background-color 0.2s;
 }
 
+#resetTime,
+#resetSlider {
+    padding: 6px 14px;
+    font-size: 14px;
+    background-color: #f3455a;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
 #confirmTime:hover,
-#setSliderValue:hover,
-#resetSlider:hover {
+#setSliderValue:hover {
     background-color: #357ABD;
+}
+
+#resetTime:hover,
+#resetSlider:hover {
+    background-color: #bd0a0a;
 }
 
 #addBtnContainer {
