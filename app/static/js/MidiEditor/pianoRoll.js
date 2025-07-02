@@ -1008,6 +1008,8 @@ playPauseBtn.addEventListener("click", async () => {
         isPlaying = true;
         playPauseBtn.textContent = "暂停";
 
+        playheadDiv.style.display = 'block';
+
         if (Tone.Transport.state === "stopped" || !hasScheduled || hasModified) {
             Tone.Transport.stop();
             Tone.Transport.cancel(); // 清除旧 scheduleOnce 调度
@@ -1076,12 +1078,18 @@ playPauseBtn.addEventListener("click", async () => {
 });
 
 function clearParts() {
+    const safeNow = Math.max(Tone.now(), 0); // 保证非负
     parts.forEach(p => {
-        p.stop();
+        try {
+            p.stop(safeNow);
+        } catch (e) {
+            console.warn("p.stop() error:", e);
+        }
         p.dispose();
     });
     parts = [];
 }
+
 
 const globalReset = document.getElementById("resetBtn");
 
@@ -1089,6 +1097,8 @@ globalReset.addEventListener("click", () => {
     Tone.Transport.stop();
     isPlaying = false;
     playPauseBtn.textContent = '播放';
+    playheadDiv.style.display = 'none'; // 隐藏进度线
+    playheadDiv.style.left = '0px'; // 重置位置
 
     // 重绘音符和网格
     redrawCanvas(currentMidi);
@@ -1100,65 +1110,112 @@ function onPlaybackEnd() {
     playPauseBtn.textContent = '播放';
     // 清除动画循环（若有残留的requestAnimationFrame）
     cancelAnimationFrame(animatePlayhead.id); // 需记录动画ID
+
+    playheadDiv.style.left = '0px';
+    playheadDiv.style.display = 'none';  // 可选：隐藏
 }
 
 function timeToX(timeInSeconds) {
     return timeInSeconds * timeScale;
 }
 
-let lastPlayheadX = null;
+// let lastPlayheadX = null;
 
-function drawPlayheadLine(x, height) {
-    overlayCtx.save();
-    overlayCtx.strokeStyle = 'red';
-    overlayCtx.lineWidth = 2;
-    overlayCtx.beginPath();
-    overlayCtx.moveTo(x, 0);
-    overlayCtx.lineTo(x, height);
-    overlayCtx.stroke();
-    overlayCtx.restore();
-    console.log("Draw play line");
-}
+// function drawPlayheadLine(x, height) {
+//     overlayCtx.save();
+//     overlayCtx.strokeStyle = 'red';
+//     overlayCtx.lineWidth = 2;
+//     overlayCtx.beginPath();
+//     overlayCtx.moveTo(x, 0);
+//     overlayCtx.lineTo(x, height);
+//     overlayCtx.stroke();
+//     overlayCtx.restore();
+//     console.log("Draw play line");
+// }
 
-// 只清除旧进度线影响的区域 + 重绘音符
-function eraseOldPlayhead(x, height) {
-    const lineWidth = 2;
-    const padding = 1;
-    const clearX = x - lineWidth / 2 - padding;
-    const clearWidth = lineWidth + 2 * padding;
+// // 只清除旧进度线影响的区域 + 重绘音符
+// function eraseOldPlayhead(x, height) {
+//     const lineWidth = 2;
+//     const padding = 1;
+//     const clearX = x - lineWidth / 2 - padding;
+//     const clearWidth = lineWidth + 2 * padding;
 
-    overlayCtx.clearRect(clearX, 0, clearWidth, height);
-}
+//     overlayCtx.clearRect(clearX, 0, clearWidth, height);
+// }
+
+// function animatePlayhead() {
+//     const currentTime = Tone.Transport.seconds;
+//     const scrollContainer = document.getElementById('canvasWrapper');
+//     const centerX = canvas.width / 2;
+//     const playheadX = timeToX(currentTime);
+
+//     const scrollTarget = Math.max(0, playheadX - centerX);
+//     scrollContainer.scrollLeft = scrollTarget;
+
+//     // // 擦除上一次的进度线及其影响范围
+//     // if (lastPlayheadX !== null) {
+//     //     // 在分层画布上擦除
+//     //     eraseOldPlayhead(lastPlayheadX, canvas.height);
+//     // }
+
+//     // const playheadScreenX = playheadX - scrollContainer.scrollLeft;
+//     // // 在分层画布上绘制
+//     // drawPlayheadLine(playheadScreenX, canvas.height);
+//     // lastPlayheadX = playheadScreenX;
+
+//     if (Math.abs(playheadX - lastPlayheadX) > 5) {
+//         eraseOldPlayhead(lastPlayheadX, canvas.height);
+//         const playheadScreenX = playheadX - scrollContainer.scrollLeft;
+//         drawPlayheadLine(playheadScreenX, canvas.height);
+//         lastPlayheadX = playheadScreenX;
+//     }
+
+//     // // 高亮当前播放音符（如果你希望这样）
+//     // highlightPlayingNotes(currentTime);
+
+//     if (currentTime < currentMidi.duration) {
+//         animatePlayhead.id = requestAnimationFrame(animatePlayhead);
+//     } else {
+//         Tone.Transport.stop();
+//         cancelAnimationFrame(animatePlayhead.id);
+//         onPlaybackEnd();
+//         // 不需要再重绘画布，删除最后一帧的进度线即可
+//         eraseOldPlayhead(lastPlayheadX, canvas.height);
+//         lastPlayheadX = null;
+//     }
+// }
+
+const playheadDiv = document.getElementById('playhead');
+let playheadCentered = false; // 播放线是否已居中
 
 function animatePlayhead() {
     const currentTime = Tone.Transport.seconds;
     const scrollContainer = document.getElementById('canvasWrapper');
-    const centerX = canvas.width / 2;
-    const playheadX = timeToX(currentTime);
+    const playheadX = timeToX(currentTime);  // 当前播放位置对应的 X 坐标
 
-    const scrollTarget = Math.max(0, playheadX - centerX);
-    scrollContainer.scrollLeft = scrollTarget;
+    const viewWidth = scrollContainer.clientWidth;
+    const centerX = viewWidth / 2;
 
-    // // 擦除上一次的进度线及其影响范围
-    // if (lastPlayheadX !== null) {
-    //     // 在分层画布上擦除
-    //     eraseOldPlayhead(lastPlayheadX, canvas.height);
-    // }
+    if (!playheadCentered) {
+        // 阶段一：播放线尚未居中，自行移动
+        playheadDiv.style.left = `${playheadX}px`;
 
-    // const playheadScreenX = playheadX - scrollContainer.scrollLeft;
-    // // 在分层画布上绘制
-    // drawPlayheadLine(playheadScreenX, canvas.height);
-    // lastPlayheadX = playheadScreenX;
+        if (playheadX >= centerX) {
+            // 到达居中点，切换为居中滚动逻辑
+            playheadCentered = true;
 
-    if (Math.abs(playheadX - lastPlayheadX) > 5) {
-        eraseOldPlayhead(lastPlayheadX, canvas.height);
-        const playheadScreenX = playheadX - scrollContainer.scrollLeft;
-        drawPlayheadLine(playheadScreenX, canvas.height);
-        lastPlayheadX = playheadScreenX;
+            // 固定 playhead 在视口中间
+            playheadDiv.style.left = '50%';
+            playheadDiv.style.transform = 'translateX(-1px)'; // 居中校准
+        }
+    } else {
+        // 阶段二：播放线固定在中央，滚动容器
+        const scrollTarget = Math.max(0, playheadX - centerX);
+        scrollContainer.scrollLeft = scrollTarget;
+        // 设置播放线位置为：scrollLeft + centerX，始终保持在视口中心
+        const visualX = scrollTarget + centerX;
+        playheadDiv.style.left = `${visualX}px`;
     }
-
-    // // 高亮当前播放音符（如果你希望这样）
-    // highlightPlayingNotes(currentTime);
 
     if (currentTime < currentMidi.duration) {
         animatePlayhead.id = requestAnimationFrame(animatePlayhead);
@@ -1166,11 +1223,10 @@ function animatePlayhead() {
         Tone.Transport.stop();
         cancelAnimationFrame(animatePlayhead.id);
         onPlaybackEnd();
-        // 不需要再重绘画布，删除最后一帧的进度线即可
-        eraseOldPlayhead(lastPlayheadX, canvas.height);
-        lastPlayheadX = null;
+        playheadCentered = false; // 播放完重置状态
     }
 }
+
 
 // 使用时改进
 function highlightPlayingNotes(currentTime) {

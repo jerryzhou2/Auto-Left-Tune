@@ -776,3 +776,17 @@ button {
     background-color: #ccc;
     cursor: not-allowed;
 }
+
+
+/* CSS 样式 */
+#playhead {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: red;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+    /* 初始隐藏 */
+}
