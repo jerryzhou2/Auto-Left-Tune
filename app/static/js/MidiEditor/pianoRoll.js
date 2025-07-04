@@ -208,7 +208,7 @@ function isValidNoteName(name) {
 }
 
 trackInput_add.addEventListener('input', () => {
-    if (trackInput_add.value !== '') {
+    if (trackInput_add.value !== '' && !isNaN(trackInput_add.value)) {
         updatePreview();
     }
 });
