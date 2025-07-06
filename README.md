@@ -25,13 +25,29 @@ Auto Left Tune 是一款面向钢琴创作与演奏的创新软件。其核心�
 
 ### 环境要求
 - Windows 10+ 或 Ubuntu 20.04+
-- Python 3.7 及以上
+- Python 3.10
 
-### 安装依赖
-```bash
-pip install -r requirements.txt
+### 代码部署
 ```
-
+git clone https://github.com/VvR7/Auto-Left-Tune.git
+```
+Linux用户/服务器可以使用我们配置好的自动化脚本安装：
+```
+bash start.sh
+```
+若以上过程出现问题，或者是Windows用户，请手动安装依赖与下载模型：
+```
+cd Auto-Left-Tune  
+# 建议使用 venv 或 conda 创建虚拟环境
+python -m venv venv        % 如果使用 venv
+source venv/bin/activate   % Linux/macOS
+.\\venv\\Scripts\\activate    % Windows
+conda create -n autolefttune python=3.10 -y % 如果使用 conda
+conda activate autolefttune
+pip install -r requirements.txt
+python setup.py  %下载模型权重
+```
+以上操作会下载一个大约500M的模型，请保证有足够的空间
 ### 启动应用
 ```bash
 python run.py
