@@ -13,6 +13,7 @@ downloaded_path = hf_hub_download(repo_id=repo_id, filename=filename)
 #当前脚本所在路径
 abs_path = os.path.abspath(__file__)
 abs_path = os.path.dirname(abs_path)
+os.makedirs(os.path.join(abs_path,'app','utils','model'),exist_ok=True)
 target_path = os.path.join(abs_path,'app','utils','model',filename)
 print(target_path)
 
